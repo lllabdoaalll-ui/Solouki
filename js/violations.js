@@ -548,8 +548,18 @@
       t.classList.toggle('active', t.dataset.mode === mode);
     });
     const single = mode === 'single';
-    $('recordPanel').hidden = !single;
-    $('bulkPanel').hidden = single;
+    const record = $('recordPanel');
+    const bulk = $('bulkPanel');
+    // catalog.css: .panel { display:none } .panel.active { display:block }
+    // must toggle .active (hidden attr alone is not enough)
+    if (record) {
+      record.classList.toggle('active', single);
+      record.hidden = !single;
+    }
+    if (bulk) {
+      bulk.classList.toggle('active', !single);
+      bulk.hidden = single;
+    }
     if (!single && state.classOptions.length === 0) {
       loadClassOptions();
     }
