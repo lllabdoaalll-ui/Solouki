@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | تسجيل مخالفة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/catalog.css">
+  <link rel="stylesheet" href="css/violations.css">
+</head>
+<body class="catalog-page">
+  <header class="catalog-header">
+    <div class="catalog-header-inner">
+      <div>
+        <p class="section-kicker">نظام سلوكي لإدارة السلوك والانضباط المدرسي</p>
+        <h1>تسجيل ملاحظة سلوكية</h1>
+        <p class="subtitle">بحث عن الطالب → اختيار المخالفة والمكان → حفظ مع التوثيق</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <a class="btn btn-outline" href="catalog.html">الكتالوج</a>
+        <button type="button" class="btn btn-outline" id="logout">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="catalog-main">
+    <div id="ok" class="note note-ok" hidden></div>
+    <div id="error" class="note note-error" hidden></div>
+
+    <section class="panel active" id="recordPanel">
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">تسجيل جديد</span>
+          <h2>نموذج المخالفة</h2>
+        </div>
+      </div>
+
+      <form id="violationRecordForm" class="record-form">
+        <!-- بحث الطالب -->
+        <div class="form-block">
+          <label for="studentSearch">بحث عن الطالب <span class="req">*</span></label>
+          <input id="studentSearch" type="search" placeholder="اسم / رقم قومي / رقم جلوس (حرفان على الأقل)" autocomplete="off">
+          <div id="studentResults" class="search-results" hidden></div>
+          <div id="selectedStudent" class="selected-student" hidden></div>
+          <input type="hidden" id="studentId" value="">
+        </div>
+
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="locationSelect">مكان الواقعة <span class="req">*</span></label>
+            <select id="locationSelect" required>
+              <option value="">— اختر المكان —</option>
+            </select>
+            <input id="customLocation" type="text" placeholder="مكان مخصص (إن اخترت غير ذلك)" hidden>
+          </div>
+
+          <div class="form-block">
+            <label for="violationDate">تاريخ المخالفة</label>
+            <input id="violationDate" type="date" required>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <label for="violationSelect">المخالفة من الكتالوج <span class="req">*</span></label>
+          <select id="violationSelect" required>
+            <option value="">— اختر المخالفة —</option>
+          </select>
+          <p class="field-hint" id="degreeHint">الدرجة تُحدَّد تلقائيًا من الكتالوج</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="penaltySelect">العقوبة (اختياري)</label>
+            <select id="penaltySelect">
+              <option value="">— بدون تحديد الآن —</option>
+            </select>
+          </div>
+          <div class="form-block">
+            <label for="notes">ملاحظات</label>
+            <input id="notes" type="text" placeholder="اختياري">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="saveBtn">حفظ المخالفة</button>
+          <button type="button" class="btn btn-outline" id="resetForm">مسح النموذج</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel active" style="margin-top:24px">
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">السجل</span>
+          <h2>آخر المخالفات المسجّلة</h2>
+        </div>
+        <button type="button" class="btn btn-outline" id="refreshList">تحديث</button>
+      </div>
+      <div id="recordsList" class="table-wrap">
+        <p class="empty-row">جاري التحميل…</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/supabase-client.js"></script>
+  <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
+  <script src="js/violations.js"></script>
+</body>
+</html>

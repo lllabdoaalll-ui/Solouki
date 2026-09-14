@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## Phase 4 — STEP 44: تسجيل المخالفة
+- صفحة `violations.html` + `js/violations.js` + `css/violations.css`
+- SQL: `sql/phase4-step44-record-violation.sql`
+  - `search_students_for_violation` — بحث ضمن نطاق الدور
+  - `record_violation` — حفظ آمن مع التحقق من الدرجة/العقوبة/النطاق
+  - `list_recent_violations` — آخر السجلات حسب الصلاحية
+  - `admin_delete_violation_record` — حذف لـ superadmin / stage_manager
+- ربط من لوحة التحكم
+- الإصدار: `4.44.0`
+
 ## Phase 4 — STEP 43.3: تعديل / حذف الأماكن المخصصة + صلاحيات إدارة أوسع للكتالوج
 - SQL: `sql/phase4-step43.3-location-edit-delete.sql`
   - `admin_update_location` / `admin_delete_location` (مخصص فقط)
