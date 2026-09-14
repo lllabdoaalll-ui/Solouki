@@ -112,13 +112,32 @@
   </section>
 </main>
 
-<!-- نموذج إضافة مخالفة -->
+<!-- نموذج إضافة / تعديل مخالفة -->
 <div id="violationModal" class="modal" hidden>
   <form id="violationForm" class="modal-card">
-    <div class="modal-head"><div><span class="section-kicker">إضافة جديدة</span><h2>إضافة مخالفة مخصصة</h2></div><button type="button" id="closeViolationModal" class="modal-close" aria-label="إغلاق">×</button></div>
-    <label>الدرجة<select id="violationDegree" required><option value="1">الدرجة الأولى (البسيطة)</option><option value="2">الدرجة الثانية (متوسطة الخطورة)</option><option value="3">الدرجة الثالثة (الخطيرة)</option></select></label>
-    <label>وصف المخالفة<textarea id="violationDescription" required placeholder="اكتب وصفًا واضحًا ومحددًا للسلوك المخالف"></textarea></label>
-    <div class="actions"><button type="button" class="btn btn-outline" id="cancelViolationModal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ المخالفة</button></div>
+    <div class="modal-head">
+      <div>
+        <span class="section-kicker" id="violationModalKicker">إضافة جديدة</span>
+        <h2 id="violationModalTitle">إضافة مخالفة مخصصة</h2>
+      </div>
+      <button type="button" id="closeViolationModal" class="modal-close" aria-label="إغلاق">×</button>
+    </div>
+    <input type="hidden" id="violationEditId" value="">
+    <label>الدرجة
+      <select id="violationDegree" required>
+        <option value="1">الدرجة الأولى (البسيطة)</option>
+        <option value="2">الدرجة الثانية (متوسطة الخطورة)</option>
+        <option value="3">الدرجة الثالثة (الخطيرة)</option>
+      </select>
+    </label>
+    <label>وصف المخالفة
+      <textarea id="violationDescription" required placeholder="اكتب وصفًا واضحًا ومحددًا للسلوك المخالف"></textarea>
+    </label>
+    <p id="violationEditHint" class="small-note" hidden style="border:0;border-radius:10px;margin:0 0 8px">عند تغيير الدرجة يُعاد توليد كود المخالفة تلقائيًا ضمن الدرجة الجديدة.</p>
+    <div class="actions">
+      <button type="button" class="btn btn-outline" id="cancelViolationModal">إلغاء</button>
+      <button type="submit" class="btn btn-primary" id="violationSubmitBtn">حفظ المخالفة</button>
+    </div>
   </form>
 </div>
 
