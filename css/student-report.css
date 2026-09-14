@@ -79,3 +79,44 @@
   .student-card { break-inside: avoid; }
   .stat-card { break-inside: avoid; }
 }
+
+
+/* متابعة وتصعيد */
+.escalation-box {
+  margin-top: 20px;
+  padding: 16px 18px;
+  border: 1px solid #d7e3de;
+  border-radius: 14px;
+  background: #f8fbf9;
+}
+.escalation-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border-right: 4px solid #0f5c56;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.escalation-card.level-none { border-right-color: #94a3b8; }
+.escalation-card.level-low { border-right-color: #2563eb; }
+.escalation-card.level-medium { border-right-color: #d97706; }
+.escalation-card.level-high { border-right-color: #b91c1c; }
+.escalation-card.level-critical { border-right-color: #7f1d1d; background: #fef2f2; }
+.escalation-card .esc-level {
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.escalation-card .esc-suggestion { font-weight: 700; color: #0a413d; margin-bottom: 4px; }
+.escalation-card .esc-reason { color: #5a736c; font-size: 13px; }
+.followups-list {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #334155;
+}
+.followups-list .fu-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e8f0ed;
+}
+.followups-list .fu-item strong { color: #0f5c56; }
