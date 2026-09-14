@@ -100,7 +100,7 @@
   function renderViolations() {
     $('btnAddViolation').hidden = !state.isAdmin;
     $('violationsHint').textContent = state.isAdmin
-      ? 'المسؤول العام يمكنه إضافة مخالفة مخصصة أو إيقاف/تفعيل مخالفة قائمة.'
+      ? 'المسؤول العام: إضافة، تعديل، نقل درجة، إيقاف/تفعيل، وحذف المخالفات المخصصة.'
       : 'قراءة فقط. المخالفات المخصّصة يضيفها المسؤول العام حسب تقدير لجنة الحماية المدرسية.';
 
     const query = (($('violationSearch') && $('violationSearch').value) || '').trim().toLowerCase();
@@ -114,13 +114,27 @@
           return String(v.code || '').toLowerCase().includes(query) || String(v.description_ar || '').toLowerCase().includes(query);
         });
         shown += rows.length;
-        const rowsHtml = rows.map((v) => `
+        const rowsHtml = rows.map((v) => {
+          let actions = '';
+          if (state.isAdmin) {
+            const buttons = [
+              `<button class="mini" data-action="toggle-violation" data-id="${v.id}" data-active="${v.is_active}">${v.is_active ? 'إيقاف' : 'تفعيل'}</button>`
+            ];
+            if (v.is_custom) {
+              buttons.push(
+                `<button class="mini" data-action="edit-violation" data-id="${v.id}">تعديل</button>`,
+                `<button class="mini mini-danger" data-action="delete-violation" data-id="${v.id}" data-code="${esc(v.code)}">حذف</button>`
+              );
+            }
+            actions = `<td class="center actions-cell">${buttons.join(' ')}</td>`;
+          }
+          return `
           <tr>
             <td>${esc(v.code)}</td>
             <td>${esc(v.description_ar)}${v.is_custom ? ' <span class="badge">مخصصة</span>' : ''}${!v.is_active ? ' <span class="badge badge-off">موقوفة</span>' : ''}</td>
-            ${state.isAdmin ? `<td class="center"><button class="mini" data-action="toggle-violation" data-id="${v.id}" data-active="${v.is_active}">${v.is_active ? 'إيقاف' : 'تفعيل'}</button></td>` : ''}
-          </tr>
-        `).join('');
+            ${actions}
+          </tr>`;
+        }).join('');
 
         return `
           <div class="violation-group" style="--degree-color:${esc(degree.color_hex || '#173b35')}">
@@ -264,6 +278,36 @@
     note('ok', 'تمت إضافة المخالفة: ' + data.code);
   }
 
+  async function updateViolation(id, degreeId, description) {
+    const sb = SoloukiDB.sb();
+    const { data, error } = await sb.rpc('admin_update_violation', {
+      p_violation_id: Number(id),
+      p_degree_id: Number(degreeId),
+      p_description: description
+    });
+    if (error) return note('error', error.message);
+    const idx = state.violations.findIndex((v) => v.id === Number(id));
+    if (idx >= 0) state.violations[idx] = data;
+    else state.violations.push(data);
+    renderStats();
+    renderViolations();
+    note('ok', 'تم تحديث المخالفة: ' + data.code);
+  }
+
+  async function deleteViolation(id, code) {
+    const label = code || id;
+    if (!window.confirm('هل تريد حذف المخالفة «' + label + '» نهائيًا؟\nلا يمكن التراجع عن هذا الإجراء.')) return;
+    const sb = SoloukiDB.sb();
+    const { error } = await sb.rpc('admin_delete_violation', {
+      p_violation_id: Number(id)
+    });
+    if (error) return note('error', error.message);
+    state.violations = state.violations.filter((v) => v.id !== Number(id));
+    renderStats();
+    renderViolations();
+    note('ok', 'تم حذف المخالفة: ' + label);
+  }
+
   async function addLocation(name) {
     const sb = SoloukiDB.sb();
     const { data, error } = await sb.rpc('admin_add_location', { p_name_ar: name });
@@ -301,7 +345,6 @@
     if (hash && document.getElementById(hash)) activateTab(hash);
   }
 
-  // تفويض النقر لأزرار الجداول المولّدة ديناميكيًا (إيقاف/تفعيل)
   function setupRowActions() {
     document.body.addEventListener('click', (ev) => {
       const btn = ev.target.closest('button[data-action]');
@@ -310,23 +353,61 @@
       const active = btn.dataset.active === 'true';
       if (btn.dataset.action === 'toggle-violation') toggleViolation(id, active);
       if (btn.dataset.action === 'toggle-location') toggleLocation(id, active);
+      if (btn.dataset.action === 'edit-violation') openEditViolation(id);
+      if (btn.dataset.action === 'delete-violation') deleteViolation(id, btn.dataset.code);
     });
+  }
+
+  function openEditViolation(id) {
+    const row = state.violations.find((v) => v.id === Number(id));
+    if (!row || !row.is_custom) {
+      note('error', 'يمكن تعديل المخالفات المخصصة فقط.');
+      return;
+    }
+    const form = $('violationForm');
+    form.reset();
+    $('violationEditId').value = String(row.id);
+    $('violationDegree').value = String(row.degree_id);
+    $('violationDescription').value = row.description_ar || '';
+    $('violationModalKicker').textContent = 'تعديل';
+    $('violationModalTitle').textContent = 'تعديل مخالفة مخصصة — ' + (row.code || '');
+    $('violationSubmitBtn').textContent = 'حفظ التعديلات';
+    const hint = $('violationEditHint');
+    if (hint) hint.hidden = false;
+    $('violationModal').hidden = false;
   }
 
   function setupViolationModal() {
     const modal = $('violationModal');
     const form = $('violationForm');
-    const open = () => { form.reset(); modal.hidden = false; };
+
+    const openAdd = () => {
+      form.reset();
+      $('violationEditId').value = '';
+      $('violationModalKicker').textContent = 'إضافة جديدة';
+      $('violationModalTitle').textContent = 'إضافة مخالفة مخصصة';
+      $('violationSubmitBtn').textContent = 'حفظ المخالفة';
+      const hint = $('violationEditHint');
+      if (hint) hint.hidden = true;
+      modal.hidden = false;
+    };
     const close = () => { modal.hidden = true; };
 
-    $('btnAddViolation').addEventListener('click', open);
+    $('btnAddViolation').addEventListener('click', openAdd);
     $('closeViolationModal').addEventListener('click', close);
     $('cancelViolationModal').addEventListener('click', close);
     modal.addEventListener('click', (ev) => { if (ev.target === modal) close(); });
 
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      await addViolation($('violationDegree').value, $('violationDescription').value.trim());
+      const editId = ($('violationEditId').value || '').trim();
+      const degreeId = $('violationDegree').value;
+      const description = $('violationDescription').value.trim();
+      if (editId) {
+        await updateViolation(editId, degreeId, description);
+      } else {
+        await addViolation(degreeId, description);
+      }
       close();
     });
   }
