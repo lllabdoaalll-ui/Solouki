@@ -2,6 +2,11 @@
    Solouki — شاشة الدخول (عصرية · متجاوبة · هوية خضراء)
    ============================================================ */
 
+body.auth-page,
+body.auth-page * {
+  box-sizing: border-box;
+}
+
 body.auth-page {
   margin: 0;
   min-height: 100vh;
@@ -150,19 +155,24 @@ body.auth-page {
 
 .auth-panel-inner {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .auth-card {
   background: #ffffff;
   border-radius: 24px;
-  padding: 32px 28px 28px;
+  padding: 28px 22px 24px;
   box-shadow:
     0 4px 6px rgba(15, 92, 86, 0.03),
     0 20px 40px rgba(15, 92, 86, 0.08);
   border: 1px solid rgba(15, 92, 86, 0.08);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .auth-card[hidden] { display: none !important; }
@@ -231,8 +241,18 @@ body.auth-page {
   box-shadow: 0 2px 8px rgba(15, 92, 86, 0.12);
 }
 
+.auth-card form {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .form-group {
   margin-bottom: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .form-group label {
@@ -243,8 +263,14 @@ body.auth-page {
   margin-bottom: 6px;
 }
 
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="text"],
 .form-group input {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0;
   padding: 13px 14px;
   border: 1.5px solid #c5d9d2;
   border-radius: 12px;
@@ -254,6 +280,9 @@ body.auth-page {
   color: #1a2e2a;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
   box-shadow: inset 0 1px 2px rgba(15, 92, 86, 0.04);
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .form-group input::placeholder {
@@ -264,32 +293,62 @@ body.auth-page {
   outline: none;
   border-color: #0f5c56;
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(15, 92, 86, 0.15);
+  box-shadow: 0 0 0 3px rgba(15, 92, 86, 0.14);
 }
 
+/* كلمة المرور: صف مرن داخل الإطار — بدون absolute يخرج عن البطاقة */
 .password-wrap {
-  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1.5px solid #c5d9d2;
+  border-radius: 12px;
+  background: #fafcfb;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(15, 92, 86, 0.04);
 }
 
-.password-wrap input {
-  padding-left: 48px;
+.password-wrap:focus-within {
+  border-color: #0f5c56;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(15, 92, 86, 0.14);
+}
+
+.password-wrap input,
+.password-wrap input[type="password"] {
+  flex: 1 1 auto;
+  min-width: 0 !important;
+  width: auto !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 13px 14px !important;
+}
+
+.password-wrap input:focus {
+  box-shadow: none !important;
 }
 
 .toggle-password {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex: 0 0 auto;
   border: none;
   background: transparent;
   cursor: pointer;
   font-size: 16px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 0 12px;
   opacity: 0.7;
+  line-height: 1;
+  align-self: stretch;
 }
 
-.toggle-password:hover { opacity: 1; background: #eef5f3; }
+.toggle-password:hover {
+  opacity: 1;
+  background: #eef5f3;
+}
 
 .btn {
   font-family: inherit;
