@@ -32,6 +32,28 @@
     <div id="ok" class="note note-ok no-print" hidden></div>
     <div id="error" class="note note-error no-print" hidden></div>
 
+    <section class="panel active screen-only no-print attention-panel" id="attentionSection">
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">متابعة</span>
+          <h2>طلاب يستحقون طباعة التقرير</h2>
+        </div>
+        <button type="button" class="btn btn-outline" id="refreshAttention">تحديث القائمة</button>
+      </div>
+      <div class="record-form">
+        <p class="attention-hint">العتبات الافتراضية: إجمالي ≥ 3، أو درجة ثانية ≥ 2، أو درجة ثالثة/رابعة ≥ 1 — ضمن نطاق صلاحيتك.</p>
+        <div id="attentionList" class="attention-list">
+          <p class="empty-row">جاري التحميل…</p>
+        </div>
+        <div class="attention-actions">
+          <button type="button" class="btn btn-outline mini-btn" id="attSelectAll">تحديد الكل</button>
+          <button type="button" class="btn btn-outline mini-btn" id="attClear">إلغاء التحديد</button>
+          <button type="button" class="btn btn-primary" id="batchPrintBtn" disabled>🖨️ طباعة التقارير المحددة</button>
+          <span class="field-hint" id="attCount"></span>
+        </div>
+      </div>
+    </section>
+
     <section class="panel active screen-only no-print">
       <div class="panel-head">
         <div>
