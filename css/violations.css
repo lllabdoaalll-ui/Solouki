@@ -1,0 +1,114 @@
+/* STEP 44 — تسجيل المخالفة */
+.record-form {
+  background: #fff;
+  border: 1px solid var(--catalog-border, #d7e3de);
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 8px 24px rgba(23, 59, 53, 0.06);
+}
+
+.form-block {
+  margin-bottom: 16px;
+}
+
+.form-block label {
+  display: block;
+  font-weight: 800;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #1e3a34;
+}
+
+.form-block input,
+.form-block select {
+  width: 100%;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #cbdad5;
+  border-radius: 10px;
+  background: #fff;
+  min-height: 42px;
+}
+
+.form-block input:focus,
+.form-block select:focus {
+  outline: 2px solid rgba(35, 114, 94, 0.25);
+  border-color: #23725e;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.req { color: #a33a32; }
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #5a736c;
+}
+
+.search-results {
+  margin-top: 6px;
+  border: 1px solid #d7e3de;
+  border-radius: 12px;
+  background: #f8fbf9;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.search-item {
+  display: block;
+  width: 100%;
+  text-align: right;
+  font: inherit;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #e8f0ed;
+  background: transparent;
+  cursor: pointer;
+}
+
+.search-item:hover {
+  background: #edf5f2;
+}
+
+.search-item strong {
+  display: block;
+  font-size: 14px;
+}
+
+.search-item span {
+  font-size: 12px;
+  color: #5a736c;
+}
+
+.selected-student {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #edf8f3, #f7faf9);
+  border: 1px solid #c5e0d6;
+  font-size: 14px;
+  font-weight: 700;
+  color: #173b35;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.records-table td.degree-1 { color: #1d4ed8; font-weight: 800; }
+.records-table td.degree-2 { color: #b45309; font-weight: 800; }
+.records-table td.degree-3 { color: #b91c1c; font-weight: 800; }
+.records-table td.degree-4 { color: #7f1d1d; font-weight: 800; }
+
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .record-form { padding: 16px; }
+}
