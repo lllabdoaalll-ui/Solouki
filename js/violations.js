@@ -246,7 +246,14 @@
     try {
       const { data, error } = await sb().rpc('record_violation', payload);
       if (error) return note('error', error.message);
-      note('ok', 'تم حفظ المخالفة بنجاح');
+      const sid = state.selectedStudent && state.selectedStudent.id;
+      note('ok', 'تم حفظ المخالفة بنجاح' + (sid ? ' — <a href="student-report.html?id=' + sid + '">عرض ملف السلوك</a>' : ''));
+      // allow HTML in note
+      const okEl = $('ok');
+      if (okEl && sid) {
+        okEl.hidden = false;
+        okEl.innerHTML = 'تم حفظ المخالفة بنجاح — <a href="student-report.html?id=' + sid + '" style="color:inherit;font-weight:800;text-decoration:underline">عرض ملف السلوك وإشعار ولي الأمر</a>';
+      }
       resetForm(false);
       await loadRecords();
     } finally {
@@ -513,7 +520,7 @@
       if (error) return note('error', error.message);
       const row = Array.isArray(data) ? data[0] : data;
       const msg = (row && row.message) || 'تم التسجيل الجماعي';
-      note('ok', msg);
+      note('ok', msg + ' — يمكنك فتح ملف سلوك أي طالب من قائمة السجل أو صفحة ملف السلوك');
       state.basket.clear();
       renderBasket();
       renderBulkStudentList($('bulkListSearch').value);
