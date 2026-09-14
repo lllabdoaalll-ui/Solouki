@@ -267,3 +267,13 @@
   .bulk-filters { grid-template-columns: 1fr; }
   .bulk-list-head { flex-direction: column; align-items: stretch; }
 }
+
+/* ضمان إخفاء اللوحات غير النشطة حتى مع تعارض catalog.css */
+#recordPanel:not(.active),
+#bulkPanel:not(.active) {
+  display: none !important;
+}
+#recordPanel.active,
+#bulkPanel.active {
+  display: block !important;
+}
