@@ -1,15 +1,9 @@
 -- ============================================================
 -- Solouki — Phase 4 / STEP 43.2: تعديل / نقل درجة / حذف مخالفة مخصصة
--- ============================================================
--- - تعديل الوصف ونقل الدرجة (1–3) للمخالفات المخصصة فقط
--- - عند تغيير الدرجة يُعاد توليد الكود داخل الدرجة الجديدة
--- - الحذف النهائي للمخصصة فقط (لا يُمس المخالفات النظامية من اللائحة)
--- نفّذه بعد phase4-step43-catalog.sql
+-- (نسخة مُصلحة — level=info + رسائل أوضح)
+-- نفّذه في Supabase SQL Editor حتى لو نُفِّذ سابقًا (CREATE OR REPLACE)
 -- ============================================================
 
--- ------------------------------------------------------------
--- 1) تعديل مخالفة مخصصة (وصف + درجة)
--- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.admin_update_violation(
   p_violation_id int,
   p_degree_id smallint,
@@ -53,7 +47,6 @@ BEGIN
 
   v_old_code := v_row.code;
 
-  -- إن تغيّرت الدرجة: كود جديد داخل الدرجة الهدف
   IF v_row.degree_id IS DISTINCT FROM p_degree_id THEN
     SELECT COALESCE(MAX(split_part(code, '.', 2)::int), 0) + 1
     INTO v_next
@@ -74,14 +67,18 @@ BEGIN
   WHERE id = p_violation_id
   RETURNING * INTO v_row;
 
-  INSERT INTO audit_events (actor_name, actor_role, action, details, level)
-  VALUES (
-    actor.full_name,
-    actor.role_type,
-    'update_violation',
-    coalesce(v_old_code, '') || ' → ' || v_row.code || ' — ' || v_desc,
-    'info'
-  );
+  BEGIN
+    INSERT INTO audit_events (actor_name, actor_role, action, details, level)
+    VALUES (
+      actor.full_name,
+      actor.role_type,
+      'update_violation',
+      coalesce(v_old_code, '') || ' → ' || v_row.code || ' — ' || v_desc,
+      'info'
+    );
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
 
   RETURN v_row;
 END;
@@ -89,9 +86,6 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_update_violation(int, smallint, text) TO authenticated;
 
--- ------------------------------------------------------------
--- 2) حذف مخالفة مخصصة نهائيًا
--- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.admin_delete_violation(
   p_violation_id int
 )
@@ -118,22 +112,42 @@ BEGIN
     RAISE EXCEPTION 'لا يمكن حذف مخالفات اللائحة الرسمية — المخصصة فقط';
   END IF;
 
-  -- إن وُجدت جداول مرتبطة لاحقًا قد يفشل الحذف بقيود FK — الرسالة ستكون واضحة
-  DELETE FROM violations_catalog WHERE id = p_violation_id;
+  BEGIN
+    DELETE FROM violations_catalog WHERE id = p_violation_id;
+  EXCEPTION WHEN foreign_key_violation THEN
+    RAISE EXCEPTION 'لا يمكن الحذف: المخالفة مرتبطة بسجلات أخرى. استخدم إيقاف بدلًا من الحذف.';
+  END;
 
-  INSERT INTO audit_events (actor_name, actor_role, action, details, level)
-  VALUES (
-    actor.full_name,
-    actor.role_type,
-    'delete_violation',
-    coalesce(v_row.code, p_violation_id::text) || ' — ' || coalesce(v_row.description_ar, ''),
-    'warn'
-  );
+  BEGIN
+    INSERT INTO audit_events (actor_name, actor_role, action, details, level)
+    VALUES (
+      actor.full_name,
+      actor.role_type,
+      'delete_violation',
+      coalesce(v_row.code, p_violation_id::text) || ' — ' || coalesce(v_row.description_ar, ''),
+      'info'
+    );
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
 
   RETURN true;
 END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_delete_violation(int) TO authenticated;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'admin_update_violation'
+      AND pg_get_function_identity_arguments(p.oid) = 'p_violation_id integer, p_description text, p_degree_id smallint'
+  ) THEN
+    DROP FUNCTION public.admin_update_violation(int, text, smallint);
+  END IF;
+END $$;
 
 NOTIFY pgrst, 'reload schema';
