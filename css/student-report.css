@@ -1,0 +1,81 @@
+/* STEP 46 — ملف سلوك الطالب */
+.student-card {
+  background: linear-gradient(135deg, #edf8f3, #f7faf9);
+  border: 1px solid #c5e0d6;
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.student-card strong { color: #173b35; font-size: 18px; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.stat-card {
+  background: #fff;
+  border: 1px solid #d7e3de;
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(23, 59, 53, 0.04);
+}
+.stat-card .n { font-size: 26px; font-weight: 800; color: #173b35; }
+.stat-card .l { font-size: 12px; color: #5a736c; margin-top: 4px; }
+.stat-card.d1 .n { color: #1d4ed8; }
+.stat-card.d2 .n { color: #b45309; }
+.stat-card.d3 .n { color: #b91c1c; }
+.stat-card.d4 .n { color: #7f1d1d; }
+
+.section-sub {
+  font-size: 16px;
+  font-weight: 800;
+  color: #173b35;
+  margin: 0 0 10px;
+}
+
+.wa-box {
+  margin-top: 24px;
+  padding: 18px 20px;
+  background: #f0f7ff;
+  border: 1px solid #b8d4f0;
+  border-radius: 16px;
+}
+.wa-box textarea {
+  width: 100%;
+  font: inherit;
+  padding: 12px;
+  border: 1px solid #cbdad5;
+  border-radius: 10px;
+  resize: vertical;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.wa-phones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+
+@media (max-width: 800px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+
+@media print {
+  .catalog-header, .no-print, .mode-tabs, #error, #ok { display: none !important; }
+  .catalog-main { padding: 0; max-width: 100%; }
+  .panel { box-shadow: none; border: none; }
+  .student-card { break-inside: avoid; }
+  .stat-card { break-inside: avoid; }
+}
