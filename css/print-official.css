@@ -1,0 +1,357 @@
+/**
+ * Solouki — هوية التقارير المطبوعة الرسمية
+ * خطوط Cairo، تدرج أوزان، ترويسة مدرسية مصرية
+ */
+
+:root {
+  --solouki-ink: #1a2e2a;
+  --solouki-primary: #0f5c56;
+  --solouki-primary-deep: #0a413d;
+  --solouki-line: #1a5c54;
+  --solouki-muted: #4a635e;
+  --solouki-gold: #9a7b2f;
+  --solouki-paper: #ffffff;
+  --solouki-soft: #f3f7f6;
+}
+
+/* ——— شاشة: إخفاء قالب الطباعة ——— */
+.print-only { display: none !important; }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 14mm 14mm 14mm;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: var(--solouki-ink) !important;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif !important;
+    font-size: 11pt !important;
+    line-height: 1.55 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  .catalog-header,
+  .mode-tabs,
+  .note,
+  #error,
+  #ok,
+  .header-actions,
+  .search-results,
+  button,
+  .btn,
+  nav,
+  .wa-box {
+    display: none !important;
+  }
+
+  .catalog-main,
+  .panel,
+  .record-form {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* إخفاء واجهة الشاشة وإظهار قالب الطباعة فقط */
+  .screen-only { display: none !important; }
+  .print-only {
+    display: block !important;
+  }
+
+  .solouki-sheet {
+    width: 100%;
+    color: var(--solouki-ink);
+  }
+
+  /* ——— الترويسة ——— */
+  .solouki-letterhead {
+    display: grid;
+    grid-template-columns: 22mm 1fr 22mm;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 2.5pt solid var(--solouki-primary);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+
+  .solouki-letterhead .logo-box {
+    width: 20mm;
+    height: 20mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .solouki-letterhead .logo-box img {
+    max-width: 20mm;
+    max-height: 20mm;
+    object-fit: contain;
+  }
+
+  .solouki-letterhead .logo-placeholder {
+    width: 18mm;
+    height: 18mm;
+    border: 1px dashed #9bb5af;
+    border-radius: 4px;
+    font-size: 7pt;
+    color: #8aa39c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .solouki-letterhead .org-block {
+    text-align: center;
+  }
+
+  .solouki-letterhead .org-republic {
+    font-size: 10pt;
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+    letter-spacing: 0.02em;
+  }
+
+  .solouki-letterhead .org-ministry {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--solouki-ink);
+    margin-top: 1px;
+  }
+
+  .solouki-letterhead .org-dir {
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--solouki-muted);
+    margin-top: 1px;
+  }
+
+  .solouki-letterhead .org-school {
+    font-size: 12pt;
+    font-weight: 800;
+    color: var(--solouki-primary);
+    margin-top: 3px;
+  }
+
+  .solouki-brand-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1pt solid var(--solouki-gold);
+    padding: 3px 0 5px;
+    margin-bottom: 12px;
+    font-size: 8pt;
+    color: var(--solouki-muted);
+  }
+
+  .solouki-brand-bar strong {
+    color: var(--solouki-primary);
+    font-weight: 800;
+  }
+
+  /* ——— عنوان التقرير ——— */
+  .solouki-doc-title {
+    text-align: center;
+    margin: 10px 0 14px;
+  }
+
+  .solouki-doc-title h1 {
+    font-size: 14pt;
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+    margin: 0 0 4px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .solouki-doc-title .meta {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: var(--solouki-muted);
+  }
+
+  .solouki-doc-title .meta b {
+    color: var(--solouki-ink);
+    font-weight: 700;
+  }
+
+  /* ——— بيانات الطالب ——— */
+  .solouki-student-box {
+    border: 1.5pt solid var(--solouki-line);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background: var(--solouki-soft);
+  }
+
+  .solouki-student-box .name {
+    font-size: 13pt;
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+    margin-bottom: 4px;
+  }
+
+  .solouki-student-box .row {
+    font-size: 10pt;
+    font-weight: 500;
+    color: var(--solouki-ink);
+  }
+
+  .solouki-student-box .row b {
+    font-weight: 700;
+  }
+
+  /* ——— إحصائيات ——— */
+  .solouki-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .solouki-stats .cell {
+    border: 1pt solid #c5d4d0;
+    border-radius: 3px;
+    text-align: center;
+    padding: 5px 2px;
+  }
+
+  .solouki-stats .cell .n {
+    font-size: 13pt;
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+  }
+
+  .solouki-stats .cell .l {
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: var(--solouki-muted);
+  }
+
+  /* ——— نصوص رسمية ——— */
+  .solouki-prose {
+    font-size: 10.5pt;
+    font-weight: 500;
+    text-align: justify;
+    margin: 10px 0;
+    line-height: 1.7;
+  }
+
+  .solouki-prose strong {
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+  }
+
+  .solouki-notice {
+    font-size: 10pt;
+    font-weight: 600;
+    border-right: 3pt solid var(--solouki-gold);
+    padding-right: 10px;
+    margin: 10px 0 14px;
+    color: var(--solouki-ink);
+  }
+
+  /* ——— الجدول ——— */
+  .solouki-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 14px;
+  }
+
+  .solouki-table th {
+    background: var(--solouki-primary) !important;
+    color: #fff !important;
+    font-weight: 800;
+    padding: 5px 6px;
+    border: 1pt solid var(--solouki-primary-deep);
+    text-align: right;
+  }
+
+  .solouki-table td {
+    padding: 4px 6px;
+    border: 1pt solid #b0c4bf;
+    font-weight: 500;
+    vertical-align: top;
+  }
+
+  .solouki-table tr:nth-child(even) td {
+    background: #f6faf9 !important;
+  }
+
+  .solouki-table .deg {
+    font-weight: 800;
+    text-align: center;
+  }
+
+  /* ——— الختام والتوقيعات ——— */
+  .solouki-closing {
+    font-size: 10.5pt;
+    font-weight: 600;
+    margin: 12px 0 6px;
+  }
+
+  .solouki-date-line {
+    font-size: 9.5pt;
+    font-weight: 500;
+    margin-bottom: 18px;
+    color: var(--solouki-muted);
+  }
+
+  .solouki-date-line b {
+    font-weight: 700;
+    color: var(--solouki-ink);
+  }
+
+  .solouki-signs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+    page-break-inside: avoid;
+  }
+
+  .solouki-signs .sign {
+    text-align: center;
+    font-size: 9pt;
+  }
+
+  .solouki-signs .sign .title {
+    font-weight: 800;
+    color: var(--solouki-primary-deep);
+    margin-bottom: 28px;
+    font-size: 9.5pt;
+  }
+
+  .solouki-signs .sign .line {
+    border-top: 1pt solid #333;
+    margin: 0 10px;
+    padding-top: 4px;
+    font-weight: 500;
+    color: var(--solouki-muted);
+    font-size: 8pt;
+  }
+
+  .solouki-footer {
+    margin-top: 16px;
+    padding-top: 6px;
+    border-top: 1pt solid #c5d4d0;
+    font-size: 7.5pt;
+    color: #7a928c;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .solouki-footer strong {
+    color: var(--solouki-primary);
+    font-weight: 800;
+  }
+}
