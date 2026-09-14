@@ -602,6 +602,24 @@ body {
   background: #e0ece8;
 }
 
+.mini-danger {
+  color: #a33a32;
+  border-color: #f0c4c0;
+}
+
+.mini-danger:hover {
+  background: #fff5f4;
+  border-color: #e8a9a3;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.actions-cell .mini {
+  margin: 2px;
+}
+
 /* ---------- Matrix ---------- */
 .matrix-wrap .data-table {
   min-width: 720px;
