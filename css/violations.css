@@ -112,3 +112,158 @@
   .form-grid { grid-template-columns: 1fr; }
   .record-form { padding: 16px; }
 }
+
+/* STEP 45 — تسجيل جماعي */
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.mode-tab {
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1.5px solid #c5d9d2;
+  background: #fff;
+  color: #2a4a42;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mode-tab:hover { border-color: #23725e; color: #173b35; }
+.mode-tab.active {
+  background: #23725e;
+  border-color: #23725e;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(35, 114, 94, 0.25);
+}
+
+.bulk-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.bulk-select {
+  width: 100%;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #cbdad5;
+  border-radius: 10px;
+  background: #fff;
+  min-height: 42px;
+}
+
+.bulk-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.bulk-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.bulk-list-actions input[type="search"] {
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid #cbdad5;
+  border-radius: 8px;
+  font: inherit;
+  min-height: 36px;
+}
+.mini-btn {
+  padding: 7px 12px !important;
+  font-size: 12.5px !important;
+  min-height: 36px;
+  border-radius: 8px !important;
+}
+
+.bulk-student-list {
+  border: 1px solid #d7e3de;
+  border-radius: 12px;
+  background: #f8fbf9;
+  max-height: 280px;
+  overflow: auto;
+  padding: 6px 0;
+}
+.bulk-student-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #e8f0ed;
+  cursor: pointer;
+  font-size: 14px;
+}
+.bulk-student-row:hover { background: #edf5f2; }
+.bulk-student-row input { width: 18px; height: 18px; accent-color: #23725e; flex-shrink: 0; }
+.bulk-student-row .meta {
+  font-size: 12px;
+  color: #5a736c;
+  margin-right: auto;
+}
+
+.basket-badge {
+  background: #23725e;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+.basket-list {
+  border: 1px solid #c5e0d6;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #edf8f3, #f7faf9);
+  max-height: 200px;
+  overflow: auto;
+  padding: 6px 0;
+}
+.basket-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #d7ebe3;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.basket-item button {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #c5a0a0;
+  background: #fff;
+  color: #a33a32;
+  cursor: pointer;
+}
+.basket-item button:hover { background: #fdf2f2; }
+
+.bulk-shared {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #c5d9d2;
+}
+.bulk-shared-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #173b35;
+  margin-bottom: 14px;
+}
+.optional-tag {
+  font-weight: 500;
+  color: #5a736c;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .bulk-filters { grid-template-columns: 1fr; }
+  .bulk-list-head { flex-direction: column; align-items: stretch; }
+}
