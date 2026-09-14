@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سلوكي | إشعارات واتساب</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/students.css">
+<style>
+.notif-page { max-width: 960px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+.sender-card {
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;
+  padding: 0.9rem 1.1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+}
+.sender-card strong { color: #1e3a5f; }
+.notif-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.notif-item {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.notif-item.sent { opacity: 0.72; border-color: #86efac; background: #f0fdf4; }
+.notif-item h3 { margin: 0 0 0.35rem; font-size: 1.05rem; color: #1e3a5f; }
+.notif-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; }
+.notif-msg {
+  background: #f8fafc; border-radius: 8px; padding: 0.65rem 0.8rem;
+  font-size: 0.9rem; line-height: 1.55; margin-bottom: 0.75rem; white-space: pre-wrap;
+}
+.notif-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.badge-count {
+  display: inline-block; background: #d97706; color: #fff;
+  border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 700;
+}
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
+.demo-bar {
+  background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px;
+  padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<main class="notif-page">
+  <header class="page-head">
+    <div><b>سلوكي</b><h1>إشعارات واتساب لأولياء الأمور</h1></div>
+    <div class="head-actions">
+      <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+      <button id="logout" class="btn btn-outline">خروج</button>
+    </div>
+  </header>
+
+  <div class="notice">
+    <strong>إرسال يدوي عبر الرقم الشخصي — نافذة واحدة:</strong>
+    1) اضغط «تجهيز نافذة واتساب» مرة واحدة.
+    2) عند كل طالب تُحدَّث <em>نفس النافذة</em> لمحادثة ولي الأمر التالي (بدون نوافذ جديدة).
+    3) أو فعّل «نسخ فقط» إن كان واتساب مفتوحًا عندك بالفعل والصق الرسالة يدويًا.
+  </div>
+
+  <div id="error" class="error-box" hidden></div>
+  <div id="ok" class="success-box" hidden></div>
+
+  <div class="sender-card">
+    <div>رقم واتساب الأخصائي (المرسل): <strong id="senderWa">—</strong></div>
+    <div class="small-note">يُسجَّل من إدارة الأدوار بواسطة المسؤول العام / مسؤول الحاسب / الأخصائي</div>
+  </div>
+
+  <div class="demo-bar" id="demoBar" hidden>
+    لا توجد مخالفات مسجّلة اليوم في النظام بعد. يمكنك
+    <button type="button" id="seedDemo" class="btn btn-outline" style="margin-inline:6px">إضافة مخالفات تجريبية لليوم</button>
+    لاختبار الإشعارات.
+  </div>
+
+  <section class="stats">
+    <div><small>طلاب بانتظار الإشعار</small><strong id="pendingCount">0</strong></div>
+    <div><small>تم تجهيز/فتح واتساب</small><strong id="openedCount">0</strong></div>
+    <div><small>مخالفات اليوم</small><strong id="violCount">0</strong></div>
+  </section>
+
+  <div class="head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin:1rem 0">
+    <div>
+      <h2 style="margin:0">إشعارات اليوم</h2>
+      <p class="small-note" style="margin:0.25rem 0 0">يُجمَّع أكثر من ملاحظة لنفس الطالب في رسالة واحدة · نافذة واتساب واحدة فقط</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="prepareWaWin" class="btn btn-outline">① تجهيز نافذة واتساب</button>
+      <button id="refreshBtn" class="btn btn-outline">تحديث</button>
+      <button id="openAllBtn" class="btn btn-primary" disabled>بدء الإرسال المجمّع</button>
+    </div>
+  </div>
+  <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:0.9rem;color:#334155">
+    <input type="checkbox" id="copyOnlyMode">
+    وضع «نسخ فقط» — لا يفتح أي نافذة؛ ينسخ الرسالة وتعرض رقم ولي الأمر للصق في واتساب المفتوح عندك
+  </label>
+
+  <div id="batchBar" class="sender-card" hidden style="background:#f0fdf4;border-color:#86efac">
+    <div style="flex:1;min-width:200px">
+      <strong id="batchProgress">—</strong>
+      <div class="small-note">بعد الإرسال اضغط «التالي»: تتحول نفس نافذة واتساب لولي الأمر التالي (لا نافذة جديدة).</div>
+    </div>
+    <div class="actions">
+      <button type="button" id="batchNextBtn" class="btn btn-primary">التالي ←</button>
+      <button type="button" id="batchCloseBtn" class="btn btn-outline">إنهاء</button>
+    </div>
+  </div>
+
+  <div id="list" class="notif-list"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/notifications.js"></script>
+</body>
+</html>

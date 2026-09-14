@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سلوكي | رفع الطلاب وWhatsApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/students.css">
+</head>
+<body>
+<main class="students-page">
+<header class="page-head"><div><b>سلوكي</b><h1>رفع الطلاب وتهيئة إشعارات WhatsApp</h1></div><div class="head-actions"><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+<div id="syncBar" class="sync-bar" role="status">
+  <span id="syncNet" class="sync-pill sync-unknown">الاتصال: …</span>
+  <span id="syncDb" class="sync-pill sync-unknown">قاعدة البيانات: …</span>
+  <span id="syncLast" class="sync-pill sync-muted">آخر مزامنة: —</span>
+</div>
+<div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
+<section class="stats"><div><small>الطلاب الحاليون</small><strong id="studentCount">0</strong></div><div><small>جدد</small><strong id="newCount">0</strong></div><div><small>منقولون/متغيرون</small><strong id="changedCount">0</strong></div><div><small>منسحبون</small><strong id="withdrawnCount">0</strong></div></section>
+<nav class="tabs"><button class="active" data-tab="import">رفع Excel</button><button data-tab="roster">قائمة الطلاب</button><button data-tab="whatsapp">واتساب (شخصي)</button><button data-tab="logs">سجل الاستيراد</button></nav>
+<section id="import" class="panel active">
+
+<div class="up-steps" id="importSteps">
+  <span class="up-step-pill is-active" data-step="1"><span class="n">1</span> اختيار المرحلة والقسم والصف</span>
+  <span class="up-step-pill" data-step="2"><span class="n">2</span> رفع ملف Excel</span>
+  <span class="up-step-pill" data-step="3"><span class="n">3</span> معالجة ومراجعة الفروقات</span>
+  <span class="up-step-pill" data-step="4"><span class="n">4</span> اعتماد وحفظ سحابي</span>
+</div>
+
+<div class="scope-card" id="importScope">
+  <h3>① نطاق الاستيراد</h3>
+  <p class="scope-sub">حدّد المرحلة والقسم والصف قبل رفع الملف. التحديث يُطبَّق على هذا النطاق فقط.</p>
+  <div class="up-field-grid">
+    <div class="up-field">
+      <label class="up-required">المرحلة</label>
+      <select id="importStage"></select>
+    </div>
+    <div class="up-field" id="sectionFieldWrap">
+      <label>القسم</label>
+      <select id="importSection" hidden>
+        <option value="">— اختر القسم —</option>
+        <option value="arabic">عربي</option>
+        <option value="languages">لغات</option>
+      </select>
+      <div id="sectionDisplay" class="section-display">يُحدد من المرحلة</div>
+    </div>
+    <div class="up-field">
+      <label class="up-required">الصف</label>
+      <select id="importGrade"></select>
+    </div>
+  </div>
+</div>
+
+<div class="import-card">
+<div class="head"><div><h2>② رفع ملف الطلاب</h2><p>النموذج القياسي 9 أعمدة — XLS / XLSX</p></div><div class="actions"><button id="downloadTemplate" class="btn btn-outline">تحميل النموذج</button><button id="clearDemo" class="btn btn-outline">مسح بيانات الاختبار</button></div></div>
+<div id="dropzone" class="dropzone"><div class="drop-icon">⇧</div><h3>اسحب ملف Excel هنا</h3><p>أو اختر ملفًا من جهازك — الرقم القومي وأرقام الهاتف تُقرأ كنص.</p><label class="btn btn-primary">اختيار ملف<input id="excelFile" type="file" accept=".xlsx,.xls" hidden></label></div>
+<div id="fileInfo" class="file-info" hidden></div>
+<div id="validation" class="validation" hidden></div>
+<div id="diff" class="diff-grid" hidden></div>
+<div id="preview" class="table-wrap" hidden></div>
+<div class="actions import-actions">
+<button id="processFile" class="btn btn-primary" disabled>⚙️ معالجة الملف</button>
+<button id="cancelImport" class="btn btn-outline" disabled>إلغاء</button>
+<button id="confirmImport" class="btn btn-primary" disabled>اعتماد التغييرات</button>
+</div>
+<p class="small-note" style="margin-top:8px">1) اختر أو اسحب الملف → 2) اضغط «معالجة الملف» → 3) راجع التقرير → 4) اعتمد التغييرات. الخانات الفارغة في Excel لا تستبدل البيانات الموجودة في النظام.</p>
+</div><!-- /import-card -->
+</section>
+
+<section id="roster" class="panel">
+  <div class="head">
+    <div>
+      <h2>قائمة الطلاب وتعديل البيانات</h2>
+      <p>ابحث وعدّل أي حقل بعد الاستيراد — الخانات تُحفظ فور الضغط على «حفظ التعديل».</p>
+    </div>
+    <div class="actions">
+      <input id="rosterSearch" type="search" placeholder="بحث بالاسم / الرقم القومي / الفصل..." style="min-width:220px;padding:0.45rem 0.7rem;border:1px solid #cbd5e1;border-radius:8px">
+      <select id="rosterFilter" style="padding:0.45rem 0.6rem;border-radius:8px;border:1px solid #cbd5e1">
+        <option value="active">النشطون فقط</option>
+        <option value="all">الكل</option>
+        <option value="withdrawn">المنسحبون</option>
+      </select>
+    </div>
+  </div>
+  <div id="rosterTable" class="table-wrap"></div>
+</section>
+
+<section id="whatsapp" class="panel">
+<div class="head"><div>
+  <h2>إشعارات واتساب — الرقم الشخصي للأخصائي</h2>
+  <p>لا Meta Cloud API ولا رقم أعمال. الإرسال من واتساب المفتوح على جهاز الأخصائي (موبايل أو حاسوب).</p>
+</div>
+<div class="actions">
+  <a class="btn btn-primary" href="notifications.html">📲 فتح صفحة إشعارات اليوم</a>
+</div>
+</div>
+
+<div class="wa-card">
+  <h3 style="margin:0 0 10px;color:#1e3a5f">كيف يعمل؟</h3>
+  <ol style="margin:0;padding-right:1.2rem;line-height:1.9;color:#334155;font-size:0.92rem">
+    <li>يُسجَّل <strong>رقم واتساب الشخصي</strong> للأخصائي من <a href="roles.html">إدارة الأدوار</a>.</li>
+    <li>بعد تسجيل المخالفات يفتح الأخصائي <strong>إشعارات اليوم</strong>.</li>
+    <li>النظام يجهّز الرسالة ويفتح <code>wa.me</code> برقم ولي الأمر.</li>
+    <li>الإرسال يتم يدويًا من الرقم الشخصي المسجّل دخول واتساب به على الجهاز.</li>
+  </ol>
+  <p class="small-note" style="margin-top:12px">التكلفة: صفر · لا اشتراك · يعمل على الموبايل وواتساب ويب/ديسكتوب.</p>
+</div>
+
+<div class="wa-card">
+  <h3 style="margin:0 0 12px;color:#1e3a5f">مرجع سريع (اختياري)</h3>
+  <p class="small-note" style="margin-bottom:12px">يمكن حفظ ملاحظة داخلية لكل مرحلة (مثل اسم الأخصائي المسؤول عن الإرسال). هذا <strong>ليس</strong> رقم أعمال API.</p>
+  <div class="wa-row">
+    <label>المرحلة<select id="waStage"></select></label>
+    <label>ملاحظة / رقم مرجعي (اختياري)<input id="waNumber" dir="ltr" placeholder="مثال: أخصائي الصف — 01xxxxxxxxx"></label>
+  </div>
+  <input type="hidden" id="waPhoneId" value="">
+  <div class="actions">
+    <button id="saveWa" class="btn btn-primary">حفظ الملاحظة</button>
+    <a class="btn btn-outline" href="notifications.html">تجربة الإشعارات</a>
+  </div>
+  <div id="waStatus" class="small-note" style="margin-top:10px"></div>
+</div>
+
+<div class="message-card">
+  <h3>صيغة الإشعار المقترحة</h3>
+  <pre id="messagePreview">ولي الأمر الكريم،
+نود إشعاركم بأن هناك تسجيلًا سلوكيًا للطالب/الطالبة.
+يمكنكم الدخول إلى برنامج سلوكي للاطلاع على التفاصيل.</pre>
+  <p class="small-note">التفاصيل الحساسة تبقى داخل سلوكي. رسالة واتساب توجّه ولي الأمر للاطلاع من البرنامج أو تعرض ملخصًا قصيرًا.</p>
+</div>
+</section>
+<section id="logs" class="panel"><div class="head"><div><h2>سجل عمليات الاستيراد</h2><p>كل عملية تعتمد التغييرات تُسجل بتاريخها وملخصها.</p></div></div><div id="logsList"></div></section>
+</main>
+
+<div id="editModal" class="modal" hidden>
+  <form id="editForm" class="modal-card" style="max-width:520px">
+    <div class="head" style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="editTitle" style="margin:0">تعديل بيانات طالب</h2>
+      <button type="button" id="closeEdit" class="btn btn-outline" style="padding:0.2rem 0.6rem">×</button>
+    </div>
+    <input type="hidden" id="editKey">
+    <label>الرقم القومي<input id="editNational" dir="ltr" required pattern="[0-9]{14}" maxlength="14"></label>
+    <label>كود الطالب<input id="editCode" dir="ltr"></label>
+    <label>اسم الطالب<input id="editName" required></label>
+    <label>النوع
+      <select id="editGender">
+        <option value="ذكر">ذكر</option>
+        <option value="أنثى">أنثى</option>
+      </select>
+    </label>
+    <label>الصف<input id="editGrade"></label>
+    <label>القسم<input id="editSection"></label>
+    <label>الفصل<input id="editClass"></label>
+    <label>رقم تليفون الأب<input id="editFather" dir="ltr" placeholder="01xxxxxxxxx"></label>
+    <label>رقم تليفون الأم<input id="editMother" dir="ltr" placeholder="01xxxxxxxxx"></label>
+    <label><input type="checkbox" id="editActive" checked> طالب نشط (غير منسحب)</label>
+    <div class="actions" style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:flex-end">
+      <button type="button" id="cancelEdit" class="btn btn-outline">إلغاء</button>
+      <button type="submit" class="btn btn-primary">حفظ التعديل</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="js/config.js"></script><script src="js/students.js"></script>
+</body></html>

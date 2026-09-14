@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173b35">
+<title>سلوكي | كتالوج المخالفات والعقوبات</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/catalog.css">
+</head>
+<body>
+<main class="catalog-page">
+  <header class="catalog-header">
+    <div class="brand-block">
+      <div class="brand-mark" aria-hidden="true">س</div>
+      <div>
+        <div class="eyebrow">نظام سلوكي لإدارة السلوك والانضباط المدرسي</div>
+        <h1>كتالوج المخالفات والعقوبات</h1>
+        <p>مرجع منظم وسهل الاستخدام وفق القرار الوزاري 150/2024</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+      <button id="logout" class="btn btn-outline" type="button">خروج</button>
+    </div>
+  </header>
+
+  <div id="error" class="error-box" hidden></div>
+  <div id="ok" class="success-box" hidden></div>
+
+  <section class="overview" aria-label="ملخص الكتالوج">
+    <div class="overview-intro">
+      <span class="section-kicker">نظرة سريعة</span>
+      <h2>ملخص الكتالوج</h2>
+      <p>استخدم الأقسام التالية للوصول إلى الدرجات والمخالفات والعقوبات والأماكن بسرعة.</p>
+    </div>
+    <div class="stats">
+      <button class="stat-card" type="button" data-jump="degreesPanel">
+        <span class="stat-icon">01</span><span class="stat-copy"><small>الدرجات</small><strong id="statDegrees">0</strong></span>
+      </button>
+      <button class="stat-card" type="button" data-jump="violationsPanel">
+        <span class="stat-icon">02</span><span class="stat-copy"><small>المخالفات النشطة</small><strong id="statViolations">0</strong></span>
+      </button>
+      <button class="stat-card" type="button" data-jump="penaltiesPanel">
+        <span class="stat-icon">03</span><span class="stat-copy"><small>العقوبات</small><strong id="statPenalties">0</strong></span>
+      </button>
+      <button class="stat-card" type="button" data-jump="locationsPanel">
+        <span class="stat-icon">04</span><span class="stat-copy"><small>الأماكن النشطة</small><strong id="statLocations">0</strong></span>
+      </button>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="أقسام الكتالوج">
+    <button class="active" data-tab="degreesPanel" type="button"><span>01</span> الدرجات</button>
+    <button data-tab="violationsPanel" type="button"><span>02</span> المخالفات</button>
+    <button data-tab="penaltiesPanel" type="button"><span>03</span> العقوبات</button>
+    <button data-tab="matrixPanel" type="button"><span>04</span> المصفوفة</button>
+    <button data-tab="locationsPanel" type="button"><span>05</span> الأماكن</button>
+  </nav>
+
+  <!-- الدرجات -->
+  <section id="degreesPanel" class="panel active">
+    <div class="panel-heading">
+      <div><span class="section-kicker">01 · التصنيف</span><h2>درجات المخالفات الأربع</h2><p>ثابتة بنص اللائحة ولا تُعدّل من الواجهة. الدرجة الرابعة لا تظهر لها مخالفات في الكتالوج.</p></div>
+      <div class="read-only">قراءة فقط</div>
+    </div>
+    <div id="degreesGrid" class="degree-grid"></div>
+  </section>
+
+  <!-- المخالفات -->
+  <section id="violationsPanel" class="panel">
+    <div class="panel-heading">
+      <div><span class="section-kicker">02 · السجل</span><h2>كتالوج المخالفات</h2><p id="violationsHint">قراءة فقط. المخالفات المخصّصة يضيفها المسؤول العام حسب تقدير لجنة الحماية المدرسية.</p></div>
+      <button id="btnAddViolation" class="btn btn-primary" hidden type="button">+ إضافة مخالفة</button>
+    </div>
+    <div class="toolbar">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="violationSearch" type="search" placeholder="ابحث بالكود أو وصف المخالفة..." autocomplete="off"></label>
+      <span id="violationCount" class="result-count"></span>
+    </div>
+    <div id="violationsGroups"></div>
+  </section>
+
+  <!-- العقوبات -->
+  <section id="penaltiesPanel" class="panel">
+    <div class="panel-heading">
+      <div><span class="section-kicker">03 · الإجراءات</span><h2>العقوبات — المادة 13</h2><p>العقوبات ثابتة بنص اللائحة ومُدرجة للرجوع السريع.</p></div>
+      <div class="read-only">قراءة فقط</div>
+    </div>
+    <div id="penaltiesTable" class="table-wrap"></div>
+  </section>
+
+  <!-- المصفوفة -->
+  <section id="matrixPanel" class="panel">
+    <div class="panel-heading">
+      <div><span class="section-kicker">04 · المرجع</span><h2>مصفوفة الدرجة × العقوبة</h2><p>توضح العقوبات المسموحة لكل درجة بشكل مباشر.</p></div>
+      <div class="read-only">قراءة فقط</div>
+    </div>
+    <div id="matrixTable" class="table-wrap matrix-wrap"></div>
+  </section>
+
+  <!-- الأماكن -->
+  <section id="locationsPanel" class="panel">
+    <div class="panel-heading">
+      <div><span class="section-kicker">05 · المواقع</span><h2>أماكن وقوع المخالفة</h2><p id="locationsHint">قراءة فقط. يمكن للمسؤول العام إضافة أماكن مخصصة أو إيقاف مكان.</p></div>
+      <button id="btnAddLocation" class="btn btn-primary" hidden type="button">+ إضافة مكان</button>
+    </div>
+    <div class="toolbar">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="locationSearch" type="search" placeholder="ابحث عن مكان..." autocomplete="off"></label>
+      <span id="locationCount" class="result-count"></span>
+    </div>
+    <div id="locationsTable" class="table-wrap"></div>
+  </section>
+</main>
+
+<!-- نموذج إضافة مخالفة -->
+<div id="violationModal" class="modal" hidden>
+  <form id="violationForm" class="modal-card">
+    <div class="modal-head"><div><span class="section-kicker">إضافة جديدة</span><h2>إضافة مخالفة مخصصة</h2></div><button type="button" id="closeViolationModal" class="modal-close" aria-label="إغلاق">×</button></div>
+    <label>الدرجة<select id="violationDegree" required><option value="1">الدرجة الأولى (البسيطة)</option><option value="2">الدرجة الثانية (متوسطة الخطورة)</option><option value="3">الدرجة الثالثة (الخطيرة)</option></select></label>
+    <label>وصف المخالفة<textarea id="violationDescription" required placeholder="اكتب وصفًا واضحًا ومحددًا للسلوك المخالف"></textarea></label>
+    <div class="actions"><button type="button" class="btn btn-outline" id="cancelViolationModal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ المخالفة</button></div>
+  </form>
+</div>
+
+<!-- نموذج إضافة مكان -->
+<div id="locationModal" class="modal" hidden>
+  <form id="locationForm" class="modal-card">
+    <div class="modal-head"><div><span class="section-kicker">إضافة جديدة</span><h2>إضافة مكان مخصص</h2></div><button type="button" id="closeLocationModal" class="modal-close" aria-label="إغلاق">×</button></div>
+    <label>اسم المكان<input id="locationName" required placeholder="مثل: المسرح المدرسي"></label>
+    <div class="actions"><button type="button" class="btn btn-outline" id="cancelLocationModal">إلغاء</button><button type="submit" class="btn btn-primary">حفظ المكان</button></div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/supabase-client.js"></script>
+<script src="js/core/session.js"></script>
+<script src="js/core/permissions.js"></script>
+<script src="js/catalog.js"></script>
+</body>
+</html>

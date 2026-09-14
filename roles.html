@@ -1,0 +1,38 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سلوكي | إدارة الأدوار</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/roles.css">
+</head><body><main class="roles-page">
+<header class="page-head"><div><b>سلوكي</b><h1>إدارة المراحل والأدوار</h1></div><div><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+<div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
+<section class="stats"><div><small>مديرو المراحل</small><strong id="mCount">0</strong></div><div><small>مسؤولو الحاسب</small><strong id="iCount">0</strong></div><div><small>الأخصائيون</small><strong id="cCount">0</strong></div><div><small>المراحل النشطة</small><strong id="sCount">0</strong></div></section>
+<nav class="tabs"><button class="active" data-tab="manager">مديرو المراحل</button><button data-tab="it">مسؤولو الحاسب</button><button data-tab="counselor">الأخصائيون</button><button data-tab="cards">بطاقات الدخول</button><button data-tab="permissions">الصلاحيات</button></nav>
+<section id="manager" class="panel active"><div class="head"><div><h2>مديرو المراحل</h2><p>إسناد مرحلة أو أكثر للمدير.</p></div><button class="btn btn-primary" onclick="openUser('stage_manager')">+ إضافة مدير</button></div><div id="managerList"></div></section>
+<section id="it" class="panel"><div class="head"><div><h2>مسؤولو الحاسب</h2><p>إسناد المراحل والأقسام المسموحة.</p></div><button class="btn btn-primary" onclick="openUser('it_officer')">+ إضافة مسؤول</button></div><div id="itList"></div></section>
+<section id="counselor" class="panel"><div class="head"><div><h2>الأخصائيون</h2><p>إسناد الفصول للأخصائي.</p></div><button class="btn btn-primary" onclick="openUser('counselor')">+ إضافة أخصائي</button></div><div id="counselorList"></div></section>
+<section id="cards" class="panel"><div class="head"><div><h2>بطاقات الدخول</h2><p>بطاقات قابلة للطباعة. لأسباب أمنية، الرقم السري يظهر مرة واحدة فقط بعد إصداره أو تجديده — اضغط "تجديد" في بطاقة أي مستخدم لإصدار رقم جديد وطباعته فورًا.</p></div><button class="btn btn-outline" onclick="downloadTemplate()">تحميل نموذج Excel</button><button class="btn btn-outline" onclick="exportUsers()">تصدير Excel</button><button class="btn btn-primary" onclick="openImport()">استيراد Excel</button><button class="btn btn-primary" onclick="print()">طباعة</button></div><div id="cardsList" class="cards"></div></section>
+<section id="permissions" class="panel"><div class="head"><div><h2>الصلاحيات</h2><p>حدّد لكل صلاحية ما إذا كانت "غير مفعّلة" أو "مراقب" (عرض فقط) أو "فعّال" (تنفيذ كامل) لكل دور. المسؤول العام دائمًا فعّال في كل شيء ولا يظهر هنا.</p></div></div><div id="permissionsTable"></div></section>
+</main>
+<div id="importModal" class="modal" hidden><section class="modal-card import-card"><div class="head"><div><h2>استيراد المستخدمين من Excel</h2><p>ارفع ملف النموذج، راجع النتائج، ثم نفّذ الاستيراد.</p></div><button type="button" onclick="closeImport()">×</button></div>
+<label class="upload-box">اختيار ملف Excel<input id="excelFile" type="file" accept=".xlsx,.xls" onchange="previewExcel(event)"></label>
+<div id="importSummary" class="import-summary" hidden></div><div id="importPreview" class="table-wrap"></div>
+<div class="actions"><button type="button" class="btn btn-outline" onclick="closeImport()">إلغاء</button><button type="button" id="confirmImport" class="btn btn-primary" onclick="confirmExcelImport()" disabled>تأكيد الاستيراد</button></div></section></div>
+<div id="modal" class="modal" hidden><form id="form" class="modal-card"><div class="head"><h2 id="modalTitle">إضافة مستخدم</h2><button type="button" onclick="closeUser()">×</button></div>
+<input type="hidden" id="role"><input type="hidden" id="editId">
+<label>الاسم الكامل<input id="name" required></label><label>البريد الإلكتروني<input id="email" type="email" required dir="ltr"></label>
+<label>كلمة المرور
+  <div class="gen-row">
+    <input id="password" type="text" minlength="8" dir="ltr" placeholder="يُولَّد تلقائيًا — انسخها عند الإضافة" autocomplete="new-password">
+    <button type="button" class="btn btn-outline btn-sm" id="btnGenPassword">توليد</button>
+  </div>
+</label>
+<!-- PIN ملغى لدخول الطاقم — الاعتماد على كلمة المرور فقط -->
+<input type="hidden" id="pin" value="">
+<p class="small-note" style="margin-bottom:10px">دخول الطاقم يتم <b>بكلمة المرور فقط</b>. ولي الأمر يدخل لاحقًا بالرقم القومي + كود الطالب من كشف Excel.</p>
+<label id="waBox">رقم واتساب الشخصي (للأخصائي)<input id="personalWa" dir="ltr" placeholder="01xxxxxxxxx أو 201xxxxxxxxx" inputmode="tel"></label>
+<p class="small-note" id="waHint" style="margin-top:-6px;margin-bottom:10px">يُستخدم عند فتح محادثات أولياء الأمور من جهاز الأخصائي. يمكن تعديله بواسطة المسؤول العام أو مسؤول الحاسب أو الأخصائي نفسه.</p>
+<div id="stagesBox"><h3>المراحل</h3><div id="stages" class="checks"></div></div>
+<div id="classesBox" hidden><h3>الفصول</h3><div id="classes" class="checks"></div></div>
+<div id="sectionsBox" hidden><h3>الأقسام</h3><label><input id="arabic" type="checkbox" checked> عربي</label><label><input id="languages" type="checkbox" checked> لغات</label></div>
+<div class="actions"><button type="button" class="btn btn-outline" onclick="closeUser()">إلغاء</button><button class="btn btn-primary">حفظ</button></div>
+</form></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script><script src="js/config.js"></script><script src="js/roles.js"></script></body></html>

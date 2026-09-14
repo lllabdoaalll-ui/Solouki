@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | لوحة التحكم</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .dash-header h1 {
+      font-size: 24px;
+      color: var(--primary);
+    }
+    .welcome-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .welcome-card h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .welcome-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .badge-role {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="dash-header">
+      <h1>سلوكي — لوحة التحكم</h1>
+      <div><a class="btn btn-primary" href="students.html">👨‍🎓 الطلاب</a> <a class="btn btn-outline" href="catalog.html">📋 كتالوج المخالفات</a> <a class="btn btn-outline" href="notifications.html">📲 إشعارات واتساب</a> <a class="btn btn-outline" href="roles.html">الأدوار</a> <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
+      <button class="btn btn-outline" id="logoutDashBtn">خروج</button></div>
+    </div>
+
+    <div class="welcome-card">
+      <h2 id="welcomeName">مرحباً</h2>
+      <p>تم تسجيل الدخول بنجاح. النظام جاهز لإدارة الطلاب والأدوار والإشعارات.</p>
+      <p id="dashVersionNote" class="small-note" style="margin-top:8px;color:#64748b"></p>
+      <div class="badge-role" id="roleBadge">—</div>
+    </div>
+  </div>
+
+  <div id="changePassModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px">
+    <form id="changePassForm" class="auth-card" style="max-width:420px;width:100%;margin:0;text-align:right">
+      <h2 style="margin-bottom:12px">تغيير كلمة المرور</h2>
+      <p style="font-size:13px;color:#64748b;margin-bottom:14px">أدخل كلمة المرور الحالية ثم الجديدة (8 أحرف على الأقل).</p>
+      <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">كلمة المرور الحالية
+        <input id="oldPass" type="password" required dir="ltr" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+      </label>
+      <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">كلمة المرور الجديدة
+        <input id="newPass" type="password" required minlength="8" dir="ltr" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+      </label>
+      <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">تأكيد كلمة المرور الجديدة
+        <input id="newPass2" type="password" required minlength="8" dir="ltr" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+      </label>
+      <div id="changePassMsg" class="error-box" hidden style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-outline" id="cancelChangePass">إلغاء</button>
+        <button type="submit" class="btn btn-primary">حفظ</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/supabase-client.js"></script>
+  <script src="js/core/session.js"></script>
+  <script>
+    (async function () {
+      const result = await SoloukiSession.requireSession();
+      if (!result) return;
+      const profile = result.profile;
+      document.getElementById('welcomeName').textContent = 'مرحباً، ' + profile.full_name;
+      document.getElementById('roleBadge').textContent = SoloukiUtils.roleLabel(profile.role_type);
+      const ver = (SOLOUKI_CONFIG && SOLOUKI_CONFIG.APP_VERSION) || '';
+      const note = document.getElementById('dashVersionNote');
+      if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
+    })();
+
+    (function setupChangePassword(){
+      const modal = document.getElementById('changePassModal');
+      const btn = document.getElementById('changePassBtn');
+      const cancel = document.getElementById('cancelChangePass');
+      const form = document.getElementById('changePassForm');
+      const msg = document.getElementById('changePassMsg');
+      if (!btn || !modal || !form) return;
+      const showMsg = (t, ok) => { msg.textContent = t; msg.hidden = false; msg.style.background = ok ? '#ecfdf5' : '#fef2f2'; msg.style.color = ok ? '#065f46' : '#991b1b'; };
+      btn.onclick = () => { modal.hidden = false; modal.style.display = 'flex'; form.reset(); msg.hidden = true; };
+      cancel.onclick = () => { modal.hidden = true; modal.style.display = 'none'; };
+      modal.addEventListener('click', e => { if (e.target === modal) { modal.hidden = true; modal.style.display = 'none'; } });
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const oldP = document.getElementById('oldPass').value;
+        const n1 = document.getElementById('newPass').value;
+        const n2 = document.getElementById('newPass2').value;
+        if (n1.length < 8) return showMsg('كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف');
+        if (n1 !== n2) return showMsg('تأكيد كلمة المرور غير متطابق');
+        try {
+          const email = (JSON.parse(sessionStorage.getItem('solouki_profile')||'{}').email)
+            || (await SoloukiDB.sb().auth.getUser()).data?.user?.email;
+          if (!email) return showMsg('تعذر معرفة البريد');
+          // التحقق من القديمة ثم التحديث — يلغي القديمة فورًا
+          const { error: reauthErr } = await SoloukiDB.sb().auth.signInWithPassword({ email, password: oldP });
+          if (reauthErr) return showMsg('كلمة المرور الحالية غير صحيحة');
+          const { error } = await SoloukiDB.sb().auth.updateUser({ password: n1 });
+          if (error) return showMsg(error.message || 'تعذر التغيير');
+          showMsg('تم تغيير كلمة المرور بنجاح. استخدم الجديدة في الدخول القادم.', true);
+          setTimeout(() => { modal.hidden = true; modal.style.display = 'none'; }, 1200);
+        } catch (err) {
+          showMsg(err.message || 'خطأ غير متوقع');
+        }
+      };
+    })();
+    document.getElementById('logoutDashBtn').addEventListener('click', function () {
+      SoloukiSession.logout('index.html');
+    });
+  </script>
+</body>
+</html>

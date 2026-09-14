@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سلوكي | ولي الأمر</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand"><div class="brand-logo">س</div><h1>متابعة ولي الأمر</h1></div>
+      <div id="gInfo" class="user-info">جاري التحميل…</div>
+      <p class="small-note">ستظهر هنا ملاحظات السلوك والتحفيز المرتبطة بالطالب في المراحل القادمة.</p>
+      <button type="button" class="btn btn-outline btn-block" id="gLogout">خروج</button>
+    </div>
+  </main>
+  <script>
+    (function () {
+      const raw = sessionStorage.getItem('solouki_guardian_student');
+      if (!raw || sessionStorage.getItem('solouki_access_mode') !== 'guardian') {
+        location.href = 'index.html';
+        return;
+      }
+      const s = JSON.parse(raw);
+      document.getElementById('gInfo').innerHTML =
+        '<strong>' + (s.full_name || '') + '</strong><br>' +
+        '<span style="color:#64748b;font-size:13px">' +
+        [s.grade, s.section === 'arabic' ? 'عربي' : (s.section === 'languages' ? 'لغات' : s.section), s.class_name]
+          .filter(Boolean).join(' — ') + '</span>';
+      document.getElementById('gLogout').onclick = function () {
+        sessionStorage.removeItem('solouki_guardian_student');
+        sessionStorage.removeItem('solouki_access_mode');
+        location.href = 'index.html';
+      };
+    })();
+  </script>
+</body>
+</html>
