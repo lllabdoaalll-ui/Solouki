@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## Phase 4 — STEP 47: هوية التقارير المطبوعة الرسمية
+- CSS: `css/print-official.css` — ترويسة مدرسية، أوزان خطوط متدرجة، جدول رسمي، توقيعات، تذييل Solouki
+- SQL: `sql/phase4-step47-report-branding.sql` — جدول `school_report_settings` + get/upsert
+- صفحة `report-settings.html`: محافظة، مديرية، إدارة، مدرسة، عام دراسي، 3 شعارات (أيمن + عربي + لغات)، نصوص الإحاطة/التنويه/الختام، مناصب التوقيع
+- طباعة `student-report`: قالب A4 رسمي يختار شعار القسم تلقائياً (عربي/لغات)
+- الإصدار: `4.47.0`
+
 ## Phase 4 — STEP 46: ملف سلوك الطالب + إشعار ولي الأمر
 - صفحة `student-report.html` + `js/student-report.js` + `css/student-report.css`
 - SQL: `sql/phase4-step46-student-behavior-report.sql`

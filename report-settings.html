@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | إعدادات التقارير الرسمية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/catalog.css">
+  <link rel="stylesheet" href="css/violations.css">
+  <style>
+    .logo-preview {
+      width: 88px; height: 88px; border: 1px dashed #b0c4bf; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; background: #f8fbf9;
+      overflow: hidden; margin-top: 8px;
+    }
+    .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .logo-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .logo-row { grid-template-columns: 1fr; } }
+    textarea.form-ta { width: 100%; min-height: 90px; font: inherit; padding: 10px 12px; border: 1px solid #cbdad5; border-radius: 10px; line-height: 1.6; }
+  </style>
+</head>
+<body class="catalog-page">
+  <header class="catalog-header">
+    <div class="catalog-header-inner">
+      <div>
+        <p class="section-kicker">هوية Solouki للتقارير</p>
+        <h1>إعدادات الترويسة والشعارات</h1>
+        <p class="subtitle">تُستخدم في كل التقارير المطبوعة — شعار عربي / لغات منفصلان</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <a class="btn btn-outline" href="student-report.html">ملف السلوك</a>
+        <button type="button" class="btn btn-outline" id="logout">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="catalog-main">
+    <div id="ok" class="note note-ok" hidden></div>
+    <div id="error" class="note note-error" hidden></div>
+
+    <section class="panel active">
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">الترويسة</span>
+          <h2>بيانات الجهة</h2>
+        </div>
+      </div>
+      <div class="record-form">
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="governorate">المحافظة</label>
+            <input id="governorate" type="text" placeholder="مثال: القاهرة">
+          </div>
+          <div class="form-block">
+            <label for="directorate">المديرية</label>
+            <input id="directorate" type="text" placeholder="مديرية التربية والتعليم بـ…">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="administration">الإدارة التعليمية</label>
+            <input id="administration" type="text" placeholder="إدارة … التعليمية">
+          </div>
+          <div class="form-block">
+            <label for="schoolName">اسم المدرسة</label>
+            <input id="schoolName" type="text" placeholder="مدرسة …">
+          </div>
+        </div>
+        <div class="form-block">
+          <label for="academicYear">العام الدراسي الافتراضي</label>
+          <input id="academicYear" type="text" placeholder="2025/2026">
+        </div>
+
+        <h3 style="margin:18px 0 10px;color:#0f5c56;font-size:15px">الشعارات</h3>
+        <p class="field-hint" style="margin-bottom:12px">ارفع صورة PNG/JPG واضحة. الشعار الأيمن غالباً الوزارة أو المديرية. الأيسر: شعار المدرسة حسب القسم.</p>
+        <div class="logo-row">
+          <div class="form-block">
+            <label>شعار أيمن (وزارة / مديرية)</label>
+            <input type="file" id="logoRightFile" accept="image/*">
+            <div class="logo-preview" id="prevRight"><span style="font-size:11px;color:#8aa">لا يوجد</span></div>
+            <button type="button" class="btn btn-outline mini-btn" id="clearRight" style="margin-top:6px">مسح</button>
+          </div>
+          <div class="form-block">
+            <label>شعار أيسر — قسم عربي</label>
+            <input type="file" id="logoArFile" accept="image/*">
+            <div class="logo-preview" id="prevAr"><span style="font-size:11px;color:#8aa">لا يوجد</span></div>
+            <button type="button" class="btn btn-outline mini-btn" id="clearAr" style="margin-top:6px">مسح</button>
+          </div>
+          <div class="form-block">
+            <label>شعار أيسر — قسم لغات</label>
+            <input type="file" id="logoLangFile" accept="image/*">
+            <div class="logo-preview" id="prevLang"><span style="font-size:11px;color:#8aa">لا يوجد</span></div>
+            <button type="button" class="btn btn-outline mini-btn" id="clearLang" style="margin-top:6px">مسح</button>
+          </div>
+        </div>
+
+        <h3 style="margin:18px 0 10px;color:#0f5c56;font-size:15px">مناصب التوقيع</h3>
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="signCounselor">الأول (يمين في الطباعة RTL)</label>
+            <input id="signCounselor" type="text">
+          </div>
+          <div class="form-block">
+            <label for="signStage">الثاني</label>
+            <input id="signStage" type="text">
+          </div>
+        </div>
+        <div class="form-block">
+          <label for="signPrincipal">الثالث (مدير المدرسة / الخاتم)</label>
+          <input id="signPrincipal" type="text">
+        </div>
+
+        <h3 style="margin:18px 0 10px;color:#0f5c56;font-size:15px">النصوص الرسمية</h3>
+        <div class="form-block">
+          <label for="introText">نص الإحاطة</label>
+          <textarea class="form-ta" id="introText"></textarea>
+        </div>
+        <div class="form-block">
+          <label for="noticeText">نص التنويه بالعلم</label>
+          <textarea class="form-ta" id="noticeText"></textarea>
+        </div>
+        <div class="form-block">
+          <label for="closingText">الختام</label>
+          <textarea class="form-ta" id="closingText"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="saveBtn">حفظ الإعدادات</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/supabase-client.js"></script>
+  <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
+  <script src="js/report-settings.js"></script>
+</body>
+</html>
