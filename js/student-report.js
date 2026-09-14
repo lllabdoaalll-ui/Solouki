@@ -116,6 +116,7 @@
     state.report = data;
     renderReport(data);
     buildPrintSheet(data);
+    loadEscalation(studentId);
     $('reportSection').hidden = false;
     $('reportSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -452,6 +453,178 @@
     setTimeout(() => window.print(), 250);
   }
 
+
+  const LEVEL_AR = {
+    none: 'لا إجراء',
+    low: 'متابعة خفيفة',
+    medium: 'تنبيه كتابي مُقترح',
+    high: 'تصعيد',
+    critical: 'عاجل'
+  };
+
+  async function loadEscalation(studentId) {
+    const box = $('escalationBox');
+    if (!box) return;
+    box.hidden = false;
+    try {
+      const [sug, fus] = await Promise.all([
+        sb().rpc('suggest_student_escalation', { p_student_id: studentId }),
+        sb().rpc('list_student_followups', { p_student_id: studentId })
+      ]);
+      if (sug.error) throw sug.error;
+      const s = sug.data || {};
+      const card = $('escalationCard');
+      card.className = 'escalation-card level-' + (s.level || 'none');
+      card.innerHTML = `
+        <div class="esc-level">${esc(LEVEL_AR[s.level] || s.level || '')}</div>
+        <div class="esc-suggestion">${esc(s.suggestion || '')}</div>
+        <div class="esc-reason">${esc(s.reason || '')}</div>
+        <div class="esc-reason" style="margin-top:6px">
+          تنبيهات كتابية سابقة: <b>${s.written_warnings_count || 0}</b>
+          · آخر عقوبة مسجّلة: <b>${esc(s.last_penalty_label || '—')}</b>
+        </div>
+      `;
+      state.escalation = s;
+
+      const list = $('followupsList');
+      const rows = fus.error ? [] : (fus.data || []);
+      if (!rows.length) {
+        list.innerHTML = '<p class="field-hint">لا يوجد تنبيه كتابي مسجّل بعد لهذا الطالب.</p>';
+      } else {
+        list.innerHTML = '<p class="field-hint" style="margin-bottom:6px"><b>سجل المتابعات</b></p>' +
+          rows.map((f) => `
+            <div class="fu-item">
+              <strong>${esc(f.title || f.followup_type)}</strong>
+              — ${esc(f.issued_at || '')}
+              ${f.notes ? ' · ' + esc(f.notes) : ''}
+            </div>
+          `).join('');
+      }
+    } catch (e) {
+      $('escalationCard').innerHTML = '<div class="esc-reason">' + esc(e.message || 'تعذّر تحميل التصعيد — نفّذ SQL الخاص بالمتابعات') + '</div>';
+      $('followupsList').innerHTML = '';
+    }
+  }
+
+  function buildWrittenWarningHtml(data, bodyText) {
+    const st = data.student || {};
+    const records = (data.records || []).slice(0, 8);
+    const s = state.settings || {};
+    const year = st.academic_year || s.academic_year || '—';
+    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    const left = pickLeftLogo(st.section);
+    const right = s.logo_right || null;
+    const body = bodyText || s.intro_text ||
+      'يُنذَر الطالب/ة كتابياً بما ثبت بحقه/ها من مخالفات سلوكية، ويُطلب من ولي الأمر التعاون مع إدارة المدرسة لتعديل السلوك، وذلك وفقاً للائحة التحفيز التربوي والانضباط المدرسي الصادرة بالقرار الوزاري رقم (150) لسنة 2024.';
+
+    const rows = records.length
+      ? records.map((r, i) => `
+          <tr>
+            <td style="text-align:center">${i + 1}</td>
+            <td>${esc(r.violation_date || '—')}</td>
+            <td class="deg">${esc(r.degree_id || '—')}</td>
+            <td>${r.violation_code ? '<strong>' + esc(r.violation_code) + '</strong> — ' : ''}${esc(r.violation_label || '—')}</td>
+            <td>${esc(r.penalty_label || '—')}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center">لا توجد مخالفات مدرجة</td></tr>';
+
+    return `
+      <div class="solouki-sheet">
+      <div class="solouki-letterhead">
+        ${logoHtml(left, 'شعار المدرسة')}
+        <div class="org-block">
+          <div class="org-republic">جمهورية مصر العربية</div>
+          <div class="org-ministry">وزارة التربية والتعليم والتعليم الفني</div>
+          <div class="org-dir">${esc(s.directorate || 'مديرية التربية والتعليم')}${s.governorate ? ' — ' + esc(s.governorate) : ''}</div>
+          <div class="org-dir">${esc(s.administration || 'الإدارة التعليمية')}</div>
+          <div class="org-school">${esc(s.school_name || 'اسم المدرسة')}</div>
+        </div>
+        ${logoHtml(right, 'شعار الجهة')}
+      </div>
+      <div class="solouki-brand-bar">
+        <span>نظام <strong>سلوكي Solouki</strong></span>
+        <span>القرار الوزاري <strong>150 لسنة 2024</strong></span>
+      </div>
+      <div class="solouki-doc-title">
+        <h1>تنبيه كتابي</h1>
+        <div class="meta">العام الدراسي: <b>${esc(year)}</b> &nbsp;|&nbsp; التاريخ: <b>${esc(today)}</b></div>
+      </div>
+      <div class="solouki-student-box">
+        <div class="name">${esc(st.full_name || '—')}</div>
+        <div class="row">
+          <b>الصف:</b> ${esc(st.grade || '—')} ·
+          <b>الفصل:</b> ${esc(st.class_name || '—')} ·
+          <b>القسم:</b> ${esc(sectionLabel(st.section))} ·
+          <b>الرقم القومي:</b> ${esc(st.national_id || '—')}
+        </div>
+      </div>
+      <p class="solouki-prose">${esc(body)}</p>
+      <table class="solouki-table">
+        <thead>
+          <tr>
+            <th style="width:8%">م</th>
+            <th style="width:14%">التاريخ</th>
+            <th style="width:10%">الدرجة</th>
+            <th>المخالفة</th>
+            <th style="width:18%">العقوبة السابقة</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="solouki-notice">${esc(s.notice_text || 'لذا لزم الإحاطة والتنويه بالعلم، مع رجاء المتابعة والتعاون.')}</p>
+      <p class="solouki-closing">${esc(s.closing_text || 'وتفضلوا بقبول فائق الاحترام والتقدير.')}</p>
+      <p class="solouki-date-line">تحريراً في: <b>${esc(today)}</b></p>
+      <div class="solouki-signs">
+        <div class="sign">
+          <div class="title">${esc(s.sign_counselor_title || 'الأخصائي الاجتماعي')}</div>
+          <div class="line">الاسم / التوقيع</div>
+        </div>
+        <div class="sign">
+          <div class="title">${esc(s.sign_stage_manager_title || 'مدير المرحلة')}</div>
+          <div class="line">الاسم / التوقيع</div>
+        </div>
+        <div class="sign">
+          <div class="title">${esc(s.sign_principal_title || 'مدير المدرسة')}</div>
+          <div class="line">الاسم / التوقيع / الخاتم</div>
+        </div>
+      </div>
+      <div class="solouki-footer">
+        مُنشأ عبر <strong>سلوكي Solouki</strong> — يُعتمد بعد التوقيع والخاتم
+      </div>
+      </div>`;
+  }
+
+  function printWrittenWarning() {
+    if (!state.report) {
+      note('error', 'اختر طالباً أولاً');
+      return;
+    }
+    $('printSheet').innerHTML = buildWrittenWarningHtml(state.report);
+    setTimeout(() => window.print(), 150);
+  }
+
+  async function issueWrittenWarning() {
+    if (!state.report || !state.report.student) {
+      note('error', 'اختر طالباً أولاً');
+      return;
+    }
+    const id = state.report.student.id;
+    if (!confirm('تأكيد تسجيل صدور تنبيه كتابي في سجل المتابعات لهذا الطالب؟')) return;
+    try {
+      const { error } = await sb().rpc('issue_written_warning', {
+        p_student_id: id,
+        p_body_text: null,
+        p_notes: null,
+        p_related_record_ids: null
+      });
+      if (error) throw error;
+      note('ok', 'تم تسجيل التنبيه الكتابي في المتابعات');
+      await loadEscalation(id);
+    } catch (e) {
+      note('error', e.message || 'تعذّر التسجيل');
+    }
+  }
+
   async function boot() {
     const auth = await SoloukiSession.requireSession();
     if (!auth) return;
@@ -496,6 +669,8 @@
       });
     }
     if ($('batchPrintBtn')) $('batchPrintBtn').addEventListener('click', batchPrint);
+    if ($('printWarningBtn')) $('printWarningBtn').addEventListener('click', printWrittenWarning);
+    if ($('issueWarningBtn')) $('issueWarningBtn').addEventListener('click', issueWrittenWarning);
 
     await loadSettings();
     await loadAttention();
