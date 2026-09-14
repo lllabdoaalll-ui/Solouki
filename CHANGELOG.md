@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Phase 4 — STEP 45: تسجيل مخالفة جماعي
+- واجهة: تبويبان في `violations.html` — فردي | جماعي
+- سلة طلاب متعددة الفصول + تشيك بوكس + بحث داخل القائمة + تحديد الكل
+- مكان الواقعة اختياري في التسجيل الجماعي
+- تأكيد قبل الحفظ + حد أقصى 50 طالباً
+- SQL: `sql/phase4-step45-bulk-violation.sql`
+  - `list_bulk_class_options` — المراحل/الصفوف/الفصول ضمن نطاق الدور
+  - `list_students_for_bulk` — طلاب فصل معيّن مع التحقق من الصلاحية
+  - `record_violation_bulk` — إدراج دفعة + Audit
+- الإصدار: `4.45.0`
+
+## Phase 4 — STEP 44.1: تطبيع الأسماء العربية في بحث المخالفات
+- SQL: `sql/phase4-step44.1-arabic-name-search.sql`
+  - دالة `normalize_arabic_name` (نفس قواعد Financial_Filter.html):
+    إزالة التشكيل، توحيد إأآا/ى/ة/ؤ/ئ، معالجة عبد وأبو، فصل مركّبات الدين/الاسلام/الله
+  - تحديث `search_students_for_violation` لاستخدام التطبيع على الاسم + ترتيب أفضل للتطابقات
+  - دعم البحث بـ student_code و seat_number معاً
+- أداة مساعدة: `tools/Financial_Filter.html` (نسخة من أداة مطابقة النتائج المالية)
+- الإصدار: `4.44.1`
+
 ## Phase 4 — STEP 44: تسجيل المخالفة
 - صفحة `violations.html` + `js/violations.js` + `css/violations.css`
 - SQL: `sql/phase4-step44-record-violation.sql`

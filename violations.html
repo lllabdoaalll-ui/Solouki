@@ -15,7 +15,7 @@
       <div>
         <p class="section-kicker">نظام سلوكي لإدارة السلوك والانضباط المدرسي</p>
         <h1>تسجيل ملاحظة سلوكية</h1>
-        <p class="subtitle">بحث عن الطالب → اختيار المخالفة والمكان → حفظ مع التوثيق</p>
+        <p class="subtitle">تسجيل فردي أو جماعي للمخالفات مع التوثيق والصلاحيات</p>
       </div>
       <div class="header-actions">
         <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
@@ -29,16 +29,20 @@
     <div id="ok" class="note note-ok" hidden></div>
     <div id="error" class="note note-error" hidden></div>
 
+    <div class="mode-tabs" id="modeTabs">
+      <button type="button" class="mode-tab active" data-mode="single">تسجيل فردي</button>
+      <button type="button" class="mode-tab" data-mode="bulk">تسجيل جماعي</button>
+    </div>
+
     <section class="panel active" id="recordPanel">
       <div class="panel-head">
         <div>
           <span class="section-kicker">تسجيل جديد</span>
-          <h2>نموذج المخالفة</h2>
+          <h2>نموذج المخالفة (طالب واحد)</h2>
         </div>
       </div>
 
       <form id="violationRecordForm" class="record-form">
-        <!-- بحث الطالب -->
         <div class="form-block">
           <label for="studentSearch">بحث عن الطالب <span class="req">*</span></label>
           <input id="studentSearch" type="search" placeholder="اسم / رقم قومي / رقم جلوس (حرفان على الأقل)" autocomplete="off">
@@ -88,6 +92,103 @@
           <button type="button" class="btn btn-outline" id="resetForm">مسح النموذج</button>
         </div>
       </form>
+    </section>
+
+    <section class="panel" id="bulkPanel" hidden>
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">تسجيل دفعة</span>
+          <h2>تسجيل مخالفة لعدة طلاب</h2>
+        </div>
+        <div class="basket-badge" id="basketBadge" hidden>
+          <span id="basketCount">0</span> في السلة
+        </div>
+      </div>
+
+      <div class="record-form bulk-form">
+        <div class="form-block">
+          <label>اختر الفصل لعرض الأسماء</label>
+          <div class="bulk-filters">
+            <select id="bulkStage" class="bulk-select">
+              <option value="">— المرحلة —</option>
+            </select>
+            <select id="bulkGrade" class="bulk-select" disabled>
+              <option value="">— الصف —</option>
+            </select>
+            <select id="bulkClass" class="bulk-select" disabled>
+              <option value="">— الفصل —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-block">
+          <div class="bulk-list-head">
+            <label>أسماء الطلاب</label>
+            <div class="bulk-list-actions">
+              <input id="bulkListSearch" type="search" placeholder="بحث داخل القائمة…" disabled>
+              <button type="button" class="btn btn-outline mini-btn" id="bulkSelectAll" disabled>تحديد الكل</button>
+              <button type="button" class="btn btn-outline mini-btn" id="bulkDeselectAll" disabled>إلغاء الكل</button>
+              <button type="button" class="btn btn-primary mini-btn" id="bulkAddToBasket" disabled>إضافة المحددين للسلة</button>
+            </div>
+          </div>
+          <div id="bulkStudentList" class="bulk-student-list">
+            <p class="empty-row">اختر المرحلة والصف والفصل أولاً</p>
+          </div>
+        </div>
+
+        <div class="form-block" id="basketBlock">
+          <label>سلة الطلاب المختارين <span class="field-hint" style="display:inline;font-weight:400">(يمكن الجمع من أكثر من فصل)</span></label>
+          <div id="basketList" class="basket-list">
+            <p class="empty-row">لا يوجد طلاب في السلة بعد</p>
+          </div>
+          <button type="button" class="btn btn-outline mini-btn" id="clearBasket" style="margin-top:8px" hidden>إفراغ السلة</button>
+        </div>
+
+        <div class="bulk-shared">
+          <h3 class="bulk-shared-title">بيانات المخالفة المشتركة</h3>
+
+          <div class="form-block">
+            <label for="bulkViolationSelect">المخالفة من الكتالوج <span class="req">*</span></label>
+            <select id="bulkViolationSelect">
+              <option value="">— اختر المخالفة —</option>
+            </select>
+            <p class="field-hint" id="bulkDegreeHint">الدرجة تُحدَّد تلقائيًا من الكتالوج</p>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-block">
+              <label for="bulkLocationSelect">مكان الواقعة <span class="optional-tag">(اختياري)</span></label>
+              <select id="bulkLocationSelect">
+                <option value="">— بدون تحديد —</option>
+              </select>
+              <input id="bulkCustomLocation" type="text" placeholder="مكان مخصص" hidden>
+            </div>
+            <div class="form-block">
+              <label for="bulkViolationDate">تاريخ المخالفة</label>
+              <input id="bulkViolationDate" type="date">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-block">
+              <label for="bulkPenaltySelect">العقوبة (اختياري)</label>
+              <select id="bulkPenaltySelect">
+                <option value="">— بدون تحديد الآن —</option>
+              </select>
+            </div>
+            <div class="form-block">
+              <label for="bulkNotes">ملاحظات مشتركة</label>
+              <input id="bulkNotes" type="text" placeholder="تُسجَّل لكل الطلاب المختارين">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="bulkSaveBtn" disabled>حفظ المخالفة للجميع</button>
+          <button type="button" class="btn btn-outline" id="bulkResetBtn">مسح</button>
+        </div>
+        <p class="field-hint" id="bulkLimitHint">الحد الأقصى 50 طالباً في الدفعة الواحدة.</p>
+      </div>
     </section>
 
     <section class="panel active" style="margin-top:24px">
