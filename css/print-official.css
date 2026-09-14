@@ -355,3 +355,103 @@
     font-weight: 800;
   }
 }
+
+  /* ——— تعدد الصفحات ——— */
+  .solouki-table thead {
+    display: table-header-group; /* تكرار رأس الجدول في كل صفحة */
+  }
+
+  .solouki-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .solouki-student-box,
+  .solouki-stats,
+  .solouki-notice,
+  .solouki-closing,
+  .solouki-letterhead {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* كتلة التوقيعات لا تُقطع وتفضّل البقاء في آخر التقرير */
+  .solouki-signs {
+    page-break-before: auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* فاصل بين تقارير طلاب مختلفين في طباعة دفعة */
+  .solouki-sheet + .solouki-sheet {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .solouki-sheet {
+    page-break-after: auto;
+  }
+
+  /* ترويسة متابعة مختصرة تظهر من الصفحة 2 عبر عنصر ثابت اختياري */
+  .solouki-cont-header {
+    display: none;
+  }
+
+  /* رقم صفحة تقريبي عبر عداد CSS (دعم متصفحات حديثة) */
+  .solouki-footer::after {
+    content: none;
+  }
+}
+
+/* شاشة: قائمة المتابعة */
+.attention-panel {
+  margin-bottom: 20px;
+}
+.attention-list {
+  border: 1px solid #d7e3de;
+  border-radius: 12px;
+  background: #fff;
+  max-height: 320px;
+  overflow: auto;
+}
+.attention-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e8f0ed;
+  font-size: 14px;
+  cursor: pointer;
+}
+.attention-row:hover { background: #edf5f2; }
+.attention-row input { width: 18px; height: 18px; accent-color: #23725e; flex-shrink: 0; }
+.attention-row .name { font-weight: 700; color: #173b35; }
+.attention-row .meta { font-size: 12px; color: #5a736c; margin-right: auto; }
+.attention-row .badge-hot {
+  background: #b91c1c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.attention-row .badge-warn {
+  background: #b45309;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.attention-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+.attention-hint {
+  font-size: 12.5px;
+  color: #5a736c;
+  margin-top: 6px;
+}
