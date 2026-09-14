@@ -2,108 +2,172 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f5c56">
   <title>سلوكي | تسجيل الدخول</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/auth.css">
 </head>
-<body>
-  <div class="auth-wrapper">
-    <!-- بطاقة تسجيل الدخول -->
-    <div class="auth-card" id="loginCard">
-      <div class="brand">
-        <div class="brand-logo">س</div>
-        <h1>سلوكي</h1>
-        <p class="brand-tagline">نبني معاً سلوكاً أفضل</p>
+<body class="auth-page">
+  <div class="auth-shell">
+
+    <!-- الجانب التعريفي -->
+    <aside class="auth-hero">
+      <div class="auth-hero-inner">
+        <div class="auth-hero-badge">القرار الوزاري 150 / 2024</div>
+        <h1>نبني معاً<br><span>سلوكاً أفضل</span></h1>
+        <p class="auth-hero-lead">
+          نظام سلوكي لإدارة السلوك والانضباط المدرسي — تسجيل الملاحظات، المتابعة، والتقارير الرسمية في مكان واحد.
+        </p>
+        <ul class="auth-hero-points">
+          <li><span class="dot">1</span><span>تسجيل فردي وجماعي للمخالفات ضمن نطاق الصلاحيات</span></li>
+          <li><span class="dot">2</span><span>ملف سلوك وتقارير مطبوعة بهوية المدرسة</span></li>
+          <li><span class="dot">3</span><span>بوابة ولي الأمر لمتابعة ملاحظات ابنه بأمان</span></li>
+        </ul>
       </div>
+      <div class="auth-hero-foot">
+        سلوكي Solouki — للطاقم المدرسي وأولياء الأمور
+      </div>
+    </aside>
 
-      <form id="loginForm" autocomplete="on">
-        <div class="form-group">
-          <label for="email">البريد الإلكتروني</label>
-          <input type="email" id="email" name="email" placeholder="example@school.com" required dir="ltr">
-        </div>
+    <!-- النماذج -->
+    <div class="auth-panel">
+      <div class="auth-panel-inner">
 
-        <div class="form-group">
-          <label for="password">كلمة المرور</label>
-          <div class="password-wrap">
-            <input type="password" id="password" name="password" placeholder="••••••••" required dir="ltr">
-            <button type="button" class="toggle-password" id="togglePassword" title="إظهار/إخفاء">👁</button>
+        <!-- طاقم المدرسة -->
+        <div class="auth-card" id="loginCard">
+          <div class="brand">
+            <div class="brand-logo">س</div>
+            <h1>سلوكي</h1>
+            <p class="brand-tagline">تسجيل دخول الطاقم المدرسي</p>
           </div>
+
+          <div class="auth-mode-tabs" role="tablist">
+            <button type="button" class="auth-mode-tab active" id="tabStaff" data-mode="staff">طاقم المدرسة</button>
+            <button type="button" class="auth-mode-tab" id="tabGuardian" data-mode="guardian">ولي الأمر</button>
+          </div>
+
+          <form id="loginForm" autocomplete="on">
+            <div class="form-group">
+              <label for="email">البريد الإلكتروني</label>
+              <input type="email" id="email" name="email" placeholder="example@school.com" required dir="ltr" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+              <label for="password">كلمة المرور</label>
+              <div class="password-wrap">
+                <input type="password" id="password" name="password" placeholder="••••••••" required dir="ltr" autocomplete="current-password">
+                <button type="button" class="toggle-password" id="togglePassword" title="إظهار/إخفاء" aria-label="إظهار كلمة المرور">👁</button>
+              </div>
+            </div>
+
+            <div class="error-box" id="loginError" hidden></div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+              <span class="btn-text">تسجيل الدخول</span>
+              <span class="btn-loader" hidden></span>
+            </button>
+          </form>
+
+          <!-- زر قديم مخفي للتوافق مع auth.js إن وُجدت إشارة goGuardian -->
+          <button type="button" id="goGuardian" hidden aria-hidden="true"></button>
+
+          <p class="auth-footer">نظام إدارة السلوك والانضباط المدرسي<br>وفق <strong>القرار الوزاري 150/2024</strong></p>
         </div>
 
-        <div class="error-box" id="loginError" hidden></div>
+        <!-- ولي الأمر -->
+        <div class="auth-card" id="guardianCard" hidden>
+          <div class="brand">
+            <div class="brand-logo">س</div>
+            <h1>ولي الأمر</h1>
+            <p class="brand-tagline">متابعة ملاحظات سلوك ابنك / ابنتك</p>
+          </div>
 
-        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-          <span class="btn-text">تسجيل الدخول</span>
-          <span class="btn-loader" hidden></span>
-        </button>
-      </form>
+          <div class="auth-mode-tabs" role="tablist">
+            <button type="button" class="auth-mode-tab" id="tabStaff2" data-mode="staff">طاقم المدرسة</button>
+            <button type="button" class="auth-mode-tab active" id="tabGuardian2" data-mode="guardian">ولي الأمر</button>
+          </div>
 
-      <p class="auth-switch"><button type="button" class="link-btn" id="goGuardian">دخول ولي الأمر (رقم قومي + كود الطالب)</button></p>
-      <p class="auth-footer">نظام إدارة السلوك والانضباط المدرسي<br>وفق القرار الوزاري 150/2024</p>
-    </div>
+          <form id="guardianForm">
+            <div class="form-group">
+              <label for="gNational">الرقم القومي للطالب</label>
+              <input type="text" id="gNational" maxlength="14" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 رقماً" required dir="ltr" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="gCode">كود الطالب / رقم الجلوس</label>
+              <input type="text" id="gCode" placeholder="كما في كشف المدرسة" required dir="ltr" autocomplete="off">
+            </div>
+            <div class="error-box" id="guardianError" hidden></div>
+            <button type="submit" class="btn btn-primary btn-block" id="guardianBtn">
+              <span class="btn-text">دخول البوابة</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-block mt-12" id="backToStaff">العودة لدخول الطاقم</button>
+          </form>
 
+          <p class="auth-footer">القراءة فقط — لا يمكن تعديل السجلات من هذه البوابة</p>
+        </div>
 
-    <!-- دخول ولي الأمر: رقم قومي + كود الطالب -->
-    <div class="auth-card" id="guardianCard" hidden>
-      <div class="brand">
-        <div class="brand-logo">س</div>
-        <h1>ولي الأمر</h1>
-        <p class="brand-tagline">الدخول برقم ابنك القومي وكود الطالب</p>
+        <!-- PIN (مخفي — توافق) -->
+        <div class="auth-card" id="pinCard" hidden style="display:none!important">
+          <div class="brand">
+            <div class="brand-logo">س</div>
+            <h1>تأكيد الهوية</h1>
+            <p class="brand-tagline">أدخل الرمز السري (PIN)</p>
+          </div>
+          <div class="user-info" id="userInfo"></div>
+          <form id="pinForm">
+            <div class="form-group">
+              <label for="pin">الرمز السري</label>
+              <input type="password" id="pin" name="pin" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" required dir="ltr" class="pin-input">
+            </div>
+            <div class="error-box" id="pinError" hidden></div>
+            <button type="submit" class="btn btn-primary btn-block" id="pinBtn">
+              <span class="btn-text">تأكيد</span>
+              <span class="btn-loader" hidden></span>
+            </button>
+            <button type="button" class="btn btn-outline btn-block mt-12" id="logoutBtn">تسجيل الخروج</button>
+          </form>
+        </div>
+
       </div>
-      <form id="guardianForm">
-        <div class="form-group">
-          <label for="gNational">الرقم القومي للطالب</label>
-          <input type="text" id="gNational" maxlength="14" inputmode="numeric" pattern="[0-9]{14}" placeholder="14 رقمًا" required dir="ltr">
-        </div>
-        <div class="form-group">
-          <label for="gCode">كود الطالب</label>
-          <input type="text" id="gCode" placeholder="كما في كشف المدرسة" required dir="ltr">
-        </div>
-        <div class="error-box" id="guardianError" hidden></div>
-        <button type="submit" class="btn btn-primary btn-block" id="guardianBtn">
-          <span class="btn-text">دخول</span>
-        </button>
-        <button type="button" class="btn btn-outline btn-block mt-12" id="backToStaff">العودة لدخول الطاقم</button>
-      </form>
-    </div>
-
-    <!-- بطاقة إدخال PIN (ملغاة لدخول الطاقم — كلمة المرور فقط) -->
-    <div class="auth-card" id="pinCard" hidden style="display:none!important">
-      <div class="brand">
-        <div class="brand-logo">س</div>
-        <h1>تأكيد الهوية</h1>
-        <p class="brand-tagline">أدخل الرمز السري (PIN)</p>
-      </div>
-
-      <div class="user-info" id="userInfo">
-        <!-- يُملأ ديناميكياً -->
-      </div>
-
-      <form id="pinForm">
-        <div class="form-group">
-          <label for="pin">الرمز السري</label>
-          <input type="password" id="pin" name="pin" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" required dir="ltr" class="pin-input">
-        </div>
-
-        <div class="error-box" id="pinError" hidden></div>
-
-        <button type="submit" class="btn btn-primary btn-block" id="pinBtn">
-          <span class="btn-text">تأكيد</span>
-          <span class="btn-loader" hidden></span>
-        </button>
-
-        <button type="button" class="btn btn-outline btn-block mt-12" id="logoutBtn">
-          تسجيل الخروج
-        </button>
-      </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      function showStaff() {
+        var login = document.getElementById('loginCard');
+        var guard = document.getElementById('guardianCard');
+        if (login) login.hidden = false;
+        if (guard) guard.hidden = true;
+        document.querySelectorAll('.auth-mode-tab').forEach(function (t) {
+          t.classList.toggle('active', t.getAttribute('data-mode') === 'staff');
+        });
+      }
+      function showGuardian() {
+        var login = document.getElementById('loginCard');
+        var guard = document.getElementById('guardianCard');
+        if (login) login.hidden = true;
+        if (guard) guard.hidden = false;
+        document.querySelectorAll('.auth-mode-tab').forEach(function (t) {
+          t.classList.toggle('active', t.getAttribute('data-mode') === 'guardian');
+        });
+      }
+      document.querySelectorAll('.auth-mode-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          if (tab.getAttribute('data-mode') === 'guardian') showGuardian();
+          else showStaff();
+        });
+      });
+      // ربط الزر المخفي goGuardian إن استدعاه auth.js
+      var go = document.getElementById('goGuardian');
+      if (go) go.addEventListener('click', showGuardian);
+    })();
+  </script>
 </body>
 </html>
