@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Phase 4 — STEP 48: بوابة ولي الأمر
+- SQL: `guardian_lookup_student` + `guardian_get_behavior_report` (SECURITY DEFINER، متاح لـ anon)
+- دخول ولي الأمر: رقم قومي 14 + كود/رقم جلوس عبر RPC آمن (بدل فتح جدول students)
+- صفحة `guardian.html` + `js/guardian.js` + `css/guardian.css`
+  - بطاقة الطالب، إحصائيات الدرجات، جدول المخالفات (قراءة فقط)
+- تخزين جلسة خفيفة: `solouki_guardian_student` + `solouki_guardian_creds`
+- الإصدار: `4.48.0`
+
 ## Phase 4 — STEP 47.1: متابعة التراكم + طباعة دفعة + تعدد صفحات
 - SQL: `list_students_needing_attention` — عتبات: إجمالي≥3 أو درجة2≥2 أو درجة3/4
 - قائمة «طلاب يستحقون طباعة التقرير» في ملف السلوك (عاجل / متابعة)

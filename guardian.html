@@ -2,38 +2,61 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>سلوكي | ولي الأمر</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | بوابة ولي الأمر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/guardian.css">
 </head>
-<body>
-  <main class="auth-wrapper">
-    <div class="auth-card">
-      <div class="brand"><div class="brand-logo">س</div><h1>متابعة ولي الأمر</h1></div>
-      <div id="gInfo" class="user-info">جاري التحميل…</div>
-      <p class="small-note">ستظهر هنا ملاحظات السلوك والتحفيز المرتبطة بالطالب في المراحل القادمة.</p>
-      <button type="button" class="btn btn-outline btn-block" id="gLogout">خروج</button>
+<body class="guardian-page">
+  <header class="g-header">
+    <div class="g-header-inner">
+      <div class="g-brand">
+        <div class="g-logo">س</div>
+        <div>
+          <div class="g-brand-name">سلوكي</div>
+          <div class="g-brand-sub">بوابة ولي الأمر</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline" id="gLogout">خروج</button>
     </div>
+  </header>
+
+  <main class="g-main">
+    <div id="error" class="g-error" hidden></div>
+
+    <section class="g-card" id="studentCard">
+      <p class="g-kicker">بيانات الطالب</p>
+      <h1 id="studentName">…</h1>
+      <p class="g-meta" id="studentMeta"></p>
+    </section>
+
+    <section class="g-stats" id="statsGrid">
+      <div class="g-stat"><div class="n" id="stTotal">0</div><div class="l">إجمالي المخالفات</div></div>
+      <div class="g-stat d1"><div class="n" id="st1">0</div><div class="l">درجة أولى</div></div>
+      <div class="g-stat d2"><div class="n" id="st2">0</div><div class="l">درجة ثانية</div></div>
+      <div class="g-stat d3"><div class="n" id="st3">0</div><div class="l">درجة ثالثة</div></div>
+      <div class="g-stat d4"><div class="n" id="st4">0</div><div class="l">درجة رابعة</div></div>
+    </section>
+
+    <section class="g-card">
+      <div class="g-card-head">
+        <h2>سجل الملاحظات السلوكية</h2>
+        <button type="button" class="btn btn-outline btn-sm" id="refreshBtn">تحديث</button>
+      </div>
+      <p class="g-note">عرض للقراءة فقط وفق لائحة الانضباط المدرسي (القرار 150 لسنة 2024). للاستفسار تواصل مع إدارة المدرسة.</p>
+      <div id="recordsBox" class="g-table-wrap">
+        <p class="g-empty">جاري التحميل…</p>
+      </div>
+    </section>
+
+    <footer class="g-footer">
+      نظام <strong>سلوكي Solouki</strong> — متابعة السلوك المدرسي
+    </footer>
   </main>
-  <script>
-    (function () {
-      const raw = sessionStorage.getItem('solouki_guardian_student');
-      if (!raw || sessionStorage.getItem('solouki_access_mode') !== 'guardian') {
-        location.href = 'index.html';
-        return;
-      }
-      const s = JSON.parse(raw);
-      document.getElementById('gInfo').innerHTML =
-        '<strong>' + (s.full_name || '') + '</strong><br>' +
-        '<span style="color:#64748b;font-size:13px">' +
-        [s.grade, s.section === 'arabic' ? 'عربي' : (s.section === 'languages' ? 'لغات' : s.section), s.class_name]
-          .filter(Boolean).join(' — ') + '</span>';
-      document.getElementById('gLogout').onclick = function () {
-        sessionStorage.removeItem('solouki_guardian_student');
-        sessionStorage.removeItem('solouki_access_mode');
-        location.href = 'index.html';
-      };
-    })();
-  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/guardian.js"></script>
 </body>
 </html>
