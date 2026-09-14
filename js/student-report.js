@@ -1,5 +1,5 @@
 /**
- * Solouki — STEP 46+47: ملف سلوك الطالب + طباعة رسمية بهوية Solouki
+ * Solouki — STEP 46+47+47.1: ملف سلوك + طباعة رسمية + متابعة + دفعة
  */
 (function () {
   'use strict';
@@ -8,7 +8,9 @@
     profile: null,
     searchTimer: null,
     report: null,
-    settings: null
+    settings: null,
+    attention: [],
+    batchMax: 15
   };
 
   const $ = (id) => document.getElementById(id);
@@ -51,16 +53,6 @@
     if (d.startsWith('0')) return '20' + d.slice(1);
     if (d.length === 10) return '20' + d;
     return d;
-  }
-
-  function formatDateAr(iso) {
-    if (!iso) return '—';
-    try {
-      if (window.SoloukiUtils && SoloukiUtils.formatDateAr) return SoloukiUtils.formatDateAr(iso);
-      return new Date(iso).toLocaleDateString('ar-EG');
-    } catch (_) {
-      return String(iso);
-    }
   }
 
   async function loadSettings() {
@@ -162,13 +154,8 @@
         <table class="data-table records-table">
           <thead>
             <tr>
-              <th>التاريخ</th>
-              <th>الدرجة</th>
-              <th>المخالفة</th>
-              <th>المكان</th>
-              <th>العقوبة</th>
-              <th>سجّلها</th>
-              <th>ملاحظات</th>
+              <th>التاريخ</th><th>الدرجة</th><th>المخالفة</th><th>المكان</th>
+              <th>العقوبة</th><th>سجّلها</th><th>ملاحظات</th>
             </tr>
           </thead>
           <tbody>
@@ -211,7 +198,7 @@
     return `<div class="logo-box"><div class="logo-placeholder">${esc(label)}</div></div>`;
   }
 
-  function buildPrintSheet(data) {
+  function buildPrintSheetHtml(data) {
     const st = data.student || {};
     const stats = data.stats || {};
     const records = data.records || [];
@@ -235,7 +222,8 @@
         `).join('')
       : `<tr><td colspan="7" style="text-align:center;padding:12px">لا توجد مخالفات مسجّلة</td></tr>`;
 
-    $('printSheet').innerHTML = `
+    return `
+      <div class="solouki-sheet">
       <div class="solouki-letterhead">
         ${logoHtml(left, 'شعار المدرسة')}
         <div class="org-block">
@@ -247,12 +235,10 @@
         </div>
         ${logoHtml(right, 'شعار الجهة')}
       </div>
-
       <div class="solouki-brand-bar">
         <span>نظام <strong>سلوكي Solouki</strong> — إدارة السلوك والانضباط</span>
         <span>القرار الوزاري <strong>150 لسنة 2024</strong></span>
       </div>
-
       <div class="solouki-doc-title">
         <h1>ملف سلوك الطالب</h1>
         <div class="meta">
@@ -261,7 +247,6 @@
           تاريخ الطباعة: <b>${esc(today)}</b>
         </div>
       </div>
-
       <div class="solouki-student-box">
         <div class="name">${esc(st.full_name || '—')}</div>
         <div class="row">
@@ -275,7 +260,6 @@
           &nbsp;·&nbsp; <b>رقم الجلوس:</b> ${esc(st.student_code || '—')}
         </div>
       </div>
-
       <div class="solouki-stats">
         <div class="cell"><div class="n">${stats.total || 0}</div><div class="l">إجمالي المخالفات</div></div>
         <div class="cell"><div class="n">${stats.degree_1 || 0}</div><div class="l">درجة أولى</div></div>
@@ -283,9 +267,7 @@
         <div class="cell"><div class="n">${stats.degree_3 || 0}</div><div class="l">درجة ثالثة</div></div>
         <div class="cell"><div class="n">${stats.degree_4 || 0}</div><div class="l">درجة رابعة</div></div>
       </div>
-
       <p class="solouki-prose">${esc(s.intro_text || 'تحية طيبة وبعد، نحيط سيادتكم علماً بالمخالفات السلوكية المبيّنة أدناه وفقاً للائحة التحفيز التربوي والانضباط المدرسي.')}</p>
-
       <table class="solouki-table">
         <thead>
           <tr>
@@ -300,11 +282,9 @@
         </thead>
         <tbody>${tableRows}</tbody>
       </table>
-
       <p class="solouki-notice">${esc(s.notice_text || 'لذا لزم الإحاطة والتنويه بالعلم.')}</p>
       <p class="solouki-closing">${esc(s.closing_text || 'وتفضلوا بقبول فائق الاحترام والتقدير.')}</p>
       <p class="solouki-date-line">تحريراً في: <b>${esc(today)}</b></p>
-
       <div class="solouki-signs">
         <div class="sign">
           <div class="title">${esc(s.sign_counselor_title || 'الأخصائي الاجتماعي')}</div>
@@ -319,11 +299,15 @@
           <div class="line">الاسم / التوقيع / الخاتم</div>
         </div>
       </div>
-
       <div class="solouki-footer">
         مُنشأ آلياً عبر نظام <strong>سلوكي Solouki</strong> — لا يُعتد بهذا المستند دون اعتماد وتوقيع الجهة المختصة
       </div>
+      </div>
     `;
+  }
+
+  function buildPrintSheet(data) {
+    $('printSheet').innerHTML = buildPrintSheetHtml(data);
   }
 
   function buildWaMessage(st, stats, records) {
@@ -382,6 +366,92 @@
     window.print();
   }
 
+  async function loadAttention() {
+    const box = $('attentionList');
+    if (!box) return;
+    box.innerHTML = '<p class="empty-row">جاري التحميل…</p>';
+    const { data, error } = await sb().rpc('list_students_needing_attention', {
+      p_min_total: 3,
+      p_min_degree2: 2,
+      p_min_degree3: 1,
+      p_limit: 80
+    });
+    if (error) {
+      box.innerHTML = '<p class="empty-row">' + esc(error.message) + '</p>';
+      state.attention = [];
+      updateBatchBtn();
+      return;
+    }
+    state.attention = data || [];
+    if (!state.attention.length) {
+      box.innerHTML = '<p class="empty-row">لا يوجد طلاب ضمن العتبات حالياً — وضع جيّد.</p>';
+      updateBatchBtn();
+      return;
+    }
+    box.innerHTML = state.attention.map((s) => {
+      const badge = s.alert_level === 'high'
+        ? '<span class="badge-hot">عاجل</span>'
+        : '<span class="badge-warn">متابعة</span>';
+      return `
+        <label class="attention-row">
+          <input type="checkbox" data-id="${s.student_id}">
+          <span class="name" data-open="${s.student_id}">${esc(s.full_name)}</span>
+          ${badge}
+          <span class="meta">${esc(s.grade)} / ${esc(s.class_name)} · إجمالي ${s.total_count} · آخر ${esc(s.last_violation_date || '—')}</span>
+        </label>`;
+    }).join('');
+    box.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      cb.addEventListener('change', updateBatchBtn);
+    });
+    box.querySelectorAll('[data-open]').forEach((el) => {
+      el.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        loadReport(el.getAttribute('data-open'));
+      });
+    });
+    updateBatchBtn();
+  }
+
+  function getSelectedAttentionIds() {
+    const box = $('attentionList');
+    if (!box) return [];
+    return [...box.querySelectorAll('input[type="checkbox"]:checked')].map((cb) => cb.dataset.id);
+  }
+
+  function updateBatchBtn() {
+    const ids = getSelectedAttentionIds();
+    const btn = $('batchPrintBtn');
+    const cnt = $('attCount');
+    if (btn) btn.disabled = ids.length === 0;
+    if (cnt) cnt.textContent = ids.length ? (ids.length + ' محدّد') : '';
+  }
+
+  async function batchPrint() {
+    const ids = getSelectedAttentionIds();
+    if (!ids.length) {
+      note('error', 'حدّد طالباً واحداً على الأقل');
+      return;
+    }
+    if (ids.length > state.batchMax) {
+      note('error', 'الحد الأقصى لطباعة الدفعة ' + state.batchMax + ' تقريراً');
+      return;
+    }
+    note('ok', 'جاري تجهيز ' + ids.length + ' تقريراً…');
+    const sheets = [];
+    for (const id of ids) {
+      const { data, error } = await sb().rpc('get_student_behavior_report', { p_student_id: id });
+      if (error) {
+        note('error', 'تعذّر تحميل أحد الطلاب: ' + error.message);
+        return;
+      }
+      sheets.push(buildPrintSheetHtml(data));
+    }
+    $('printSheet').innerHTML = sheets.join('');
+    note('ok', 'تم تجهيز ' + sheets.length + ' تقريراً');
+    setTimeout(() => window.print(), 250);
+  }
+
   async function boot() {
     const auth = await SoloukiSession.requireSession();
     if (!auth) return;
@@ -408,11 +478,27 @@
         await navigator.clipboard.writeText($('waMessage').value || '');
         note('ok', 'تم نسخ الرسالة');
       } catch (_) {
-        note('error', 'تعذّر النسخ — انسخ يدوياً من المربع');
+        note('error', 'تعذّر النسخ');
       }
     });
 
+    if ($('refreshAttention')) $('refreshAttention').addEventListener('click', loadAttention);
+    if ($('attSelectAll')) {
+      $('attSelectAll').addEventListener('click', () => {
+        $('attentionList')?.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = true; });
+        updateBatchBtn();
+      });
+    }
+    if ($('attClear')) {
+      $('attClear').addEventListener('click', () => {
+        $('attentionList')?.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = false; });
+        updateBatchBtn();
+      });
+    }
+    if ($('batchPrintBtn')) $('batchPrintBtn').addEventListener('click', batchPrint);
+
     await loadSettings();
+    await loadAttention();
 
     const params = new URLSearchParams(location.search);
     const sid = params.get('id');
