@@ -326,40 +326,18 @@ function translateAuthError(msg) {
         return;
       }
       try {
-        const { data, error } = await sb
-          .from('students')
-          .select('id, full_name, national_id, student_code, grade, section, class_name, stage_id, is_active')
-          .eq('national_id', national)
-          .eq('is_active', true)
-          .limit(5);
+        // RPC آمن: لا يفتح جدول الطلاب لـ anon مباشرة
+        const { data, error } = await sb.rpc('guardian_lookup_student', {
+          p_national_id: national,
+          p_code: code
+        });
         if (error) throw error;
-        const match = (data || []).find(s =>
-          String(s.student_code || s.seat_number || '').trim() === code
-          || String(s.student_code || '').trim() === code
-        );
-        // إن لم يوجد عمود seat في select — قارن student_code فقط
-        const found = match || (data || []).find(s => String(s.student_code || '').trim() === code);
-        if (!found) {
-          // محاولة ثانية: student_code أو seat_number عبر or filter إن أمكن
-          const { data: data2 } = await sb
-            .from('students')
-            .select('id, full_name, national_id, student_code, seat_number, grade, section, class_name, stage_id, is_active')
-            .eq('national_id', national)
-            .eq('is_active', true)
-            .limit(5);
-          const found2 = (data2 || []).find(s =>
-            String(s.student_code || '').trim() === code || String(s.seat_number || '').trim() === code
-          );
-          if (!found2) {
-            if (guardianError) { guardianError.textContent = 'لا يوجد طالب مطابق. تحقق من الرقم القومي وكود الطالب.'; guardianError.hidden = false; }
-            return;
-          }
-          sessionStorage.setItem('solouki_guardian_student', JSON.stringify(found2));
-          sessionStorage.setItem('solouki_access_mode', 'guardian');
-          window.location.href = 'guardian.html';
+        if (!data || !data.id) {
+          if (guardianError) { guardianError.textContent = 'لا يوجد طالب مطابق. تحقق من الرقم القومي وكود الطالب.'; guardianError.hidden = false; }
           return;
         }
-        sessionStorage.setItem('solouki_guardian_student', JSON.stringify(found));
+        sessionStorage.setItem('solouki_guardian_student', JSON.stringify(data));
+        sessionStorage.setItem('solouki_guardian_creds', JSON.stringify({ national, code }));
         sessionStorage.setItem('solouki_access_mode', 'guardian');
         window.location.href = 'guardian.html';
       } catch (err) {
