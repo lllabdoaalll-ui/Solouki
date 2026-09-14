@@ -328,7 +328,7 @@
     if (sb) {
       try {
         const { data, error } = await sb.from('stages')
-          .select('id,name_ar,name,section,stage_type,sort_order,is_active')
+          .select('id,name_ar,section,stage_type,sort_order,is_active')
           .order('sort_order');
         if (!error && data && data.length) {
           cloudStages = data.filter(s => s.is_active !== false);

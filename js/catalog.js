@@ -205,16 +205,30 @@
   function renderLocations() {
     $('btnAddLocation').hidden = !state.isAdmin;
     $('locationsHint').textContent = state.isAdmin
-      ? 'المسؤول العام يمكنه إضافة مكان مخصص أو إيقاف/تفعيل مكان قائم.'
+      ? 'المسؤول العام: إضافة، تعديل، إيقاف/تفعيل، وحذف الأماكن المخصصة.'
       : 'قراءة فقط.';
     const query = (($('locationSearch') && $('locationSearch').value) || '').trim().toLowerCase();
     const filtered = state.locations.filter((l) => !query || String(l.name_ar || '').toLowerCase().includes(query));
-    const rows = filtered.map((l) => `
+    const rows = filtered.map((l) => {
+      let actions = '';
+      if (state.isAdmin) {
+        const buttons = [
+          `<button class="mini" data-action="toggle-location" data-id="${l.id}" data-active="${l.is_active}">${l.is_active ? 'إيقاف' : 'تفعيل'}</button>`
+        ];
+        if (l.is_custom) {
+          buttons.push(
+            `<button class="mini" data-action="edit-location" data-id="${l.id}">تعديل</button>`,
+            `<button class="mini mini-danger" data-action="delete-location" data-id="${l.id}" data-name="${esc(l.name_ar)}">حذف</button>`
+          );
+        }
+        actions = `<td class="center actions-cell">${buttons.join(' ')}</td>`;
+      }
+      return `
       <tr>
         <td>${esc(l.name_ar)}${l.is_custom ? ' <span class="badge">مخصص</span>' : ''}${!l.is_active ? ' <span class="badge badge-off">موقوف</span>' : ''}</td>
-        ${state.isAdmin ? `<td class="center"><button class="mini" data-action="toggle-location" data-id="${l.id}" data-active="${l.is_active}">${l.is_active ? 'إيقاف' : 'تفعيل'}</button></td>` : ''}
-      </tr>
-    `).join('');
+        ${actions}
+      </tr>`;
+    }).join('');
 
     $('locationsTable').innerHTML = `
       <table class="data-table">
@@ -319,6 +333,36 @@
     note('ok', 'تمت إضافة المكان: ' + data.name_ar);
   }
 
+  async function updateLocation(id, name) {
+    const sb = SoloukiDB.sb();
+    const { data, error } = await sb.rpc('admin_update_location', {
+      p_location_id: Number(id),
+      p_name_ar: name
+    });
+    if (error) return note('error', error.message);
+    const idx = state.locations.findIndex((l) => l.id === Number(id));
+    if (idx >= 0) state.locations[idx] = data;
+    else state.locations.push(data);
+    state.locations.sort((a, b) => a.sort_order - b.sort_order);
+    renderStats();
+    renderLocations();
+    note('ok', 'تم تحديث المكان: ' + data.name_ar);
+  }
+
+  async function deleteLocation(id, name) {
+    const label = name || id;
+    if (!window.confirm('هل تريد حذف المكان «' + label + '» نهائيًا؟\nلا يمكن التراجع عن هذا الإجراء.')) return;
+    const sb = SoloukiDB.sb();
+    const { error } = await sb.rpc('admin_delete_location', {
+      p_location_id: Number(id)
+    });
+    if (error) return note('error', error.message);
+    state.locations = state.locations.filter((l) => l.id !== Number(id));
+    renderStats();
+    renderLocations();
+    note('ok', 'تم حذف المكان: ' + label);
+  }
+
   // ------------------------------------------------------------
   // ربط الأحداث
   // ------------------------------------------------------------
@@ -355,6 +399,8 @@
       if (btn.dataset.action === 'toggle-location') toggleLocation(id, active);
       if (btn.dataset.action === 'edit-violation') openEditViolation(id);
       if (btn.dataset.action === 'delete-violation') deleteViolation(id, btn.dataset.code);
+      if (btn.dataset.action === 'edit-location') openEditLocation(id);
+      if (btn.dataset.action === 'delete-location') deleteLocation(id, btn.dataset.name);
     });
   }
 
@@ -412,20 +458,50 @@
     });
   }
 
+  function openEditLocation(id) {
+    const row = state.locations.find((l) => l.id === Number(id));
+    if (!row || !row.is_custom) {
+      note('error', 'يمكن تعديل الأماكن المخصصة فقط.');
+      return;
+    }
+    const form = $('locationForm');
+    form.reset();
+    $('locationEditId').value = String(row.id);
+    $('locationName').value = row.name_ar || '';
+    $('locationModalKicker').textContent = 'تعديل';
+    $('locationModalTitle').textContent = 'تعديل مكان مخصص';
+    $('locationSubmitBtn').textContent = 'حفظ التعديلات';
+    $('locationModal').hidden = false;
+  }
+
   function setupLocationModal() {
     const modal = $('locationModal');
     const form = $('locationForm');
-    const open = () => { form.reset(); modal.hidden = false; };
+
+    const openAdd = () => {
+      form.reset();
+      $('locationEditId').value = '';
+      $('locationModalKicker').textContent = 'إضافة جديدة';
+      $('locationModalTitle').textContent = 'إضافة مكان مخصص';
+      $('locationSubmitBtn').textContent = 'حفظ المكان';
+      modal.hidden = false;
+    };
     const close = () => { modal.hidden = true; };
 
-    $('btnAddLocation').addEventListener('click', open);
+    $('btnAddLocation').addEventListener('click', openAdd);
     $('closeLocationModal').addEventListener('click', close);
     $('cancelLocationModal').addEventListener('click', close);
     modal.addEventListener('click', (ev) => { if (ev.target === modal) close(); });
 
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      await addLocation($('locationName').value.trim());
+      const editId = ($('locationEditId').value || '').trim();
+      const name = $('locationName').value.trim();
+      if (editId) {
+        await updateLocation(editId, name);
+      } else {
+        await addLocation(name);
+      }
       close();
     });
   }
