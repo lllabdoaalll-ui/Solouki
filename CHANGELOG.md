@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Phase 4 — STEP 49: متابعات + تصعيد + تنبيه كتابي
+- SQL: جدول `behavior_followups` + `suggest_student_escalation` + `issue_written_warning` + `list_student_followups`
+- قواعد تصعيد عملية حسب التراكم والدرجات والتنبيهات السابقة
+- في ملف السلوك: بطاقة اقتراح التصعيد + طباعة نموذج «تنبيه كتابي» رسمي + تسجيل صدوره
+- الإصدار: `4.49.0`
+
 ## Phase 4 — STEP 48: بوابة ولي الأمر
 - SQL: `guardian_lookup_student` + `guardian_get_behavior_report` (SECURITY DEFINER، متاح لـ anon)
 - دخول ولي الأمر: رقم قومي 14 + كود/رقم جلوس عبر RPC آمن (بدل فتح جدول students)
