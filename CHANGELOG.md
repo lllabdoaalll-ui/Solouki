@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Phase 4 — STEP 50.2: حذف / انسحاب طالب
+- SQL: `admin_withdraw_student` + `admin_restore_student` + صلاحية `delete_students`
+- الأدوار: **المسؤول العام** و **مسؤول الحاسب** فقط (ضمن نطاق المرحلة لمسؤول الحاسب)
+- حذف ناعم: `is_active=false` + `status=withdrawn` — المخالفات والتكريمات تُحفظ
+- واجهة: زر «حذف» في قائمة الطلاب + في نافذة التعديل، وزر «استعادة» للمنسحبين
+- ملف: `sql/phase4-step50.2-withdraw-student.sql`
+
+## Phase 4 — STEP 50.1: إصلاح أعمدة merit_records
+- السبب: جدول `merit_records` القديم من Schema قديم بدون عمود `category`
+- الحل: `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` لـ category / notes / school_id / updated_at
+- ملف: `sql/phase4-step50.1-fix-merit-columns.sql`
+- يصلح خطأ: `column mr.category does not exist` عند طباعة التقارير
+
 ## Phase 4 — STEP 50: التكريمات + نظام النقاط (التحفيز التربوي)
 - SQL: جدول `merit_records` + `merit_categories` + `behaviour_point_settings`
 - دوال: `record_merit` · `list_student_merits` · `get_student_points` · `list_merit_categories`

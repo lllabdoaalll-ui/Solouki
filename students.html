@@ -153,10 +153,13 @@
     <label>رقم تليفون الأب<input id="editFather" dir="ltr" placeholder="01xxxxxxxxx"></label>
     <label>رقم تليفون الأم<input id="editMother" dir="ltr" placeholder="01xxxxxxxxx"></label>
     <label><input type="checkbox" id="editActive" checked> طالب نشط (غير منسحب)</label>
-    <div class="actions" style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:flex-end">
+    <div class="actions" style="margin-top:0.75rem;display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap">
+      <button type="button" id="withdrawStudentBtn" class="btn btn-danger" hidden>حذف / انسحاب</button>
+      <button type="button" id="restoreStudentBtn" class="btn btn-outline" hidden>استعادة الطالب</button>
       <button type="button" id="cancelEdit" class="btn btn-outline">إلغاء</button>
       <button type="submit" class="btn btn-primary">حفظ التعديل</button>
     </div>
+    <p id="withdrawHint" class="small-note" hidden style="margin-top:0.5rem;color:#b91c1c">الحذف يُخرج الطالب من القائمة النشطة فقط. سجل المخالفات والتكريمات يُحفظ ولا يُمس.</p>
   </form>
 </div>
 
