@@ -4,21 +4,27 @@
 -- ============================================================
 
 -- جدول التكريمات / السلوك الإيجابي
+-- يدعم وجود جدول قديم (من Schema v1) بدون أعمدة category/notes/school_id
 CREATE TABLE IF NOT EXISTS public.merit_records (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id        uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
   stage_id          text NOT NULL,
-  school_id         uuid,
   title             text NOT NULL,
   description       text,
-  points            smallint NOT NULL DEFAULT 10 CHECK (points >= 0 AND points <= 100),
+  points            smallint NOT NULL DEFAULT 10,
   merit_date        date NOT NULL DEFAULT CURRENT_DATE,
-  category          text DEFAULT 'general',
   awarded_by        uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
-  notes             text,
-  created_at        timestamptz NOT NULL DEFAULT now(),
-  updated_at        timestamptz NOT NULL DEFAULT now()
+  created_at        timestamptz NOT NULL DEFAULT now()
 );
+
+-- ترقية آمنة إن وُجد الجدول من مخطط قديم
+ALTER TABLE public.merit_records ADD COLUMN IF NOT EXISTS school_id uuid;
+ALTER TABLE public.merit_records ADD COLUMN IF NOT EXISTS category text DEFAULT 'general';
+ALTER TABLE public.merit_records ADD COLUMN IF NOT EXISTS notes text;
+ALTER TABLE public.merit_records ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+ALTER TABLE public.merit_records ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+-- ضمان القيمة الافتراضية للصفوف القديمة
+UPDATE public.merit_records SET category = 'general' WHERE category IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_merits_student ON public.merit_records(student_id, merit_date DESC);
 CREATE INDEX IF NOT EXISTS idx_merits_stage ON public.merit_records(stage_id, merit_date DESC);
@@ -229,7 +235,7 @@ BEGIN
     RAISE EXCEPTION 'خارج نطاق صلاحياتك';
   END IF;
 
-  SELECT coalesce(jsonb_agg(row_to_json(x)::jsonb ORDER BY x.merit_date DESC, x.created_at DESC), '[]'::jsonb)
+  SELECT coalesce(jsonb_agg(row_to_json(x)::jsonb ORDER BY x.merit_date DESC, x.created_at DESC NULLS LAST), '[]'::jsonb)
   INTO result
   FROM (
     SELECT
@@ -402,7 +408,7 @@ BEGIN
     WHERE vr.student_id = stu.id
   ) x;
 
-  SELECT coalesce(jsonb_agg(row_to_json(m)::jsonb ORDER BY m.merit_date DESC, m.created_at DESC), '[]'::jsonb)
+  SELECT coalesce(jsonb_agg(row_to_json(m)::jsonb ORDER BY m.merit_date DESC, m.created_at DESC NULLS LAST), '[]'::jsonb)
   INTO merits
   FROM (
     SELECT
