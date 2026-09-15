@@ -1073,9 +1073,9 @@
 
 
   // —— صلاحية تعديل بيانات الطالب (Phase 4 / STEP 41) ——
-  let myAccess = { role: null, editStudents: 'none' };
+  let myAccess = { role: null, editStudents: 'none', deleteStudents: 'none' };
   async function loadMyAccess() {
-    if (!sb) { myAccess = { role: 'superadmin', editStudents: 'active' }; return; } // وضع تجريبي محلي بدون قاعدة بيانات
+    if (!sb) { myAccess = { role: 'superadmin', editStudents: 'active', deleteStudents: 'active' }; return; }
     try {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) return;
@@ -1083,12 +1083,90 @@
       myAccess.role = prof?.role_type || null;
       const { data: mode } = await sb.rpc('my_permission', { p_key: 'edit_students' });
       myAccess.editStudents = mode || 'none';
+      const { data: delMode } = await sb.rpc('my_permission', { p_key: 'delete_students' });
+      myAccess.deleteStudents = delMode || 'none';
+      // مسؤول عام ومسؤول حاسب دائماً إن وُجدت الصلاحية أو الدور
+      if (myAccess.role === 'superadmin') myAccess.deleteStudents = 'active';
     } catch (err) { console.warn('loadMyAccess', err); }
   }
   function canEditStudents() { return myAccess.role === 'superadmin' || myAccess.editStudents === 'active'; }
   function canViewStudentDetails() { return canEditStudents() || myAccess.editStudents === 'observer'; }
+  function canDeleteStudents() {
+    return myAccess.role === 'superadmin'
+      || myAccess.role === 'it_officer'
+      || myAccess.deleteStudents === 'active';
+  }
 
   // —— قائمة الطلاب وتعديل البيانات ——
+
+  async function withdrawStudentByKey(key) {
+    const s = current.find(x => studentKey(x) === key);
+    if (!s) return msg('error', 'الطالب غير موجود.');
+    if (!canDeleteStudents()) return msg('error', 'لا صلاحية لحذف الطلاب.');
+    const reason = window.prompt(
+      'تأكيد حذف الطالب من القائمة النشطة:\n' +
+      (s.full_name || '') + ' — ' + (s.national_id || '') + '\n\n' +
+      'لن تُحذف المخالفات أو التكريمات.\nيمكنك كتابة سبب الانسحاب (اختياري):',
+      ''
+    );
+    if (reason === null) return; // إلغاء
+    if (!s.id || String(s.id).length < 30) {
+      // محلي بدون UUID
+      s.is_active = false;
+      s.status = 'withdrawn';
+      saveDemo();
+      closeEditStudent();
+      renderStats();
+      renderRoster();
+      msg('ok', 'تم تعليم الطالب منسحبًا محليًا: ' + (s.full_name || ''));
+      return;
+    }
+    try {
+      const { data, error } = await sb.rpc('admin_withdraw_student', {
+        p_student_id: s.id,
+        p_reason: reason || null
+      });
+      if (error) throw error;
+      s.is_active = false;
+      s.status = 'withdrawn';
+      closeEditStudent();
+      await loadCurrent();
+      renderRoster();
+      msg('ok', 'تم حذف الطالب من القائمة النشطة: ' + (data?.full_name || s.full_name || ''));
+    } catch (e) {
+      msg('error', e.message || String(e));
+    }
+  }
+
+  async function restoreStudentByKey(key) {
+    const s = current.find(x => studentKey(x) === key);
+    if (!s) return msg('error', 'الطالب غير موجود.');
+    if (!canDeleteStudents()) return msg('error', 'لا صلاحية لاستعادة الطلاب.');
+    if (!window.confirm('استعادة الطالب إلى القائمة النشطة؟\n' + (s.full_name || '') + ' — ' + (s.national_id || ''))) return;
+    if (!s.id || String(s.id).length < 30) {
+      s.is_active = true;
+      s.status = 'active';
+      saveDemo();
+      closeEditStudent();
+      renderStats();
+      renderRoster();
+      msg('ok', 'تمت استعادة الطالب محليًا: ' + (s.full_name || ''));
+      return;
+    }
+    try {
+      const { data, error } = await sb.rpc('admin_restore_student', { p_student_id: s.id });
+      if (error) throw error;
+      s.is_active = true;
+      s.status = 'active';
+      closeEditStudent();
+      await loadCurrent();
+      renderRoster();
+      msg('ok', 'تمت استعادة الطالب: ' + (data?.full_name || s.full_name || ''));
+    } catch (e) {
+      msg('error', e.message || String(e));
+    }
+  }
+
   function renderRoster() {
     const q = normalize($('rosterSearch')?.value || '').toLowerCase();
     const filter = $('rosterFilter')?.value || 'active';
@@ -1109,9 +1187,11 @@
       return;
     }
 
-    const actionCell = canEditStudents()
+    const editBtn = canEditStudents()
       ? '<button type="button" class="btn btn-primary btn-sm btn-edit-student">تعديل</button>'
       : (canViewStudentDetails() ? '<button type="button" class="btn btn-outline btn-sm btn-edit-student">عرض</button>' : '');
+    // زر الحذف يُبنى لكل صف حسب الحالة
+    const actionCell = editBtn; // يُكمَل داخل الحلقة
 
     let html = `<table class="roster-table"><thead><tr>
       <th>الاسم</th><th>الرقم القومي</th><th>الكود</th><th>الصف / الفصل</th><th>هاتف الأب</th><th>هاتف الأم</th><th>الحالة</th><th></th>
@@ -1128,17 +1208,30 @@
         <td dir="ltr">${escapeHtml(s.mother_phone || '—')}</td>
         <td>${active ? 'نشط' : 'منسحب'}</td>
         <td class="roster-actions">
-          ${actionCell}
+          ${editBtn}
+          ${canDeleteStudents() && active ? '<button type="button" class="btn btn-danger btn-sm btn-withdraw-student">حذف</button>' : ''}
+          ${canDeleteStudents() && !active ? '<button type="button" class="btn btn-outline btn-sm btn-restore-student">استعادة</button>' : ''}
         </td>
       </tr>`;
     });
     html += '</tbody></table>';
     $('rosterTable').innerHTML = html;
     $('rosterTable').querySelectorAll('.btn-edit-student').forEach(btn => {
-
       btn.onclick = () => {
         const tr = btn.closest('tr');
         openEditStudent(tr.getAttribute('data-key'));
+      };
+    });
+    $('rosterTable').querySelectorAll('.btn-withdraw-student').forEach(btn => {
+      btn.onclick = () => {
+        const tr = btn.closest('tr');
+        withdrawStudentByKey(tr.getAttribute('data-key'));
+      };
+    });
+    $('rosterTable').querySelectorAll('.btn-restore-student').forEach(btn => {
+      btn.onclick = () => {
+        const tr = btn.closest('tr');
+        restoreStudentByKey(tr.getAttribute('data-key'));
       };
     });
   }
@@ -1165,6 +1258,21 @@
     $('editFather').value = pretty(s.father_phone);
     $('editMother').value = pretty(s.mother_phone);
     $('editActive').checked = s.is_active !== false;
+    // أزرار الحذف/الاستعادة (مسؤول عام + مسؤول حاسب)
+    const wBtn = $('withdrawStudentBtn');
+    const rBtn = $('restoreStudentBtn');
+    const wHint = $('withdrawHint');
+    const canDel = canDeleteStudents();
+    if (wBtn) {
+      wBtn.hidden = !(canDel && s.is_active !== false);
+      wBtn.onclick = () => withdrawStudentByKey(key);
+    }
+    if (rBtn) {
+      rBtn.hidden = !(canDel && s.is_active === false);
+      rBtn.onclick = () => restoreStudentByKey(key);
+    }
+    if (wHint) wHint.hidden = !(canDel && s.is_active !== false);
+
     ['editNational','editCode','editName','editGender','editGrade','editSection','editClass','editFather','editMother','editActive']
       .forEach(id => { const el = $(id); if (el) el.disabled = readOnly; });
     const saveBtn = $('editForm')?.querySelector('button[type="submit"]');
