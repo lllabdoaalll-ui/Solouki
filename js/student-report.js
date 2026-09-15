@@ -1,5 +1,5 @@
 /**
- * Solouki — STEP 46+47+47.1: ملف سلوك + طباعة رسمية + متابعة + دفعة
+ * Solouki — STEP 46→50: ملف سلوك + طباعة + تصعيد + تكريمات ونقاط
  */
 (function () {
   'use strict';
@@ -146,6 +146,53 @@
       <div class="stat-card d3"><div class="n">${stats.degree_3 || 0}</div><div class="l">درجة ثالثة</div></div>
       <div class="stat-card d4"><div class="n">${stats.degree_4 || 0}</div><div class="l">درجة رابعة</div></div>
     `;
+
+    // STEP 50 — نقاط السلوك
+    const pts = data.points || {};
+    const pb = $('pointsBar');
+    if (pb) {
+      const net = pts.net ?? 0;
+      const netClass = net > 0 ? 'points-pos' : (net < 0 ? 'points-neg' : '');
+      pb.hidden = false;
+      pb.innerHTML = `
+        <div class="points-item"><span class="pl">تكريمات</span><span class="pn points-pos">+${pts.positive || 0}</span></div>
+        <div class="points-item"><span class="pl">خصم مخالفات</span><span class="pn points-neg">−${pts.negative || 0}</span></div>
+        <div class="points-item net"><span class="pl">الرصيد الصافي</span><span class="pn ${netClass}">${net > 0 ? '+' : ''}${net}</span></div>
+        <div class="points-item"><span class="pl">عدد التكريمات</span><span class="pn">${pts.merits_count || 0}</span></div>
+      `;
+    }
+
+    // STEP 50 — جدول التكريمات
+    const merits = Array.isArray(data.merits) ? data.merits : [];
+    const mbox = $('meritsTable');
+    if (mbox) {
+      if (!merits.length) {
+        mbox.innerHTML = '<p class="empty-row">لا توجد تكريمات مسجّلة لهذا الطالب.</p>';
+      } else {
+        mbox.innerHTML = `
+          <table class="data-table records-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>العنوان</th>
+                <th>النقاط</th>
+                <th>بواسطة</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${merits.map((m) => `
+                <tr>
+                  <td>${esc(m.merit_date || '')}</td>
+                  <td><strong>${esc(m.title || '')}</strong>${m.description ? '<br><span class="meta">' + esc(m.description) + '</span>' : ''}</td>
+                  <td class="points-pos">+${esc(m.points)}</td>
+                  <td>${esc(m.awarded_by_name || '—')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
 
     const box = $('recordsTable');
     if (!records.length) {

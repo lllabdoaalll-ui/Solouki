@@ -102,6 +102,47 @@
     `;
   }
 
+
+  function renderPoints(pts) {
+    const card = $('pointsCard');
+    const box = $('gPoints');
+    if (!card || !box) return;
+    pts = pts || {};
+    const net = pts.net ?? 0;
+    card.hidden = false;
+    box.innerHTML = `
+      <div class="g-point"><span>تكريمات</span><b class="pos">+${pts.positive || 0}</b></div>
+      <div class="g-point"><span>خصم مخالفات</span><b class="neg">−${pts.negative || 0}</b></div>
+      <div class="g-point"><span>الرصيد</span><b class="${net >= 0 ? 'pos' : 'neg'}">${net > 0 ? '+' : ''}${net}</b></div>
+    `;
+  }
+
+  function renderMerits(merits) {
+    const card = $('meritsCard');
+    const box = $('meritsBox');
+    if (!card || !box) return;
+    merits = Array.isArray(merits) ? merits : [];
+    if (!merits.length) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+    box.innerHTML = `
+      <table class="g-table">
+        <thead><tr><th>التاريخ</th><th>التكريم</th><th>النقاط</th></tr></thead>
+        <tbody>
+          ${merits.map((m) => `
+            <tr>
+              <td>${esc(m.merit_date || '—')}</td>
+              <td>${esc(m.title || '')}${m.description ? '<br><small>' + esc(m.description) + '</small>' : ''}</td>
+              <td class="pos">+${esc(m.points)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
   async function loadReport(sb, creds, fallbackStudent) {
     showError('');
     $('recordsBox').innerHTML = '<p class="g-empty">جاري التحميل…</p>';
@@ -115,6 +156,8 @@
       renderStudent(data.student || fallbackStudent);
       renderStats(data.stats);
       renderRecords(data.records);
+      renderPoints(data.points);
+      renderMerits(data.merits);
       if (data.student) {
         sessionStorage.setItem('solouki_guardian_student', JSON.stringify(data.student));
       }
