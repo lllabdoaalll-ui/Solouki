@@ -563,3 +563,13 @@ pre {
   color: #0f172a;
   font-weight: 600;
 }
+
+.btn-danger {
+  background: #b91c1c;
+  color: #fff;
+  border: 1px solid #991b1b;
+}
+.btn-danger:hover { background: #991b1b; }
+.roster-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+.btn-sm { padding: 0.25rem 0.55rem; font-size: 0.8rem; }
+tr.inactive { opacity: 0.72; }
