@@ -23,6 +23,7 @@
         <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
         <a class="btn btn-outline" href="report-settings.html">إعدادات الترويسة</a>
         <a class="btn btn-outline" href="violations.html">تسجيل مخالفة</a>
+        <a class="btn btn-outline" href="merits.html">🏆 تكريم</a>
         <button type="button" class="btn btn-outline" id="logout">خروج</button>
       </div>
     </div>
@@ -84,9 +85,14 @@
 
       <div id="studentCard" class="student-card"></div>
       <div class="stats-grid" id="statsGrid"></div>
+      <div class="points-bar" id="pointsBar" hidden></div>
       <div class="report-table-wrap">
         <h3 class="section-sub">سجل المخالفات</h3>
         <div id="recordsTable" class="table-wrap"></div>
+      </div>
+      <div class="report-table-wrap" id="meritsSection">
+        <h3 class="section-sub">🏆 التكريمات والتحفيز</h3>
+        <div id="meritsTable" class="table-wrap"></div>
       </div>
 
       <div class="escalation-box no-print" id="escalationBox" hidden>

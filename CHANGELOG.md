@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Phase 4 — STEP 50: التكريمات + نظام النقاط (التحفيز التربوي)
+- SQL: جدول `merit_records` + `merit_categories` + `behaviour_point_settings`
+- دوال: `record_merit` · `list_student_merits` · `get_student_points` · `list_merit_categories`
+- توسيع `get_student_behavior_report` و `guardian_get_behavior_report` ليشملا التكريمات والرصيد
+- صفحة `merits.html` + `js/merits.js` لتسجيل تكريم (بحث طالب · تصنيف · نقاط · تاريخ)
+- ملف سلوك الطالب: شريط نقاط + جدول تكريمات
+- بوابة ولي الأمر: رصيد السلوك + قائمة التكريمات
+- صلاحية `record_merits` موجودة مسبقاً (أخصائي + مدير مرحلة + مسؤول عام)
+- الإصدار: `4.50.0`
+
+
 ## Phase 4 — STEP 49: متابعات + تصعيد + تنبيه كتابي
 - SQL: جدول `behavior_followups` + `suggest_student_escalation` + `issue_written_warning` + `list_student_followups`
 - قواعد تصعيد عملية حسب التراكم والدرجات والتنبيهات السابقة

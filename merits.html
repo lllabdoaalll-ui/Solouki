@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | تسجيل تكريم</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/catalog.css">
+  <link rel="stylesheet" href="css/violations.css">
+  <link rel="stylesheet" href="css/student-report.css">
+</head>
+<body class="catalog-page">
+  <header class="catalog-header">
+    <div class="catalog-header-inner">
+      <div>
+        <p class="section-kicker">نظام سلوكي لإدارة السلوك والانضباط المدرسي</p>
+        <h1>تسجيل تكريم / تحفيز إيجابي</h1>
+        <p class="subtitle">وفق لائحة التحفيز التربوي — القرار 150/2024</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <a class="btn btn-outline" href="violations.html">تسجيل مخالفة</a>
+        <a class="btn btn-outline" href="student-report.html">ملف سلوك الطالب</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="catalog-main">
+    <div id="error" class="note note-error" hidden></div>
+    <div id="success" class="note note-ok" hidden></div>
+
+    <section class="panel active">
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">بحث</span>
+          <h2>اختر الطالب</h2>
+        </div>
+      </div>
+      <div class="form-block">
+        <label for="studentSearch">اسم الطالب / الرقم القومي / رقم الجلوس</label>
+        <input id="studentSearch" type="search" placeholder="حرفان على الأقل…" autocomplete="off">
+        <div id="studentResults" class="search-results" hidden></div>
+      </div>
+      <div id="selectedStudent" class="student-card" hidden></div>
+    </section>
+
+    <section class="panel active" id="meritFormPanel" hidden>
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">تكريم</span>
+          <h2>بيانات التكريم</h2>
+        </div>
+      </div>
+      <form id="meritForm" class="record-form">
+        <div class="form-block">
+          <label for="categorySelect">نوع التكريم</label>
+          <select id="categorySelect">
+            <option value="general">— اختر أو اكتب عنواناً —</option>
+          </select>
+        </div>
+        <div class="form-block">
+          <label for="meritTitle">العنوان <span class="req">*</span></label>
+          <input id="meritTitle" type="text" required maxlength="120" placeholder="مثال: مشاركة مميزة في النشاط">
+        </div>
+        <div class="form-block">
+          <label for="meritDesc">الوصف (اختياري)</label>
+          <textarea id="meritDesc" rows="2" maxlength="500" placeholder="تفاصيل قصيرة عن السلوك الإيجابي"></textarea>
+        </div>
+        <div class="form-grid">
+          <div class="form-block">
+            <label for="meritPoints">النقاط الإيجابية</label>
+            <input id="meritPoints" type="number" min="0" max="100" value="10">
+          </div>
+          <div class="form-block">
+            <label for="meritDate">تاريخ التكريم</label>
+            <input id="meritDate" type="date" required>
+          </div>
+        </div>
+        <div class="form-block">
+          <label for="meritNotes">ملاحظات داخلية (اختياري)</label>
+          <input id="meritNotes" type="text" maxlength="200">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="saveMeritBtn">حفظ التكريم</button>
+          <button type="button" class="btn btn-outline" id="resetMeritBtn">مسح</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel active" id="recentPanel" hidden>
+      <div class="panel-head">
+        <div>
+          <span class="section-kicker">سجل</span>
+          <h2>تكريمات هذا الطالب</h2>
+        </div>
+      </div>
+      <div id="meritsList" class="table-wrap"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/supabase-client.js"></script>
+  <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
+  <script src="js/merits.js"></script>
+</body>
+</html>
