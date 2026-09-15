@@ -161,3 +161,21 @@
   .g-stats { grid-template-columns: repeat(2, 1fr); }
   .g-card h1 { font-size: 18px; }
 }
+
+/* STEP 50 */
+.g-points {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.g-point {
+  background: #f7faf9;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.g-point span { display: block; font-size: 12px; color: #5a736c; }
+.g-point b { font-size: 20px; }
+.g-point .pos { color: #0b5e42; }
+.g-point .neg { color: #b91c1c; }
+.g-table .pos { color: #0b5e42; font-weight: 700; }

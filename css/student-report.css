@@ -120,3 +120,26 @@
   border-bottom: 1px solid #e8f0ed;
 }
 .followups-list .fu-item strong { color: #0f5c56; }
+
+/* STEP 50 — نقاط وتكريمات */
+.points-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.points-item {
+  background: #fff;
+  border: 1px solid #d7e3de;
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: center;
+}
+.points-item .pl { display: block; font-size: 12px; color: #5a736c; margin-bottom: 4px; }
+.points-item .pn { font-size: 22px; font-weight: 800; color: #173b35; }
+.points-item.net { background: linear-gradient(135deg, #edf8f3, #f7faf9); border-color: #a8d5c4; }
+.points-pos { color: #0b5e42 !important; }
+.points-neg { color: #b91c1c !important; }
+@media (max-width: 700px) {
+  .points-bar { grid-template-columns: repeat(2, 1fr); }
+}
