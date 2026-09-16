@@ -124,26 +124,44 @@
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
 
-      // إظهار التبويبات حسب الصلاحيات
+      // إظهار التبويبات حسب الدور + الصلاحيات
       const nav = document.getElementById('dashNav');
-      if (!nav || !window.SoloukiPerms) return;
+      if (!nav) return;
+      const role = profile.role_type || '';
+      const isSuper = role === 'superadmin';
+
+      // خريطة احتياطية حسب الدور إن تعذّر استدعاء my_permission
+      const roleFallback = {
+        superadmin: ['view_students','record_violations','record_merits','view_reports','send_whatsapp','superadmin'],
+        stage_manager: ['view_students','record_violations','record_merits','view_reports','send_whatsapp'],
+        it_officer: ['view_students','view_reports'],
+        counselor: ['view_students','record_violations','record_merits','view_reports','send_whatsapp']
+      };
+      const fallbackKeys = new Set(roleFallback[role] || []);
+
       const links = nav.querySelectorAll('[data-perm]');
       for (const el of links) {
         const key = el.getAttribute('data-perm');
         const mode = el.getAttribute('data-perm-mode') || 'view';
+
         if (key === 'superadmin') {
-          el.hidden = profile.role_type !== 'superadmin';
+          el.hidden = !isSuper;
           continue;
         }
-        try {
-          if (mode === 'act') {
-            el.hidden = !(await SoloukiPerms.canAct(key));
-          } else {
-            el.hidden = !(await SoloukiPerms.canView(key));
+
+        let allowed = false;
+        if (window.SoloukiPerms) {
+          try {
+            allowed = mode === 'act'
+              ? await SoloukiPerms.canAct(key)
+              : await SoloukiPerms.canView(key);
+          } catch (_) {
+            allowed = fallbackKeys.has(key);
           }
-        } catch (_) {
-          el.hidden = true;
+        } else {
+          allowed = fallbackKeys.has(key);
         }
+        el.hidden = !allowed;
       }
     })();
 
