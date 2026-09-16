@@ -1,0 +1,28 @@
+# Local / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+service-account.json
+
+# Build / dependency output
+node_modules/
+dist/
+build/
+coverage/
+
+# Local archives / backups
+*.zip
+*.7z
+*.rar
+*.bak
+*.backup

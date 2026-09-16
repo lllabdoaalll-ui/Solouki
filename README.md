@@ -38,14 +38,14 @@
 | `diagnostics.html` | **فحص جاهزية النظام** (STEP 53) |
 | `backup.html` | **النسخ الاحتياطي والتصدير التشغيلي** (STEP 54) |
 | `audit.html` | **سجل التدقيق التشغيلي** (STEP 57) |
-| `whatsapp-settings.html` | **إعداد WhatsApp Business لكل مرحلة** (STEP 59) |
+| `whatsapp-settings.html` | **إعداد WhatsApp Business لكل مرحلة** (STEP 60) |
 | `guardian.html` | بوابة ولي الأمر |
 | `notifications.html` | إشعارات واتساب اليدوية |
 | `roles.html` | الأدوار + بطاقات + الصلاحيات |
 | `report-settings.html` | ترويسة التقارير الرسمية |
 
 ## آخر إضافة
-**STEP 59 — إعداد WhatsApp Business لكل مرحلة**
+**STEP 60 — إعداد WhatsApp Business لكل مرحلة**
 
 بعد تنفيذ SQL الخاص بالمرحلة، يستطيع مسؤول الحاسب إدارة رقم WhatsApp Business للمراحل المسندة إليه، ويستطيع المسؤول العام إدارة جميع المراحل.
 

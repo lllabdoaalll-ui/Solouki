@@ -1,3 +1,9 @@
+# STEP 60 — WhatsApp delivery tracking
+- Add provider delivery status fields and webhook event history.
+- Add secure `whatsapp-webhook` Edge Function with Meta verification.
+- Show provider status in notification center.
+- Version 4.60.0.
+
 ## STEP 59 — WhatsApp Notification Center (4.59.0)
 - Added server-side WhatsApp notification queue with per-student/per-parent deduplication.
 - Added daily preparation RPC and notification status/attempt tracking.

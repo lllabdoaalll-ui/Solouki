@@ -1,5 +1,5 @@
 /* Solouki STEP 52 — offline shell + safe cache-first static assets */
-const CACHE_NAME = 'solouki-static-v4.59.0';
+const CACHE_NAME = 'solouki-static-v4.60.0';
 const APP_SHELL = [
   './', './index.html', './dashboard.html', './students.html',
   './merits.html', './student-report.html', './analytics.html', './backup.html', './audit.html', './catalog.html',
