@@ -1,0 +1,5 @@
+-- STEP 54 — Operational export documentation / optional permission seed
+-- The export page uses Supabase RLS directly and never uses service-role credentials.
+-- No schema mutation is required for the basic export flow.
+-- Optional: ensure report viewers can access the export page through the existing view_reports permission.
+-- This file is intentionally non-destructive.
