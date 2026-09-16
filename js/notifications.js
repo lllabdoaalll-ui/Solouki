@@ -67,6 +67,7 @@
   }
 
   function statusLabel(s){ return ({queued:'مجهز للإرسال',sending:'جاري الإرسال',sent:'تم الإرسال',failed:'فشل — يمكن إعادة المحاولة'})[s]||s; }
+  function providerLabel(s){ return ({sent:'تم قبول الرسالة',delivered:'تم التسليم',read:'تمت القراءة',failed:'فشل لدى WhatsApp',queued:'بانتظار المزود'})[s]||s||'—'; }
   function render(){
     const sent=rows.filter(r=>r.status==='sent').length, pending=rows.filter(r=>['queued','failed'].includes(r.status)).length;
     $('pendingCount').textContent=pending; $('openedCount').textContent=sent; $('violCount').textContent=rows.reduce((n,r)=>n+(r.violation_count||0),0);
@@ -79,6 +80,7 @@
         ${['queued','failed'].includes(r.status)?`<button class="btn btn-primary" data-send="${r.id}">إرسال عبر API</button>`:''}
         ${r.status==='failed'?`<button class="btn btn-outline" data-manual="${r.id}">فتح WhatsApp يدويًا</button>`:''}
         ${r.status==='sent'?`<span class="small-note">${r.sent_at?esc(new Date(r.sent_at).toLocaleString('ar-EG')):''}</span>`:''}
+      ${r.provider_status?`<div class="small-note">حالة WhatsApp: <strong>${esc(providerLabel(r.provider_status))}</strong>${r.provider_status_at?' — '+esc(new Date(r.provider_status_at).toLocaleString('ar-EG')):''}</div>`:''}
       </div></article>`).join(''):'<div class="empty-state">لم يتم تجهيز إشعارات اليوم بعد. اضغط «تجهيز إشعارات اليوم».</div>';
     rows.forEach(r=>{document.querySelector(`[data-send="${r.id}"]`)?.addEventListener('click',()=>sendOne(r));document.querySelector(`[data-manual="${r.id}"]`)?.addEventListener('click',()=>manual(r));});
   }
