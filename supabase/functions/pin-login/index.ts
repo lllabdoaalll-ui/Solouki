@@ -52,21 +52,48 @@ Deno.serve(async (req) => {
       return json({ error: 'الحساب مقفل مؤقتاً بسبب محاولات فاشلة. انتظر قليلاً.' }, 429)
     }
 
-    // تحقق PIN عبر SQL crypt
-    const { data: ok, error: vErr } = await admin.rpc('verify_pin', {
+    // يجب أن يكون PIN مخزناً كـ bcrypt. لا نحاول مقارنة PIN مع قيمة خام
+    // ولا نعتمد على verify_pin العامة أولاً، لأن نسخة قديمة منها قد تكون
+    // موجودة في قاعدة البيانات وتعيد false حتى بعد تحديث الدوال.
+    const looksLikeBcrypt = /^\$2[aby]?\$\d\d\$/.test(String(profile.pin_hash || ''))
+    if (!looksLikeBcrypt) {
+      return json({
+        error: 'رقم PIN لهذا الحساب غير مهيأ بالتنسيق الآمن. أعد إصدار PIN جديداً من إدارة المستخدمين ثم حاول مرة أخرى.',
+        code: 'PIN_HASH_NEEDS_RESET',
+      }, 409)
+    }
+
+    // استخدم دالة الخدمة المخصصة أولاً؛ فهي مصممة للاستدعاء من Edge Function
+    // باستخدام service_role. ثم نستخدم verify_pin كخطة بديلة للتوافق.
+    let pinOk = false
+    let verifyError: any = null
+
+    const { data: serviceOk, error: serviceErr } = await admin.rpc('verify_pin_service', {
       p_user_id: profileId,
       p_pin: pin,
     })
 
-    // إن verify_pin تتطلب authenticated فقط، نتحقق يدوياً عبر استعلام
-    let pinOk = ok === true
-    if (vErr || ok === null || ok === undefined) {
-      // fallback: استدعاء SQL مباشر عبر rpc مخصص لـ service
-      const { data: ok2, error: e2 } = await admin.rpc('verify_pin_service', {
+    if (!serviceErr) {
+      pinOk = serviceOk === true
+    } else {
+      verifyError = serviceErr
+      const { data: ok, error: vErr } = await admin.rpc('verify_pin', {
         p_user_id: profileId,
         p_pin: pin,
       })
-      if (!e2) pinOk = ok2 === true
+      if (!vErr) {
+        pinOk = ok === true
+      } else {
+        verifyError = vErr
+      }
+    }
+
+    if (verifyError && !pinOk) {
+      console.error('PIN verification RPC failed', verifyError.message || verifyError)
+      return json({
+        error: 'تعذر التحقق من الرقم السري. تأكد من تنفيذ SQL الخاص بتسجيل دخول الطاقم (50.3) في Supabase.',
+        code: 'PIN_VERIFY_NOT_READY',
+      }, 500)
     }
 
     if (!pinOk) {
