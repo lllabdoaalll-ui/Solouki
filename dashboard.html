@@ -130,20 +130,20 @@
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
 
-      // إظهار التبويبات حسب الدور + الصلاحيات
+      // إظهار التبويبات: صلاحيات DB + افتراضيات الدور (إن كانت الصلاحية none)
       const nav = document.getElementById('dashNav');
       if (!nav) return;
       const role = profile.role_type || '';
       const isSuper = role === 'superadmin';
 
-      // خريطة احتياطية حسب الدور إن تعذّر استدعاء my_permission
-      const roleFallback = {
+      // افتراضيات الدور — تطابق مصفوفة STEP 42
+      const roleDefaults = {
         superadmin: ['view_students','record_violations','record_merits','view_reports','send_whatsapp','superadmin'],
         stage_manager: ['view_students','record_violations','record_merits','view_reports','send_whatsapp'],
         it_officer: ['view_students','view_reports'],
         counselor: ['view_students','record_violations','record_merits','view_reports','send_whatsapp']
       };
-      const fallbackKeys = new Set(roleFallback[role] || []);
+      const defaults = new Set(roleDefaults[role] || []);
 
       const links = nav.querySelectorAll('[data-perm]');
       for (const el of links) {
@@ -153,16 +153,27 @@
         let allowed = false;
         if (key === 'superadmin') {
           allowed = isSuper;
-        } else if (window.SoloukiPerms) {
-          try {
-            allowed = mode === 'act'
-              ? await SoloukiPerms.canAct(key)
-              : await SoloukiPerms.canView(key);
-          } catch (_) {
-            allowed = fallbackKeys.has(key);
-          }
         } else {
-          allowed = fallbackKeys.has(key);
+          // 1) حاول من قاعدة الصلاحيات
+          let fromDb = null; // null = فشل الاستعلام
+          if (window.SoloukiPerms) {
+            try {
+              if (mode === 'act') {
+                fromDb = await SoloukiPerms.canAct(key);
+              } else {
+                fromDb = await SoloukiPerms.canView(key);
+              }
+            } catch (_) {
+              fromDb = null;
+            }
+          }
+          // 2) إن نجحت DB وسمحت → اعرض
+          //    إن رفضت أو فشلت → اعتمد افتراض الدور
+          if (fromDb === true) {
+            allowed = true;
+          } else {
+            allowed = defaults.has(key);
+          }
         }
         el.classList.toggle('is-nav-hidden', !allowed);
         el.hidden = !allowed;
