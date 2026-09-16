@@ -86,16 +86,19 @@ function showLoginScreen() {
 // ============================================================
 // إظهار / إخفاء كلمة المرور
 // ============================================================
-togglePassword.addEventListener('click', () => {
-  const input = document.getElementById('password');
-  if (input.type === 'password') {
-    input.type = 'text';
-    togglePassword.textContent = '🔒';
-  } else {
-    input.type = 'password';
-    togglePassword.textContent = '👁';
-  }
-});
+if (togglePassword) {
+  togglePassword.addEventListener('click', () => {
+    const input = document.getElementById('password');
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      togglePassword.textContent = '🔒';
+    } else {
+      input.type = 'password';
+      togglePassword.textContent = '👁';
+    }
+  });
+}
 
 // ============================================================
 // تسجيل الدخول (إيميل + كلمة مرور)
@@ -105,8 +108,14 @@ loginForm.addEventListener('submit', async (e) => {
   hideError(loginError);
   setLoading(loginBtn, true);
 
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  const email = (document.getElementById('email')?.value || '').trim();
+  const password = document.getElementById('password')?.value || '';
+
+  if (!email || !password) {
+    showError(loginError, 'أدخل البريد وكلمة المرور');
+    setLoading(loginBtn, false);
+    return;
+  }
 
   try {
     // 1. تسجيل الدخول عبر Supabase Auth
@@ -242,6 +251,107 @@ function redirectByRole(role) {
   // في المراحل القادمة سنفصل اللوحات
   window.location.href = 'dashboard.html';
 }
+
+
+// ============================================================
+// دخول الطاقم: اسم + PIN (أسلوب نظام رصد الدرجات)
+// ============================================================
+const pinStaffForm = document.getElementById('pinStaffForm');
+const pinStaffError = document.getElementById('pinStaffError');
+const pinStaffBtn = document.getElementById('pinStaffBtn');
+const staffSelect = document.getElementById('staffSelect');
+
+const ROLE_AR = {
+  superadmin: 'مسؤول عام',
+  stage_manager: 'مدير مرحلة',
+  it_officer: 'مسؤول حاسب',
+  counselor: 'أخصائي اجتماعي'
+};
+
+async function loadStaffLoginList() {
+  if (!staffSelect) return;
+  try {
+    const { data, error } = await sb.rpc('list_staff_for_login');
+    if (error) throw error;
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length) {
+      staffSelect.innerHTML = '<option value="">— لا يوجد حسابات بأرقام سرية بعد —</option>';
+      return;
+    }
+    staffSelect.innerHTML = '<option value="">— اختر اسمك —</option>' +
+      list.map((p) => {
+        const role = ROLE_AR[p.role_type] || p.role_type;
+        return `<option value="${p.id}">${p.full_name} — ${role}</option>`;
+      }).join('');
+  } catch (e) {
+    console.warn('list_staff_for_login', e);
+    staffSelect.innerHTML = '<option value="">— تعذّر تحميل الأسماء — نفّذ SQL الخطوة 50.3 —</option>';
+  }
+}
+
+if (pinStaffForm) {
+  loadStaffLoginList();
+
+  pinStaffForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError(pinStaffError);
+    const profileId = staffSelect?.value;
+    const pin = (document.getElementById('staffPin')?.value || '').trim();
+    if (!profileId) {
+      showError(pinStaffError, 'اختر اسمك من القائمة');
+      return;
+    }
+    if (!pin) {
+      showError(pinStaffError, 'أدخل الرقم السري');
+      return;
+    }
+    setLoading(pinStaffBtn, true);
+    try {
+      const { data, error } = await sb.functions.invoke('pin-login', {
+        body: { profile_id: profileId, pin }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.token_hash) throw new Error('لم تُرجع الخادم رمز جلسة');
+
+      const { data: sess, error: otpErr } = await sb.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: 'email'
+      });
+      if (otpErr) throw otpErr;
+
+      // تحميل الملف الشخصي
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) throw new Error('تعذّر إنشاء الجلسة');
+
+      const { data: profile, error: profileError } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (profileError || !profile) {
+        await sb.auth.signOut();
+        throw new Error('لا يوجد ملف شخصي نشط مرتبط بهذا الحساب');
+      }
+
+      sessionStorage.setItem('solouki_profile', JSON.stringify(profile));
+      sessionStorage.setItem('solouki_pin_verified', 'true');
+      redirectByRole(profile.role_type);
+    } catch (err) {
+      console.error(err);
+      let msg = err.message || 'فشل الدخول';
+      if (/Failed to send|FunctionsRelayError|not found|404/i.test(msg)) {
+        msg = 'دالة الدخول بالرقم السري غير منشورة بعد. انشر Edge Function: pin-login — أو استخدم دخول البريد مؤقتاً.';
+      }
+      showError(pinStaffError, msg);
+    } finally {
+      setLoading(pinStaffBtn, false);
+    }
+  });
+}
+
 
 // ============================================================
 // ترجمة أخطاء Supabase
