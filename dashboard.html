@@ -51,14 +51,37 @@
       font-weight: 700;
       margin-top: 12px;
     }
+    .dash-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    /* يتغلب على display:inline-flex في .btn */
+    .dash-nav a.is-nav-hidden,
+    .dash-nav button.is-nav-hidden,
+    a.btn.is-nav-hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="dashboard">
     <div class="dash-header">
       <h1>سلوكي — لوحة التحكم</h1>
-      <div><a class="btn btn-primary" href="students.html">👨‍🎓 الطلاب</a> <a class="btn btn-outline" href="violations.html">📝 تسجيل مخالفة</a> <a class="btn btn-outline" href="merits.html">🏆 تسجيل تكريم</a> <a class="btn btn-outline" href="student-report.html">📁 ملف سلوك الطالب</a> <a class="btn btn-outline" href="report-settings.html">🏛️ ترويسة التقارير</a> <a class="btn btn-outline" href="catalog.html">📋 كتالوج المخالفات</a> <a class="btn btn-outline" href="notifications.html">📲 إشعارات واتساب</a> <a class="btn btn-outline" href="roles.html">الأدوار</a> <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
-      <button class="btn btn-outline" id="logoutDashBtn">خروج</button></div>
+      <div class="dash-nav" id="dashNav">
+        <a href="students.html" class="btn btn-primary is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden>👨‍🎓 الطلاب</a>
+        <a href="violations.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden>📝 تسجيل مخالفة</a>
+        <a href="merits.html" class="btn btn-outline is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden>🏆 تسجيل تكريم</a>
+        <a href="student-report.html" class="btn btn-outline is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>📁 ملف سلوك الطالب</a>
+        <a href="catalog.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>📋 كتالوج المخالفات</a>
+        <a href="notifications.html" class="btn btn-outline is-nav-hidden" data-perm="send_whatsapp" data-perm-mode="view" hidden>📲 إشعارات واتساب</a>
+        <a href="report-settings.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>🏛️ ترويسة التقارير</a>
+        <a href="roles.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>الأدوار</a>
+        <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
+        <button class="btn btn-outline" id="logoutDashBtn">خروج</button>
+      </div>
     </div>
 
     <div class="welcome-card">
@@ -95,6 +118,7 @@
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
   <script>
     (async function () {
       const result = await SoloukiSession.requireSession();
@@ -105,6 +129,44 @@
       const ver = (SOLOUKI_CONFIG && SOLOUKI_CONFIG.APP_VERSION) || '';
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
+
+      // إظهار التبويبات حسب الدور + الصلاحيات
+      const nav = document.getElementById('dashNav');
+      if (!nav) return;
+      const role = profile.role_type || '';
+      const isSuper = role === 'superadmin';
+
+      // خريطة احتياطية حسب الدور إن تعذّر استدعاء my_permission
+      const roleFallback = {
+        superadmin: ['view_students','record_violations','record_merits','view_reports','send_whatsapp','superadmin'],
+        stage_manager: ['view_students','record_violations','record_merits','view_reports','send_whatsapp'],
+        it_officer: ['view_students','view_reports'],
+        counselor: ['view_students','record_violations','record_merits','view_reports','send_whatsapp']
+      };
+      const fallbackKeys = new Set(roleFallback[role] || []);
+
+      const links = nav.querySelectorAll('[data-perm]');
+      for (const el of links) {
+        const key = el.getAttribute('data-perm');
+        const mode = el.getAttribute('data-perm-mode') || 'view';
+
+        let allowed = false;
+        if (key === 'superadmin') {
+          allowed = isSuper;
+        } else if (window.SoloukiPerms) {
+          try {
+            allowed = mode === 'act'
+              ? await SoloukiPerms.canAct(key)
+              : await SoloukiPerms.canView(key);
+          } catch (_) {
+            allowed = fallbackKeys.has(key);
+          }
+        } else {
+          allowed = fallbackKeys.has(key);
+        }
+        el.classList.toggle('is-nav-hidden', !allowed);
+        el.hidden = !allowed;
+      }
     })();
 
     (function setupChangePassword(){
