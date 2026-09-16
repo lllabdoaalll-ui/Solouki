@@ -36,12 +36,12 @@
     <div class="auth-panel">
       <div class="auth-panel-inner">
 
-        <!-- طاقم المدرسة -->
+        <!-- طاقم المدرسة: بريد + كلمة مرور -->
         <div class="auth-card" id="loginCard">
           <div class="brand">
             <div class="brand-logo">س</div>
             <h1>سلوكي</h1>
-            <p class="brand-tagline">تسجيل دخول الطاقم المدرسي</p>
+            <p class="brand-tagline">دخول طاقم المدرسة</p>
           </div>
 
           <div class="auth-mode-tabs" role="tablist">
@@ -49,57 +49,45 @@
             <button type="button" class="auth-mode-tab" id="tabGuardian" data-mode="guardian">ولي الأمر</button>
           </div>
 
-          <!-- دخول الطاقم: اسم + PIN -->
-          <form id="pinStaffForm" autocomplete="off">
+          <!-- نموذج الدخول بالبريد وكلمة المرور -->
+          <form id="emailLoginForm" autocomplete="on">
             <div class="form-group">
-              <label for="staffSelect">اختر اسمك</label>
-              <select id="staffSelect" required>
-                <option value="">— جاري تحميل الأسماء —</option>
-              </select>
+              <label for="loginEmail">البريد الإلكتروني</label>
+              <input type="email" id="loginEmail" name="email"
+                     placeholder="name@school.com" dir="ltr"
+                     autocomplete="username" required>
             </div>
             <div class="form-group">
-              <label for="staffPin">الرقم السري (من بطاقة الدخول)</label>
-              <input type="password" id="staffPin" maxlength="12" inputmode="text" placeholder="••••••" required dir="ltr" autocomplete="off" class="pin-input">
+              <label for="loginPassword">كلمة المرور</label>
+              <div class="password-wrap">
+                <input type="password" id="loginPassword" name="password"
+                       placeholder="••••••••" dir="ltr"
+                       autocomplete="current-password" required>
+                <button type="button" class="toggle-password" id="togglePassword"
+                        title="إظهار/إخفاء" aria-label="إظهار كلمة المرور">👁</button>
+              </div>
             </div>
-            <div class="error-box" id="pinStaffError" hidden></div>
-            <button type="submit" class="btn btn-primary btn-block" id="pinStaffBtn">
-              <span class="btn-text">تسجيل الدخول</span>
+
+            <div class="error-box" id="loginError" hidden></div>
+            <div class="success-box" id="loginSuccess" hidden></div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+              <span class="btn-text">دخول</span>
               <span class="btn-loader" hidden></span>
+            </button>
+
+            <button type="button" class="btn-link" id="forgotPasswordBtn" style="display:block;width:100%;margin-top:12px;text-align:center;background:none;border:none;color:#0f5c56;font-weight:600;cursor:pointer;font-size:14px">
+              نسيت كلمة المرور؟
             </button>
           </form>
 
-          <!-- دخول بالبريد وكلمة المرور (ظاهر دائماً) -->
-          <div class="auth-advanced" style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0">
-            <p style="color:#64748b;font-size:13px;margin:0 0 10px;font-weight:600;text-align:center">
-              دخول المسؤول العام بالبريد وكلمة المرور
-            </p>
-            <form id="loginForm" autocomplete="on">
-              <div class="form-group">
-                <label for="email">البريد الإلكتروني</label>
-                <input type="email" id="email" name="email" placeholder="example@school.com" dir="ltr" autocomplete="username">
-              </div>
-              <div class="form-group">
-                <label for="password">كلمة المرور</label>
-                <div class="password-wrap">
-                  <input type="password" id="password" name="password" placeholder="••••••••" dir="ltr" autocomplete="current-password">
-                  <button type="button" class="toggle-password" id="togglePassword" title="إظهار/إخفاء" aria-label="إظهار كلمة المرور">👁</button>
-                </div>
-              </div>
-              <div class="error-box" id="loginError" hidden></div>
-              <button type="submit" class="btn btn-outline btn-block" id="loginBtn">
-                <span class="btn-text">دخول بالبريد</span>
-                <span class="btn-loader" hidden></span>
-              </button>
-            </form>
-          </div>
-
-          <!-- زر قديم مخفي للتوافق -->
-          <button type="button" id="goGuardian" hidden aria-hidden="true"></button>
-
-          <p class="auth-footer">نظام إدارة السلوك والانضباط المدرسي<br>وفق <strong>القرار الوزاري 150/2024</strong></p>
+          <p class="auth-footer">
+            نظام إدارة السلوك والانضباط المدرسي<br>
+            وفق <strong>القرار الوزاري 150/2024</strong>
+          </p>
         </div>
 
-        <!-- ولي الأمر -->
+        <!-- ولي الأمر (كما هو) -->
         <div class="auth-card" id="guardianCard" hidden>
           <div class="brand">
             <div class="brand-logo">س</div>
@@ -131,30 +119,27 @@
           <p class="auth-footer">القراءة فقط — لا يمكن تعديل السجلات من هذه البوابة</p>
         </div>
 
-        <!-- PIN (مخفي — توافق) -->
-        <div class="auth-card" id="pinCard" hidden style="display:none!important">
-          <div class="brand">
-            <div class="brand-logo">س</div>
-            <h1>تأكيد الهوية</h1>
-            <p class="brand-tagline">أدخل الرمز السري (PIN)</p>
-          </div>
-          <div class="user-info" id="userInfo"></div>
-          <form id="pinForm">
-            <div class="form-group">
-              <label for="pin">الرمز السري</label>
-              <input type="password" id="pin" name="pin" maxlength="8" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" required dir="ltr" class="pin-input">
-            </div>
-            <div class="error-box" id="pinError" hidden></div>
-            <button type="submit" class="btn btn-primary btn-block" id="pinBtn">
-              <span class="btn-text">تأكيد</span>
-              <span class="btn-loader" hidden></span>
-            </button>
-            <button type="button" class="btn btn-outline btn-block mt-12" id="logoutBtn">تسجيل الخروج</button>
-          </form>
-        </div>
-
       </div>
     </div>
+  </div>
+
+  <!-- نافذة "نسيت كلمة المرور" -->
+  <div id="forgotModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px">
+    <form id="forgotForm" class="modal-card" style="background:#fff;border-radius:16px;padding:28px 24px;max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.2)">
+      <h2 style="margin:0 0 8px;font-size:1.25rem;color:#0f5c56">استعادة كلمة المرور</h2>
+      <p style="font-size:13px;color:#64748b;margin:0 0 18px;line-height:1.6">
+        أدخل بريدك الإلكتروني، وسنرسل لك رابطاً لإعادة التعيين.
+      </p>
+      <div class="form-group">
+        <label for="forgotEmail">البريد الإلكتروني</label>
+        <input type="email" id="forgotEmail" dir="ltr" required placeholder="name@school.com" style="width:100%">
+      </div>
+      <div id="forgotMsg" class="error-box" hidden style="margin-top:10px"></div>
+      <div class="actions" style="display:flex;gap:10px;margin-top:18px">
+        <button type="button" class="btn btn-outline" id="cancelForgot" style="flex:1">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="flex:1">إرسال الرابط</button>
+      </div>
+    </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -186,8 +171,8 @@
           else showStaff();
         });
       });
-      var go = document.getElementById('goGuardian');
-      if (go) go.addEventListener('click', showGuardian);
+      var back = document.getElementById('backToStaff');
+      if (back) back.addEventListener('click', showStaff);
     })();
   </script>
 </body>

@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## Phase 4 — STEP 53-A: توحيد قاعدة البيانات (بريد + كلمة مرور)
+- اعتماد SQL النهائي للتحول من PIN إلى Email/Password
+- أعمدة جديدة في `profiles`:
+  - `must_change_password` (DEFAULT TRUE)
+  - `password_changed_at`
+  - `last_login_at`
+- إعادة تسمية أعمدة PIN إلى `pin_hash_deprecated` / `pin_plain_deprecated` (حماية مؤقتة بدل الحذف)
+- حذف جميع دوال PIN القديمة
+- Trigger `on_auth_user_created` → `handle_new_auth_user()` لإنشاء profile تلقائياً
+- دوال: `mark_password_changed()` + `record_last_login()`
+- ملف: `sql/phase4-step53-auth-email-password.sql`
+- **ملاحظة:** هذه الخطوة قاعدة بيانات فقط — الواجهة ستُستكمل في الخطوات التالية
+
 ## Phase 4 — STEP 50.3: دخول الطاقم بالاسم + PIN (مثل نظام رصد الدرجات)
 - شاشة الدخول الافتراضية: اختيار الاسم + الرقم السري (بطاقة الدخول)
 - دخول البريد/كلمة المرور يبقى متاحاً تحت «خيارات متقدمة» للمسؤول العام
