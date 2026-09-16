@@ -2,6 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f766e">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>سلوكي | لوحة التحكم</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -75,10 +77,14 @@
         <a href="violations.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden>📝 تسجيل مخالفة</a>
         <a href="merits.html" class="btn btn-outline is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden>🏆 تسجيل تكريم</a>
         <a href="student-report.html" class="btn btn-outline is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>📁 ملف سلوك الطالب</a>
+        <a href="analytics.html" class="btn btn-outline is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>📊 التحليلات</a>
         <a href="catalog.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>📋 كتالوج المخالفات</a>
         <a href="notifications.html" class="btn btn-outline is-nav-hidden" data-perm="send_whatsapp" data-perm-mode="view" hidden>📲 إشعارات واتساب</a>
+        <a href="whatsapp-settings.html" class="btn btn-outline is-nav-hidden" data-perm="whatsapp_settings" data-perm-mode="view" hidden>⚙️ WhatsApp Business</a>
+        <a href="diagnostics.html" class="btn btn-outline is-nav-hidden" data-perm="system_diagnostics" hidden>🛠️ فحص النظام</a>
         <a href="report-settings.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>🏛️ ترويسة التقارير</a>
         <a href="roles.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>الأدوار</a>
+        <a href="audit.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>🧾 سجل التدقيق</a>
         <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
         <button class="btn btn-outline" id="logoutDashBtn">خروج</button>
       </div>
@@ -138,9 +144,9 @@
 
       // افتراضيات الدور — تطابق مصفوفة STEP 42
       const roleDefaults = {
-        superadmin: ['view_students','record_violations','record_merits','view_reports','send_whatsapp','superadmin'],
+        superadmin: ['system_diagnostics','view_students','record_violations','record_merits','view_reports','send_whatsapp','whatsapp_settings','superadmin'],
         stage_manager: ['view_students','record_violations','record_merits','view_reports','send_whatsapp'],
-        it_officer: ['view_students','view_reports'],
+        it_officer: ['system_diagnostics','view_students','view_reports','whatsapp_settings'],
         counselor: ['view_students','record_violations','record_merits','view_reports','send_whatsapp']
       };
       const defaults = new Set(roleDefaults[role] || []);
@@ -218,5 +224,6 @@
       SoloukiSession.logout('index.html');
     });
   </script>
+  <script src="js/pwa.js"></script>
 </body>
 </html>

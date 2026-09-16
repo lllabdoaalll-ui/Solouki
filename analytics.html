@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | التحليلات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/analytics.css">
+</head>
+<body>
+  <main class="analytics-page">
+    <header class="page-head">
+      <div>
+        <div class="eyebrow">STEP 51</div>
+        <h1>لوحة التحليلات السلوكية</h1>
+        <p>قراءة إحصائية للمخالفات داخل نطاق صلاحيات المستخدم، مع فلترة بالتاريخ والمرحلة.</p>
+      </div>
+      <a href="dashboard.html" class="btn btn-outline">← لوحة التحكم</a>
+    </header>
+
+    <section class="filter-card">
+      <div class="filter-grid">
+        <label>من تاريخ<input id="fromDate" type="date"></label>
+        <label>إلى تاريخ<input id="toDate" type="date"></label>
+        <label>المرحلة<select id="stageSelect"><option value="">كل المراحل المسموح بها</option></select></label>
+        <div class="filter-actions"><button id="loadBtn" class="btn btn-primary">تحديث التحليلات</button><button id="last30Btn" class="btn btn-outline">آخر 30 يوماً</button></div>
+      </div>
+      <div id="analyticsMsg" class="analytics-msg" hidden></div>
+    </section>
+
+    <section class="stats-grid" id="statsGrid">
+      <article class="stat-card"><span>إجمالي المخالفات</span><strong id="totalViolations">—</strong></article>
+      <article class="stat-card"><span>طلاب لديهم مخالفات</span><strong id="studentsWithViolations">—</strong></article>
+      <article class="stat-card"><span>الدرجة الأولى</span><strong id="d1">—</strong></article>
+      <article class="stat-card"><span>الدرجة الثانية</span><strong id="d2">—</strong></article>
+      <article class="stat-card"><span>الدرجة الثالثة</span><strong id="d3">—</strong></article>
+      <article class="stat-card"><span>الدرجة الرابعة</span><strong id="d4">—</strong></article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel">
+        <div class="panel-head"><h2>أكثر المخالفات تكراراً</h2><span>أعلى 10</span></div>
+        <div id="topViolations" class="bars"></div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><h2>توزيع الدرجات</h2><span>حسب الفترة</span></div>
+        <div id="degreeBars" class="bars"></div>
+      </article>
+      <article class="panel wide">
+        <div class="panel-head"><h2>مقارنة الفصول</h2><span>حسب عدد المخالفات</span></div>
+        <div class="table-wrap"><table><thead><tr><th>المرحلة</th><th>الصف</th><th>القسم</th><th>الفصل</th><th>المخالفات</th><th>الطلاب</th></tr></thead><tbody id="classesBody"></tbody></table></div>
+      </article>
+      <article class="panel wide">
+        <div class="panel-head"><h2>طلاب متكررون / يحتاجون متابعة</h2><span>3 مخالفات فأكثر أو درجة 2/3/4 وفق القواعد</span></div>
+        <div class="table-wrap"><table><thead><tr><th>الطالب</th><th>الصف/الفصل</th><th>المخالفات</th><th>درجة 2</th><th>درجة 3</th><th>درجة 4</th><th>آخر مخالفة</th></tr></thead><tbody id="attentionBody"></tbody></table></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/core/supabase-client.js"></script>
+  <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>

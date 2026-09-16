@@ -1,4 +1,34 @@
+## STEP 59 — WhatsApp Notification Center (4.59.0)
+- Added server-side WhatsApp notification queue with per-student/per-parent deduplication.
+- Added daily preparation RPC and notification status/attempt tracking.
+- Added secure Edge Function `whatsapp-send`; WhatsApp token stays in Edge Function secrets.
+- Updated notifications page to prepare and send notifications through Cloud API, with explicit manual fallback.
+
+# STEP 58 — WhatsApp Business settings per stage
+
+- Added `whatsapp-settings.html` for stage WhatsApp Business configuration.
+- IT officers are limited in the UI to assigned active stages.
+- Added secure RPC `save_stage_whatsapp_settings`; direct client writes are revoked.
+- Added `whatsapp_settings` permission for IT officers.
+- No WhatsApp API token/secret is stored in the database.
+- Version 4.58.0.
+
 # CHANGELOG
+
+## STEP 57 — Audit Integrity Hardening (v4.57.0)
+- Added server-side database triggers for audit coverage on students, violations, merits, behavior follow-ups, and WhatsApp notification records.
+- Audit records now identify database-originated mutations without storing sensitive field values.
+- Removed direct authenticated INSERT/UPDATE/DELETE access to `audit_logs`; the server-side RPC/triggers remain the write path.
+- UPDATE events record changed column names only (excluding `updated_at`).
+
+
+## Phase 4 — STEP 53: مراقبة الجاهزية والتشخيص التشغيلي
+- صفحة `diagnostics.html` لفحص الاتصال وSupabase Auth وRLS وService Worker وسياق HTTPS والإصدار.
+- الحالات: سليم / تنبيه / فشل مع وقت آخر فحص.
+- رابط الفحص يظهر للمسؤول العام ومسؤول الحاسب.
+- لا يتم عرض أو تخزين Service Role Key أو كلمات المرور.
+- الإصدار: `4.53.0`
+
 
 ## Phase 4 — STEP 55.1: بطاقات الدخول بكلمة المرور
 - إصلاح بطاقات الدخول: تعرض البريد الإلكتروني وكلمة المرور المؤقتة الفعلية بدل النص الثابت.
@@ -384,3 +414,31 @@
 - Added clearer frontend handling for PIN login HTTP errors in `js/auth.js`.
 - Added `sql/phase4-step51-pin-login-repair.sql` to recreate the required verification/list functions and grants.
 - No plaintext PINs or service-role secrets were added to client-side files.
+
+## Phase 4 — STEP 51: تحليلات ولوحات تنفيذية
+- إضافة `analytics.html` + `js/analytics.js` + `css/analytics.css`.
+- لوحة مؤشرات للمخالفات ضمن نطاق صلاحيات المستخدم.
+- فلترة بالتاريخ والمرحلة.
+- مؤشرات إجمالي المخالفات والطلاب وتوزيع الدرجات 1–4.
+- أكثر 10 مخالفات تكراراً.
+- مقارنة الفصول حسب عدد المخالفات وعدد الطلاب المتأثرين.
+- قائمة الطلاب المتكررين وحالات تحتاج متابعة وفق عتبات تراكمية.
+- SQL: `sql/phase4-step51-analytics.sql` عبر RPC آمنة `get_behavior_analytics`.
+- إضافة رابط «التحليلات» إلى لوحة التحكم تحت صلاحية `view_reports`.
+- الإصدار: `4.51.0`
+
+## 4.52.0 — STEP 52
+- إضافة PWA Manifest للتثبيت كتطبيق.
+- إضافة Service Worker للـ static shell وfallback عند انقطاع الإنترنت.
+- عدم تخزين استجابات Supabase أو CDN في الكاش.
+- إضافة مؤشر اتصال داخل الواجهة.
+- إضافة أيقونات SVG وتحديث الإصدار إلى 4.52.0.
+
+## Phase 4 — STEP 54: النسخ الاحتياطي والتصدير التشغيلي
+- إضافة `backup.html` لتصدير البيانات المتاحة وفق RLS.
+- JSON شامل للطلاب والمخالفات والتكريمات والبيانات المرجعية الاختيارية.
+- CSV للطلاب والمخالفات والتكريمات.
+- حماية الوصول عبر `view_reports` / `superadmin`.
+- عدم تصدير `profiles` أو كلمات المرور أو أسرار Supabase.
+- لا يستخدم Service Role Key في المتصفح.
+- تحديث الإصدار إلى `4.54.0`.

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f766e">
+<title>سلوكي | فحص النظام</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/diagnostics.css">
+</head><body>
+<main class="diagnostics-page">
+  <header class="page-head"><div><h1>🛠️ فحص جاهزية النظام</h1><p>تشخيص سريع للاتصال والمصادقة وPWA وإعدادات التطبيق.</p></div><a class="btn btn-outline" href="dashboard.html">← لوحة التحكم</a></header>
+  <section class="summary-card"><div><strong id="overallStatus">جاري الفحص…</strong><span id="checkedAt"></span></div><button id="runChecks" class="btn btn-primary">إعادة الفحص</button></section>
+  <section id="checks" class="checks-grid" aria-live="polite"></section>
+  <section class="note"><strong>ملاحظة أمنية:</strong> هذه الصفحة لا تعرض مفاتيح سرية ولا تختبر Service Role Key. نجاح الفحص لا يعني أن كل صلاحيات قاعدة البيانات صحيحة؛ التحقق النهائي يكون عبر RLS وRPC.</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script><script src="js/core/utils.js"></script><script src="js/core/supabase-client.js"></script><script src="js/core/session.js"></script><script src="js/diagnostics.js"></script><script src="js/pwa.js"></script>
+</body></html>

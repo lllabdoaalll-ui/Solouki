@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f766e"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سلوكي | النسخ الاحتياطي والتصدير</title>
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/backup.css">
+</head>
+<body>
+<main class="backup-page">
+<header class="page-head"><div><b>سلوكي</b><h1>النسخ الاحتياطي والتصدير</h1></div><div class="head-actions"><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+<section class="backup-note"><strong>نسخة تشغيلية آمنة</strong><p>يُصدّر هذا القسم البيانات التي يستطيع حسابك قراءتها وفق صلاحيات قاعدة البيانات. لا يتم تصدير كلمات المرور أو مفاتيح Supabase أو أسرار النظام.</p></section>
+<div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
+<section class="panel">
+  <div class="head"><div><h2>نطاق التصدير</h2><p>يمكنك تحديد فترة للمخالفات والتكريمات. بيانات الطلاب تُصدّر كما هي ضمن نطاق وصول الحساب.</p></div></div>
+  <div class="filters">
+    <label>من تاريخ<input id="fromDate" type="date"></label>
+    <label>إلى تاريخ<input id="toDate" type="date"></label>
+    <label class="check"><input id="includeCatalogs" type="checkbox" checked> تضمين كتالوج المخالفات والمواقع والعقوبات</label>
+  </div>
+</section>
+<section class="export-grid">
+  <article class="export-card"><h3>📦 نسخة JSON شاملة</h3><p>ملف واحد يحتوي على الطلاب والمخالفات والتكريمات والبيانات المرجعية المتاحة.</p><button class="btn btn-primary" data-export="json">إنشاء النسخة</button></article>
+  <article class="export-card"><h3>👨‍🎓 الطلاب CSV</h3><p>ملف CSV مناسب للمراجعة في Excel. لا يحتوي على بيانات الدخول للمستخدمين.</p><button class="btn btn-outline" data-export="students-csv">تصدير الطلاب</button></article>
+  <article class="export-card"><h3>📝 المخالفات CSV</h3><p>المخالفات المتاحة للحساب ضمن الفترة المحددة.</p><button class="btn btn-outline" data-export="violations-csv">تصدير المخالفات</button></article>
+  <article class="export-card"><h3>🏆 التكريمات CSV</h3><p>سجل التكريمات والنقاط المتاح ضمن الفترة المحددة.</p><button class="btn btn-outline" data-export="merits-csv">تصدير التكريمات</button></article>
+</section>
+<section class="panel security-panel"><h2>ملاحظات مهمة</h2><ul><li>هذه النسخة لا تُعتبر نسخة قاعدة بيانات كاملة من Supabase؛ هي تصدير للبيانات التي يسمح بها RLS للحساب الحالي.</li><li>لنسخة استعادة كاملة للبنية والـ SQL استخدم ملفات المشروع ونسخة Supabase الاحتياطية.</li><li>احتفظ بملفات التصدير في مكان آمن لأنها قد تحتوي على بيانات طلاب وأولياء أمور.</li></ul></section>
+<div id="progress" class="progress" hidden><span id="progressText">جاري تجهيز النسخة…</span></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/config.js"></script><script src="js/core/utils.js"></script><script src="js/core/supabase-client.js"></script><script src="js/core/session.js"></script><script src="js/core/permissions.js"></script><script src="js/core/audit.js"></script><script src="js/backup.js"></script><script src="js/pwa.js"></script>
+</body></html>

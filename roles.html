@@ -1,5 +1,7 @@
 <!doctype html><html lang="ar" dir="rtl"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سلوكي | إدارة الأدوار</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/roles.css">
 </head><body><main class="roles-page">
 <header class="page-head"><div><b>سلوكي</b><h1>إدارة المراحل والأدوار</h1></div><div><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
@@ -35,4 +37,5 @@
 <div id="sectionsBox" hidden><h3>الأقسام</h3><label><input id="arabic" type="checkbox" checked> عربي</label><label><input id="languages" type="checkbox" checked> لغات</label></div>
 <div class="actions"><button type="button" class="btn btn-outline" onclick="closeUser()">إلغاء</button><button class="btn btn-primary">حفظ</button></div>
 </form></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script><script src="js/config.js"></script><script src="js/roles.js"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script><script src="js/config.js"></script><script src="js/core/audit.js"></script><script src="js/roles.js"></script>  <script src="js/pwa.js"></script>
+</body></html>
