@@ -49,27 +49,46 @@
             <button type="button" class="auth-mode-tab" id="tabGuardian" data-mode="guardian">ولي الأمر</button>
           </div>
 
-          <form id="loginForm" autocomplete="on">
+          <!-- دخول الطاقم: اسم + PIN (مثل نظام رصد الدرجات) -->
+          <form id="pinStaffForm" autocomplete="off">
             <div class="form-group">
-              <label for="email">البريد الإلكتروني</label>
-              <input type="email" id="email" name="email" placeholder="example@school.com" required dir="ltr" autocomplete="username">
+              <label for="staffSelect">اختر اسمك</label>
+              <select id="staffSelect" required>
+                <option value="">— جاري تحميل الأسماء —</option>
+              </select>
             </div>
-
             <div class="form-group">
-              <label for="password">كلمة المرور</label>
-              <div class="password-wrap">
-                <input type="password" id="password" name="password" placeholder="••••••••" required dir="ltr" autocomplete="current-password">
-                <button type="button" class="toggle-password" id="togglePassword" title="إظهار/إخفاء" aria-label="إظهار كلمة المرور">👁</button>
-              </div>
+              <label for="staffPin">الرقم السري (من بطاقة الدخول)</label>
+              <input type="password" id="staffPin" maxlength="12" inputmode="text" placeholder="••••••" required dir="ltr" autocomplete="off" class="pin-input">
             </div>
-
-            <div class="error-box" id="loginError" hidden></div>
-
-            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+            <div class="error-box" id="pinStaffError" hidden></div>
+            <button type="submit" class="btn btn-primary btn-block" id="pinStaffBtn">
               <span class="btn-text">تسجيل الدخول</span>
               <span class="btn-loader" hidden></span>
             </button>
           </form>
+
+          <details class="auth-advanced" style="margin-top:14px">
+            <summary style="cursor:pointer;color:#64748b;font-size:13px">دخول بالبريد وكلمة المرور (المسؤول العام)</summary>
+            <form id="loginForm" autocomplete="on" style="margin-top:12px">
+              <div class="form-group">
+                <label for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" name="email" placeholder="example@school.com" dir="ltr" autocomplete="username">
+              </div>
+              <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <div class="password-wrap">
+                  <input type="password" id="password" name="password" placeholder="••••••••" dir="ltr" autocomplete="current-password">
+                  <button type="button" class="toggle-password" id="togglePassword" title="إظهار/إخفاء" aria-label="إظهار كلمة المرور">👁</button>
+                </div>
+              </div>
+              <div class="error-box" id="loginError" hidden></div>
+              <button type="submit" class="btn btn-outline btn-block" id="loginBtn">
+                <span class="btn-text">دخول بالبريد</span>
+                <span class="btn-loader" hidden></span>
+              </button>
+            </form>
+          </details>
 
           <!-- زر قديم مخفي للتوافق مع auth.js إن وُجدت إشارة goGuardian -->
           <button type="button" id="goGuardian" hidden aria-hidden="true"></button>
