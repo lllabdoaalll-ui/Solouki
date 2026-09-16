@@ -292,3 +292,11 @@
 - سبب العطل: الإشارة إلى زر `testWa` المحذوف كانت توقف السكربت قبل ربط التبويبات وملء القوائم.
 - حماية كل ربطات الأحداث من العناصر غير الموجودة.
 - احتياطي إلزامي لملء قوائم المرحلة/الصف محليًا عند فشل السحابة.
+
+
+## Step 51 — PIN Login Repair
+- Updated `supabase/functions/pin-login/index.ts` to use `verify_pin_service` first, avoiding stale versions of `verify_pin`.
+- Added explicit detection of non-bcrypt PIN hashes and a clear reset message.
+- Added clearer frontend handling for PIN login HTTP errors in `js/auth.js`.
+- Added `sql/phase4-step51-pin-login-repair.sql` to recreate the required verification/list functions and grants.
+- No plaintext PINs or service-role secrets were added to client-side files.
