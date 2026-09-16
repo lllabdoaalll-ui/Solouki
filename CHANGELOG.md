@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## Phase 4 — STEP 54.2: تبويبات لوحة التحكم حسب الصلاحيات
+- كل رابط في `dashboard.html` مرتبط بمفتاح صلاحية عبر `data-perm`
+- الإظهار يعتمد على `SoloukiPerms.canView` / `canAct` (والمسؤول العام يرى الكل)
+- الطلاب ← `view_students`
+- مخالفة / كتالوج ← `record_violations`
+- تكريم ← `record_merits`
+- ملف السلوك ← `view_reports`
+- واتساب ← `send_whatsapp`
+- ترويسة التقارير + الأدوار ← مسؤول عام فقط
+- كلمة المرور والخروج ← للجميع
+
+## Phase 4 — STEP 54.1: إخفاء رابط الأدوار عن غير المسؤول العام
+- في `dashboard.html`: زر «الأدوار» يظهر فقط إذا `role_type === 'superadmin'`
+- الصفحة `roles.html` كانت ترفض الدخول مسبقاً؛ الآن الرابط نفسه لا يظهر لمدير المرحلة ومسؤول الحاسب
+
 ## Phase 4 — STEP 54: إدارة الطاقم من داخل النظام
 - Edge Function جديدة: `admin-manage-staff`
   - `create` — إنشاء Auth + profile + دور + كلمة مرور افتراضية + must_change_password

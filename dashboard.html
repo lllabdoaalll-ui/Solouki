@@ -51,14 +51,31 @@
       font-weight: 700;
       margin-top: 12px;
     }
+    .dash-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
   </style>
 </head>
 <body>
   <div class="dashboard">
     <div class="dash-header">
       <h1>سلوكي — لوحة التحكم</h1>
-      <div><a class="btn btn-primary" href="students.html">👨‍🎓 الطلاب</a> <a class="btn btn-outline" href="violations.html">📝 تسجيل مخالفة</a> <a class="btn btn-outline" href="merits.html">🏆 تسجيل تكريم</a> <a class="btn btn-outline" href="student-report.html">📁 ملف سلوك الطالب</a> <a class="btn btn-outline" href="report-settings.html">🏛️ ترويسة التقارير</a> <a class="btn btn-outline" href="catalog.html">📋 كتالوج المخالفات</a> <a class="btn btn-outline" href="notifications.html">📲 إشعارات واتساب</a> <a class="btn btn-outline" href="roles.html">الأدوار</a> <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
-      <button class="btn btn-outline" id="logoutDashBtn">خروج</button></div>
+      <div class="dash-nav" id="dashNav">
+        <a class="btn btn-primary" href="students.html" data-perm="view_students" data-perm-mode="view" hidden>👨‍🎓 الطلاب</a>
+        <a class="btn btn-outline" href="violations.html" data-perm="record_violations" data-perm-mode="act" hidden>📝 تسجيل مخالفة</a>
+        <a class="btn btn-outline" href="merits.html" data-perm="record_merits" data-perm-mode="act" hidden>🏆 تسجيل تكريم</a>
+        <a class="btn btn-outline" href="student-report.html" data-perm="view_reports" data-perm-mode="view" hidden>📁 ملف سلوك الطالب</a>
+        <a class="btn btn-outline" href="catalog.html" data-perm="record_violations" data-perm-mode="view" hidden>📋 كتالوج المخالفات</a>
+        <a class="btn btn-outline" href="notifications.html" data-perm="send_whatsapp" data-perm-mode="view" hidden>📲 إشعارات واتساب</a>
+        <a class="btn btn-outline" href="report-settings.html" data-perm="superadmin" hidden>🏛️ ترويسة التقارير</a>
+        <a class="btn btn-outline" href="roles.html" data-perm="superadmin" hidden>الأدوار</a>
+        <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
+        <button class="btn btn-outline" id="logoutDashBtn">خروج</button>
+      </div>
     </div>
 
     <div class="welcome-card">
@@ -95,6 +112,7 @@
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
+  <script src="js/core/permissions.js"></script>
   <script>
     (async function () {
       const result = await SoloukiSession.requireSession();
@@ -105,6 +123,28 @@
       const ver = (SOLOUKI_CONFIG && SOLOUKI_CONFIG.APP_VERSION) || '';
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
+
+      // إظهار التبويبات حسب الصلاحيات
+      const nav = document.getElementById('dashNav');
+      if (!nav || !window.SoloukiPerms) return;
+      const links = nav.querySelectorAll('[data-perm]');
+      for (const el of links) {
+        const key = el.getAttribute('data-perm');
+        const mode = el.getAttribute('data-perm-mode') || 'view';
+        if (key === 'superadmin') {
+          el.hidden = profile.role_type !== 'superadmin';
+          continue;
+        }
+        try {
+          if (mode === 'act') {
+            el.hidden = !(await SoloukiPerms.canAct(key));
+          } else {
+            el.hidden = !(await SoloukiPerms.canView(key));
+          }
+        } catch (_) {
+          el.hidden = true;
+        }
+      }
     })();
 
     (function setupChangePassword(){
