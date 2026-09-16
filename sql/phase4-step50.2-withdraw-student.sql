@@ -11,9 +11,9 @@ ON CONFLICT (key) DO UPDATE
       category = EXCLUDED.category,
       sort_order = EXCLUDED.sort_order;
 
--- افتراضي: مسؤول عام + مسؤول حاسب فقط
+-- ملاحظة: superadmin غير مدرج هنا — له كل الصلاحيات تلقائياً عبر my_permission()
+-- الأدوار المسموحة في role_permissions: stage_manager | it_officer | counselor فقط
 INSERT INTO public.role_permissions (role_type, permission_key, mode) VALUES
-  ('superadmin',   'delete_students', 'active'),
   ('it_officer',   'delete_students', 'active'),
   ('stage_manager','delete_students', 'none'),
   ('counselor',    'delete_students', 'none')
@@ -185,8 +185,3 @@ ALTER TABLE public.students ADD COLUMN IF NOT EXISTS status text DEFAULT 'active
 ALTER TABLE public.students ADD COLUMN IF NOT EXISTS school_id uuid;
 
 NOTIFY pgrst, 'reload schema';
-
-DO $$
-BEGIN
-  RAISE NOTICE 'OK STEP 50.2: admin_withdraw_student + admin_restore_student';
-END $$;

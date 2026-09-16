@@ -285,8 +285,3 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_student_behavior_report(uuid) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
-
-DO $$
-BEGIN
-  RAISE NOTICE 'OK STEP 50.1: merit_records columns + functions ready';
-END $$;
