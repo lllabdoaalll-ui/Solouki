@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## Phase 4 — STEP 53-B: واجهة الدخول بالبريد + كلمة المرور
+- إعادة كتابة `js/auth.js` بالكامل: إزالة كل منطق PIN
+- الدخول عبر `signInWithPassword` + جلب profile
+- بعد الدخول: `record_last_login()` ثم فحص `must_change_password`
+- إن كان يجب التغيير → توجيه إلى `change-password.html?first=1`
+- زر «نسيت كلمة المرور؟» → `resetPasswordForEmail` + نافذة منبثقة
+- تحديث `js/core/session.js`: التحقق يعتمد على Auth session فقط (بدون PIN)
+- `change-password.html`: في أول دخول يُخفى حقل «كلمة المرور الحالية»
+- استدعاء `mark_password_changed()` بعد التغيير الناجح
+- الإصدار: `4.53.0-b`
+
 ## Phase 4 — STEP 53-A: توحيد قاعدة البيانات (بريد + كلمة مرور)
 - اعتماد SQL النهائي للتحول من PIN إلى Email/Password
 - أعمدة جديدة في `profiles`:
