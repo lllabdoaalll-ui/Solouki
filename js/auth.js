@@ -310,7 +310,13 @@ if (pinStaffForm) {
       const { data, error } = await sb.functions.invoke('pin-login', {
         body: { profile_id: profileId, pin }
       });
-      if (error) throw error;
+      if (error) {
+        const status = error?.context?.status || error?.status || 0;
+        if (status === 401) throw new Error('الرقم السري غير صحيح');
+        if (status === 409) throw new Error('هذا الحساب يحتاج إلى إصدار PIN جديد من إدارة المستخدمين.');
+        if (status === 500) throw new Error('خدمة تسجيل الدخول غير مهيأة بالكامل. نفّذ SQL الخطوة 50.3 أو 51 ثم أعد المحاولة.');
+        throw error;
+      }
       if (data?.error) throw new Error(data.error);
       if (!data?.token_hash) throw new Error('لم تُرجع الخادم رمز جلسة');
 
