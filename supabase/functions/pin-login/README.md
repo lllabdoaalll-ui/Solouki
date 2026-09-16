@@ -1,13 +1,7 @@
-# pin-login
+# pin-login (مهجور)
 
-دخول الطاقم بالاسم + PIN (مثل نظام رصد الدرجات).
+هذه الدالة خاصة بنظام PIN القديم.
 
-## النشر
-```bash
-supabase functions deploy pin-login
-```
-
-يتطلب `SUPABASE_SERVICE_ROLE_KEY` في أسرار الدوال (متوفر تلقائياً في Supabase hosted).
-
-## SQL مطلوب
-نفّذ `sql/phase4-step50.3-pin-staff-login.sql` قبل الاستخدام.
+**STEP 53+:** دخول الطاقم يتم عبر Supabase Auth (بريد + كلمة مرور).
+**لا تنشر ولا تستخدم** هذه الدالة في الإنتاج.
+الإدارة من: `admin-manage-staff` و`admin-reset-password`.

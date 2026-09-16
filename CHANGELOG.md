@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## Phase 4 — STEP 55: تنظيف بقايا PIN
+- `bulk-user-import`: إنشاء/تحديث عبر Auth + كلمة مرور فقط (بدون PIN)
+- `roles.js`: «كلمة مرور جديدة» عبر `admin-manage-staff` بدل `admin_set_profile_pin`
+- قالب Excel للاستيراد بدون عمود pin
+- `pin-login` Edge Function: مهجورة (توثيق فقط)
+- دخول الطاقم = بريد + كلمة مرور فقط
+- الإصدار: `4.55.0`
+
+## Phase 4 — STEP 54.4: تبويبات مدير المرحلة + بذرة صلاحيات
+- لوحة التحكم تعتمد افتراضيات الدور إن رجعت الصلاحية `none` من DB
+- SQL: `phase4-step54.4-seed-role-permissions.sql` لزرع مصفوفة الأدوار
+- مدير مرحلة يرى: طلاب، مخالفة، تكريم، ملف سلوك، كتالوج، واتساب
+- لا يرى: أدوار، ترويسة تقارير
+- الإصدار: `4.54.4`
+
+## Phase 4 — STEP 54.3: إصلاح إخفاء التبويبات (CSS)
+- السبب: قاعدة `.btn { display: inline-flex }` كانت تتجاوز HTML `hidden`
+- الحل: صنف `is-nav-hidden { display: none !important }` + تبديله حسب الصلاحية/الدور
+- الإصدار: `4.54.3`
+
 ## Phase 4 — STEP 54.2: تبويبات لوحة التحكم حسب الصلاحيات
 - كل رابط في `dashboard.html` مرتبط بمفتاح صلاحية عبر `data-perm`
 - الإظهار يعتمد على `SoloukiPerms.canView` / `canAct` (والمسؤول العام يرى الكل)

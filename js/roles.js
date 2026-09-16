@@ -13,7 +13,7 @@ render()}
 function stage(id){return S.stages.find(x=>x.id===id)?.name_ar||id}
 function scope(u){if(u.role_type==='counselor')return S.classes.filter(x=>x.counselor_id===u.id).map(x=>`${stage(x.stage_id)} — ${x.grade} — ${x.class_name}`);return S.assign.filter(x=>x.profile_id===u.id).map(x=>stage(x.stage_id))}
 function table(role,id){const us=S.users.filter(x=>x.role_type===role);$(id).innerHTML=`<div class="table-wrap"><table class="data-table"><tr><th>الاسم</th><th>البريد</th><th>النطاق</th><th>الحالة</th><th></th></tr>${us.map(u=>`<tr><td><b>${esc(u.full_name)}</b></td><td dir="ltr">${esc(u.email||'—')}</td><td>${scope(u).map(x=>`<span class="badge">${esc(x)}</span>`).join('')||'—'}</td><td>${u.is_active?'نشط':'موقوف'}</td><td><button class="mini" onclick="editUser('${u.id}')">تعديل</button> <button class="mini" onclick="resetUserPassword('${u.id}')" title="إصدار كلمة مرور جديدة وإلغاء القديمة">كلمة مرور جديدة</button> <button class="mini" onclick="toggleUser('${u.id}')">${u.is_active?'إيقاف':'تفعيل'}</button></td></tr>`).join('')}</table></div>`}
-function render(){ $('mCount').textContent=S.users.filter(x=>x.role_type==='stage_manager').length;$('iCount').textContent=S.users.filter(x=>x.role_type==='it_officer').length;$('cCount').textContent=S.users.filter(x=>x.role_type==='counselor').length;$('sCount').textContent=S.stages.filter(x=>x.is_active).length;table('stage_manager','managerList');table('it_officer','itList');table('counselor','counselorList');$('cardsList').innerHTML=S.users.map(u=>`<article class="access-card"><small>سلوكي</small><h3>${esc(u.full_name)}</h3><small>${rn(u.role_type)}</small><div class="pin">${'كلمة مرور الحساب'}</div><small>${scope(u).map(esc).join(' • ')||'لم يُسند بعد'}</small><button type="button" class="mini no-print" onclick="regeneratePin('${u.id}')">إعادة إصدار بيانات الدخول</button></article>`).join('')}
+function render(){ $('mCount').textContent=S.users.filter(x=>x.role_type==='stage_manager').length;$('iCount').textContent=S.users.filter(x=>x.role_type==='it_officer').length;$('cCount').textContent=S.users.filter(x=>x.role_type==='counselor').length;$('sCount').textContent=S.stages.filter(x=>x.is_active).length;table('stage_manager','managerList');table('it_officer','itList');table('counselor','counselorList');$('cardsList').innerHTML=S.users.map(u=>`<article class="access-card"><small>سلوكي</small><h3>${esc(u.full_name)}</h3><small>${rn(u.role_type)}</small><div class="pin">${'كلمة مرور الحساب'}</div><small>${scope(u).map(esc).join(' • ')||'لم يُسند بعد'}</small><button type="button" class="mini no-print" onclick="regeneratePin('${u.id}')">كلمة مرور جديدة</button></article>`).join('')}
 
 window.resetUserPassword=async id=>{
   const u=S.users.find(x=>x.id===id);if(!u)return;
@@ -34,7 +34,22 @@ window.resetUserPassword=async id=>{
   }
 };
 
-window.regeneratePin=async id=>{const u=S.users.find(x=>x.id===id);if(!u)return;if(!confirm(`سيتم إصدار رقم سري جديد لـ ${u.full_name} فورًا، ولن يمكن استرجاع عرضه لاحقًا إلا بتجديده مجددًا. تأكيد؟`))return;const {data,error}=await sb.rpc('admin_set_profile_pin',{p_profile_id:id});if(error)return note('error',error.message);S.revealedPins[id]=data;render();note('ok','تم إصدار رقم سري جديد. اطبع البطاقة الآن قبل مغادرة الصفحة.')}
+window.regeneratePin=async id=>{
+  const u=S.users.find(x=>x.id===id);if(!u)return;
+  if(!confirm('سيتم إصدار كلمة مرور مؤقتة جديدة لـ '+u.full_name+' وإلزامه بتغييرها عند الدخول. تأكيد؟'))return;
+  try{
+    const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'reset_password',profile_id:id}});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    const pw=data?.password;
+    if(!pw)throw new Error('لم تُرجع كلمة مرور');
+    S.revealedPins[id]=pw;
+    render();
+    note('ok','كلمة مرور مؤقتة لـ '+u.full_name+': '+pw);
+    try{await navigator.clipboard.writeText(pw)}catch(_){}
+    alert('كلمة المرور المؤقتة:\n'+pw+'\n\nانسخها الآن — سيُطلب تغييرها عند أول دخول.');
+  }catch(err){note('error',err.message||String(err))}
+}
 const PERM_ROLES=[['stage_manager','مدير مرحلة'],['it_officer','مسؤول حاسب'],['counselor','أخصائي اجتماعي']];
 const PERM_MODES=[['none','غير مفعّل'],['observer','مراقب'],['active','فعّال']];
 function permMode(role,key){return S.rolePerms.find(p=>p.role_type===role&&p.permission_key===key)?.mode||'none'}
@@ -151,7 +166,7 @@ await boot();
 };
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});
 $('logout').onclick=async()=>{await sb.auth.signOut();sessionStorage.clear();location.href='index.html'};
-if($('btnGenPin'))$('btnGenPin').onclick=()=>{ $('pin').value=generateRandomPin(6); note('ok','تم توليد PIN جديد.'); };
+if($('btnGenPin'))$('btnGenPin').onclick=()=>{ if($('password')){$('password').value=generatePassword(12); note('ok','تم توليد كلمة مرور.');} };
 if($('btnGenPassword'))$('btnGenPassword').onclick=()=>{ $('password').value=generatePassword(12); note('ok','تم توليد كلمة مرور جديدة — انسخها قبل الحفظ.'); };
 boot();
 
@@ -192,17 +207,17 @@ const ROLE_VALUES={stage_manager:'مدير مرحلة',it_officer:'مسؤول ح
 function downloadBlob(data,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function downloadTemplate(){
  const rows=[
-  ['role_type','full_name','email','password','pin','stage_names','classes','sections','is_active'],
-  ['stage_manager','أحمد محمد','manager@example.com','TempPass123!','123456','المرحلة الابتدائية;المرحلة الإعدادية','','','TRUE'],
-  ['it_officer','مسؤول الحاسب','it@example.com','TempPass234!','234567','كل المراحل','','arabic;languages','TRUE'],
-  ['counselor','الأخصائي الاجتماعي','counselor@example.com','TempPass345!','345678','المرحلة الإعدادية','المرحلة الإعدادية|أولى إعدادي|1;المرحلة الإعدادية|ثانية إعدادي|2','arabic','TRUE']
+  ['role_type','full_name','email','password','stage_names','classes','sections','is_active'],
+  ['stage_manager','أحمد محمد','manager@example.com','TempPass123!','المرحلة الابتدائية;المرحلة الإعدادية','','','TRUE'],
+  ['it_officer','مسؤول الحاسب','it@example.com','TempPass234!','كل المراحل','','arabic;languages','TRUE'],
+  ['counselor','الأخصائي الاجتماعي','counselor@example.com','TempPass345!','المرحلة الإعدادية','المرحلة الإعدادية|أولى إعدادي|1;المرحلة الإعدادية|ثانية إعدادي|2','arabic','TRUE']
  ];
- const instructions=[['الحقل','التعليمات'],['role_type','stage_manager أو it_officer أو counselor'],['full_name','الاسم الكامل'],['password','كلمة مرور الحساب الجديد؛ 8 أحرف على الأقل. لا يتم تصديرها لاحقًا'],['email','البريد الإلكتروني، ويجب أن يكون فريدًا'],['pin','6 أرقام للحساب الجديد؛ اتركه فارغًا عند تعديل حساب قائم للاحتفاظ برقمه الحالي'],['stage_names','أسماء المراحل مفصولة بعلامة ; أو اكتب كل المراحل لمسؤول الحاسب'],['classes','للأخصائي فقط: stage_name|grade|class_name مفصولة بـ ; (ستُطابق بعد وجود الفصول)'],['sections','arabic;languages لمسؤول الحاسب'],['is_active','TRUE أو FALSE']];
+ const instructions=[['الحقل','التعليمات'],['role_type','stage_manager أو it_officer أو counselor'],['full_name','الاسم الكامل'],['password','كلمة مرور الحساب الجديد؛ 8 أحرف على الأقل. لا يتم تصديرها لاحقًا'],['email','البريد الإلكتروني، ويجب أن يكون فريدًا'],['password','كلمة مرور افتراضية 8+ أحرف؛ تُلزم بالتغيير عند أول دخول'],['stage_names','أسماء المراحل مفصولة بعلامة ; أو اكتب كل المراحل لمسؤول الحاسب'],['classes','للأخصائي فقط: stage_name|grade|class_name مفصولة بـ ; (ستُطابق بعد وجود الفصول)'],['sections','arabic;languages لمسؤول الحاسب'],['is_active','TRUE أو FALSE']];
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'المستخدمون');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(instructions),'تعليمات');
  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});downloadBlob(out,'solouki-users-template.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 function exportUsers(){
- const rows=[['role_type','full_name','email','password','pin','stage_names','classes','sections','is_active']];
+ const rows=[['role_type','full_name','email','password','stage_names','classes','sections','is_active']];
  S.users.forEach(u=>{const stages=S.assign.filter(a=>a.profile_id===u.id).map(a=>stage(a.stage_id));const classes=S.classes.filter(c=>c.counselor_id===u.id).map(c=>`${stage(c.stage_id)}|${c.grade}|${c.class_name}`);rows.push([u.role_type,u.full_name,u.email||'','','',stages.join(';'),classes.join(';'),u.role_type==='it_officer'?'arabic;languages':'',u.is_active?'TRUE':'FALSE'])});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'المستخدمون');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});downloadBlob(out,'solouki-users-export.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
@@ -210,8 +225,8 @@ function openImport(){$('importModal').hidden=false;IMPORT_ROWS=[];$('excelFile'
 function closeImport(){$('importModal').hidden=true}
 function norm(v){return String(v??'').trim()}
 function validateImportRow(r,i){const errors=[];const role=norm(r.role_type).toLowerCase();const email=norm(r.email);const pin=norm(r.pin);const password=norm(r.password);if(!ROLE_VALUES[role])errors.push('الدور غير صحيح');if(!norm(r.full_name))errors.push('الاسم مطلوب');if(!/^\S+@\S+\.\S+$/.test(email))errors.push('البريد غير صحيح');const isExisting=S.users.some(u=>(u.email||'').toLowerCase()===email.toLowerCase());if(pin&&!/^\d{6}$/.test(pin))errors.push('PIN يجب أن يكون 6 أرقام أو فارغًا للاحتفاظ بالرقم الحالي');if(!pin&&!isExisting)errors.push('PIN مطلوب للحساب الجديد');if(!norm(r.is_active)){} if(!norm(r.password)&&!isExisting)errors.push('كلمة المرور مطلوبة للحساب الجديد');if(password&&password.length<8)errors.push('كلمة المرور يجب أن تكون 8 أحرف على الأقل');if(role!=='counselor'&&!norm(r.stage_names))errors.push('المرحلة مطلوبة');if(role==='counselor'&&!norm(r.stage_names))errors.push('المرحلة مطلوبة للأخصائي');if(role!=='it_officer'&&norm(r.sections))errors.push('الأقسام لمسؤول الحاسب فقط');return {...r,role_type:role,full_name:norm(r.full_name),email,password,pin,errors,row:i+2}}
-async function previewExcel(ev){const f=ev.target.files?.[0];if(!f)return;try{const data=await f.arrayBuffer();const wb=XLSX.read(data,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const raw=XLSX.utils.sheet_to_json(ws,{defval:''});if(!raw.length)throw Error('الملف لا يحتوي على بيانات.');const allowed=['role_type','full_name','email','password','pin','stage_names','classes','sections','is_active'];const missing=allowed.filter(k=>!(k in raw[0]));if(missing.length)throw Error('الأعمدة الناقصة: '+missing.join(', '));IMPORT_ROWS=raw.map(validateImportRow);const seen=new Set();IMPORT_ROWS.forEach(r=>{const k=r.email.toLowerCase();if(seen.has(k))r.errors.push('البريد مكرر داخل الملف');seen.add(k);});const bad=IMPORT_ROWS.filter(r=>r.errors.length).length;renderImportPreview();$('importSummary').innerHTML=`<b>عدد السجلات:</b> ${IMPORT_ROWS.length} &nbsp; <span class="${bad?'bad':'good'}"><b>تحتاج مراجعة:</b> ${bad}</span>`;$('importSummary').hidden=false;$('confirmImport').disabled=bad>0||!IMPORT_ROWS.length}catch(e){note('error',e.message)}}
+async function previewExcel(ev){const f=ev.target.files?.[0];if(!f)return;try{const data=await f.arrayBuffer();const wb=XLSX.read(data,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const raw=XLSX.utils.sheet_to_json(ws,{defval:''});if(!raw.length)throw Error('الملف لا يحتوي على بيانات.');const allowed=['role_type','full_name','email','password','stage_names','classes','sections','is_active'];const missing=allowed.filter(k=>!(k in raw[0]));if(missing.length)throw Error('الأعمدة الناقصة: '+missing.join(', '));IMPORT_ROWS=raw.map(validateImportRow);const seen=new Set();IMPORT_ROWS.forEach(r=>{const k=r.email.toLowerCase();if(seen.has(k))r.errors.push('البريد مكرر داخل الملف');seen.add(k);});const bad=IMPORT_ROWS.filter(r=>r.errors.length).length;renderImportPreview();$('importSummary').innerHTML=`<b>عدد السجلات:</b> ${IMPORT_ROWS.length} &nbsp; <span class="${bad?'bad':'good'}"><b>تحتاج مراجعة:</b> ${bad}</span>`;$('importSummary').hidden=false;$('confirmImport').disabled=bad>0||!IMPORT_ROWS.length}catch(e){note('error',e.message)}}
 function renderImportPreview(){const rows=IMPORT_ROWS;const head=['#','الدور','الاسم','البريد','كلمة المرور','المراحل','الفصول','الحالة','الملاحظات'];$('importPreview').innerHTML=`<table class="data-table"><tr>${head.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr class="${r.errors.length?'import-row-error':''}"><td>${r.row}</td><td>${esc(ROLE_VALUES[r.role_type]||r.role_type)}</td><td>${esc(r.full_name)}</td><td dir="ltr">${esc(r.email)}</td><td>${r.password?'موجودة':'—'}</td><td>${esc(r.stage_names)}</td><td>${esc(r.classes)}</td><td>${String(r.is_active).toUpperCase()==='FALSE'?'موقوف':'نشط'}</td><td>${r.errors.length?`<ul class="import-errors">${r.errors.map(esc).map(x=>`<li>${x}</li>`).join('')}</ul>`:'✓ صالح'}</td></tr>`).join('')}</table>`}
 async function confirmExcelImport(){if(!IMPORT_ROWS.length||IMPORT_ROWS.some(r=>r.errors.length))return;const {data:{session}}=await sb.auth.getSession();if(!session)return;const payload={rows:IMPORT_ROWS.map(({errors,row,...r})=>({...r,is_active:String(r.is_active).toUpperCase()!=='FALSE'}))};$('confirmImport').disabled=true;$('confirmImport').textContent='جاري الاستيراد...';const {data,error}=await sb.functions.invoke('bulk-user-import',{body:payload});if(error){note('error',error.message);$('confirmImport').disabled=false;$('confirmImport').textContent='تأكيد الاستيراد';return}note('ok',`تم الاستيراد: ${data?.created||0} جديد، ${data?.updated||0} محدث.`);closeImport();await boot();
- const issued=(data?.results||[]).filter(r=>r.status==='ok'&&r.pin);
- if(issued.length){const byEmail=new Map(S.users.map(u=>[String(u.email||'').toLowerCase(),u.id]));issued.forEach(r=>{const id=byEmail.get(String(r.email||'').toLowerCase());if(id)S.revealedPins[id]=r.pin});render();document.querySelector('.tabs button[data-tab="cards"]').click();note('ok','بطاقات الأرقام السرية الجديدة جاهزة للطباعة الآن — لن تظهر مرة أخرى بعد مغادرة الصفحة.')}}
+ const issued=(data?.results||[]).filter(r=>r.status==='ok'&&r.password);
+ if(issued.length){const byEmail=new Map(S.users.map(u=>[String(u.email||'').toLowerCase(),u.id]));issued.forEach(r=>{const id=byEmail.get(String(r.email||'').toLowerCase());if(id)S.revealedPins[id]=r.password});render();document.querySelector('.tabs button[data-tab="cards"]').click();note('ok','كلمات المرور المؤقتة للحسابات الجديدة جاهزة — انسخها أو اطبع البطاقات الآن.')}}
