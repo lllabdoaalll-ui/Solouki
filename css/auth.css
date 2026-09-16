@@ -464,3 +464,35 @@ body.auth-page {
   .auth-mode-tab { font-size: 12.5px; padding: 9px 4px; }
   .brand-logo { width: 56px; height: 56px; font-size: 24px; }
 }
+
+/* ——— success box + modal (STEP 53) ——— */
+.success-box {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #0f5c56;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 8px;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.modal[hidden] {
+  display: none !important;
+}
