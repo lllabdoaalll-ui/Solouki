@@ -21,7 +21,7 @@ window.resetUserPassword=async id=>{
   if(me.role_type==='it_officer'&&u.role_type==='superadmin')return note('error','لا يمكن لمسؤول الحاسب إعادة تعيين كلمة سر المسؤول العام');
   if(!confirm('سيتم إصدار كلمة مرور جديدة لـ '+u.full_name+' وإلغاء القديمة فورًا. تأكيد؟'))return;
   try{
-    const {data,error}=await sb.functions.invoke('admin-reset-password',{body:{profile_id:id}});
+    const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'reset_password',profile_id:id}});
     if(error)throw error;
     const payload=data?.error?null:data;
     if(!payload?.ok)throw new Error(data?.error||'فشل إعادة التعيين');
@@ -53,14 +53,102 @@ if(role==='counselor'){$('classes').innerHTML=S.classes.length?S.classes.map(c=>
 function closeUser(){$('modal').hidden=true}window.closeUser=closeUser;
 window.openUser=openUser;
 window.editUser=id=>openUser(S.users.find(u=>u.id===id)?.role_type,S.users.find(u=>u.id===id));
-window.toggleUser=async id=>{const u=S.users.find(x=>x.id===id);const {error}=await sb.rpc('set_profile_active',{p_profile_id:id,p_is_active:!u.is_active});if(error)return note('error',error.message);note('ok','تم تحديث حالة الحساب.');await boot()}
-$('form').onsubmit=async e=>{e.preventDefault();const role=$('role').value,id=$('editId').value,pin=$('pin').value.trim();if(pin&&!/^[0-9]{6}$/.test(pin))return note('error','PIN يجب أن يكون 6 أرقام، أو اتركه فارغًا.');
-if(!id)return note('error','إنشاء مستخدم Auth جديد يحتاج Edge Function آمنة في الخادم. استخدم استيراد Excel لإضافة مستخدم جديد.');
-const u=S.users.find(x=>x.id===id);const personal_whatsapp=$('personalWa').value.trim();const {error}=await sb.from('profiles').update({full_name:$('name').value.trim(),email:$('email').value.trim(),personal_whatsapp:personal_whatsapp||null,phone:personal_whatsapp||null,updated_at:new Date().toISOString()}).eq('id',id);if(error)return note('error',error.message);
-if(pin){const {data,error:pinErr}=await sb.rpc('admin_set_profile_pin',{p_profile_id:id,p_pin:pin});if(pinErr)return note('error',pinErr.message);S.revealedPins[id]=data}
-await sb.from('stage_assignments').delete().eq('profile_id',id);const st=[...$('stages').querySelectorAll('input:checked')].map(x=>({profile_id:id,stage_id:x.value,assigned_by:S.profile.id}));if(st.length)await sb.from('stage_assignments').insert(st);
-if(role==='counselor'){await sb.from('counselor_class_assignments').delete().eq('counselor_id',id);const rows=[...$('classes').querySelectorAll('input:checked')].map(x=>{const [stage_id,grade,class_name]=x.value.split('|');return{counselor_id:id,stage_id,grade,class_name,class_key:stage_id+':'+grade+':'+class_name,section:'arabic',assigned_by:S.profile.id}});if(rows.length)await sb.from('counselor_class_assignments').insert(rows)}
-closeUser();note('ok',pin?'تم حفظ التعديلات وإصدار رقم سري جديد — اطبع بطاقته من تبويب بطاقات الدخول.':'تم حفظ التعديلات.');await boot()};
+window.toggleUser=async id=>{
+  const u=S.users.find(x=>x.id===id); if(!u)return;
+  const goingOff=!!u.is_active;
+  if(goingOff){
+    if(!confirm('إيقاف حساب «'+u.full_name+'»؟\nلن يتمكن من الدخول، وتبقى المخالفات والتكريمات التي سجّلها محفوظة.'))return;
+    try{
+      const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'deactivate',profile_id:id}});
+      if(error)throw error;
+      if(data?.error)throw new Error(data.error);
+      note('ok',data?.note||'تم إيقاف الحساب.');
+    }catch(err){return note('error',err.message||String(err))}
+  }else{
+    try{
+      const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'reactivate',profile_id:id}});
+      if(error)throw error;
+      if(data?.error)throw new Error(data.error);
+      note('ok','تم إعادة تفعيل الحساب.');
+    }catch(err){return note('error',err.message||String(err))}
+  }
+  await boot();
+}
+$('form').onsubmit=async e=>{e.preventDefault();
+const role=$('role').value,id=$('editId').value;
+const full_name=$('name').value.trim();
+const email=$('email').value.trim().toLowerCase();
+const password=($('password')&&$('password').value||'').trim();
+const personal_whatsapp=$('personalWa').value.trim();
+if(!full_name||!email)return note('error','الاسم والبريد مطلوبان');
+
+// ——— إنشاء مستخدم جديد عبر Edge Function ———
+if(!id){
+  if(!password||password.length<8)return note('error','كلمة المرور الافتراضية مطلوبة (8 أحرف على الأقل) — اضغط توليد');
+  const stage_ids=[...($('stages')?$('stages').querySelectorAll('input:checked'):[])].map(x=>x.value);
+  const classes=role==='counselor'
+    ?[...($('classes')?$('classes').querySelectorAll('input:checked'):[])].map(x=>{const [stage_id,grade,class_name]=x.value.split('|');return{stage_id,grade,class_name}})
+    :[];
+  try{
+    const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{
+      action:'create',
+      full_name,email,role_type:role,password,
+      personal_whatsapp:personal_whatsapp||null,
+      stage_ids, classes
+    }});
+    if(error)throw error;
+    if(data?.error)throw new Error(data.error);
+    if(!data?.ok)throw new Error('فشل إنشاء الحساب');
+    const pw=data.password||password;
+    closeUser();
+    note('ok','تم إنشاء الحساب. انسخ كلمة المرور الآن (مرة واحدة): '+pw);
+    try{await navigator.clipboard.writeText(pw)}catch(_){}
+    alert('تم إنشاء حساب:\n'+data.full_name+'\n'+data.email+'\n\nكلمة المرور الافتراضية:\n'+pw+'\n\nسيُطلب منه تغييرها عند أول دخول.');
+    await boot();
+  }catch(err){
+    note('error',err.message||String(err));
+  }
+  return;
+}
+
+// ——— تعديل مستخدم موجود ———
+const {error}=await sb.from('profiles').update({
+  full_name, email,
+  personal_whatsapp:personal_whatsapp||null,
+  phone:personal_whatsapp||null,
+  updated_at:new Date().toISOString()
+}).eq('id',id);
+if(error)return note('error',error.message);
+
+// تحديث كلمة المرور إن أُدخلت
+if(password&&password.length>=8){
+  try{
+    const {data,error:pwErr}=await sb.functions.invoke('admin-manage-staff',{body:{
+      action:'reset_password', profile_id:id, password
+    }});
+    if(pwErr)throw pwErr;
+    if(data?.error)throw new Error(data.error);
+    note('ok','تم حفظ التعديلات وتحديث كلمة المرور.');
+  }catch(err){
+    return note('error','حُفظ الملف لكن فشل تحديث كلمة المرور: '+(err.message||err));
+  }
+}
+
+await sb.from('stage_assignments').delete().eq('profile_id',id);
+const st=[...($('stages')?$('stages').querySelectorAll('input:checked'):[])].map(x=>({profile_id:id,stage_id:x.value,assigned_by:S.profile.id}));
+if(st.length)await sb.from('stage_assignments').insert(st);
+if(role==='counselor'){
+  await sb.from('counselor_class_assignments').delete().eq('counselor_id',id);
+  const rows=[...($('classes')?$('classes').querySelectorAll('input:checked'):[])].map(x=>{
+    const [stage_id,grade,class_name]=x.value.split('|');
+    return{counselor_id:id,stage_id,grade,class_name,class_key:stage_id+':'+grade+':'+class_name,section:'arabic',assigned_by:S.profile.id};
+  });
+  if(rows.length)await sb.from('counselor_class_assignments').insert(rows);
+}
+closeUser();
+if(!(password&&password.length>=8)) note('ok','تم حفظ التعديلات.');
+await boot();
+};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});
 $('logout').onclick=async()=>{await sb.auth.signOut();sessionStorage.clear();location.href='index.html'};
 if($('btnGenPin'))$('btnGenPin').onclick=()=>{ $('pin').value=generateRandomPin(6); note('ok','تم توليد PIN جديد.'); };

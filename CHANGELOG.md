@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## Phase 4 — STEP 54: إدارة الطاقم من داخل النظام
+- Edge Function جديدة: `admin-manage-staff`
+  - `create` — إنشاء Auth + profile + دور + كلمة مرور افتراضية + must_change_password
+  - `reset_password` — كلمة مرور جديدة وإلزام التغيير
+  - `deactivate` — إيقاف ناعم (السجلات محفوظة، إزالة الإسنادات)
+  - `reactivate` — إعادة التفعيل
+- تحديث `roles.js`: زر «إضافة» يعمل فعلياً من داخل النظام
+- إيقاف الحساب عبر Edge Function بدل حذف السجلات
+- عدة مستخدمين بنفس الدور مدعومون أصلاً
+- النشر: `supabase functions deploy admin-manage-staff`
+- الإصدار: `4.54.0`
+
+## Phase 4 — STEP 53-C: مزامنة المستخدمين الحاليين + إصلاح قيود PIN
+- إزالة قيد NOT NULL عن `pin_hash_deprecated` / `pin_plain_deprecated`
+- مزامنة كل `auth.users` مع `profiles` (INSERT … ON CONFLICT)
+- تعيين `must_change_password = TRUE` للحسابات التجريبية
+- ملف: `sql/phase4-step53-c-sync-existing-users.sql`
+
 ## Phase 4 — STEP 53-B: واجهة الدخول بالبريد + كلمة المرور
 - إعادة كتابة `js/auth.js` بالكامل: إزالة كل منطق PIN
 - الدخول عبر `signInWithPassword` + جلب profile
