@@ -1,5 +1,5 @@
 const sb=supabase.createClient(SOLOUKI_CONFIG.SUPABASE_URL,SOLOUKI_CONFIG.SUPABASE_ANON_KEY);
-const S={profile:null,stages:[],users:[],assign:[],classes:[],revealedPasswords:{},permCatalog:[],rolePerms:[]};const $=id=>document.getElementById(id);
+const S={profile:null,stages:[],users:[],assign:[],classes:[],availableClasses:[],revealedPasswords:{},permCatalog:[],rolePerms:[]};const $=id=>document.getElementById(id);
 const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const rn=r=>({stage_manager:'مدير مرحلة',it_officer:'مسؤول حاسب',counselor:'أخصائي اجتماعي'})[r]||r;
 function note(id,t){$(id).textContent=t;$(id).hidden=false;setTimeout(()=>$(id).hidden=true,3500)}
@@ -20,8 +20,41 @@ const p=await sb.from('profiles').select('*').eq('id',session.user.id).eq('is_ac
 const a=await Promise.all([sb.from('stages').select('*').eq('school_id',p.data.school_id).order('sort_order'),sb.from('profiles').select('*').eq('school_id',p.data.school_id).in('role_type',['stage_manager','it_officer','counselor']).order('full_name')]);
 S.stages=a[0].data||[];S.users=a[1].data||[];const ids=S.stages.map(x=>x.id);
 if(ids.length){S.assign=(await sb.from('stage_assignments').select('*').in('stage_id',ids)).data||[];S.classes=(await sb.from('counselor_class_assignments').select('*').in('stage_id',ids)).data||[]}
+/* تحميل الفصول المتاحة من الطلاب (أو من RPC) لعرضها عند إسناد الأخصائي */
+S.availableClasses=await loadAvailableClasses(ids);
 const permA=await Promise.all([sb.from('permission_catalog').select('*').order('sort_order'),sb.from('role_permissions').select('*')]);S.permCatalog=permA[0].data||[];S.rolePerms=permA[1].data||[];renderPermissions();
 render()}
+/** يجلب الفصول الفعلية من الطلاب (أو RPC) وليس من الإسنادات السابقة فقط */
+async function loadAvailableClasses(stageIds){
+  try{
+    const {data,error}=await sb.rpc('list_bulk_class_options');
+    if(!error&&data&&data.length){
+      return data.map(o=>({
+        stage_id:o.stage_id,
+        grade:o.grade,
+        class_name:o.class_name,
+        section:o.section||'arabic',
+        stage_name:o.stage_name||stage(o.stage_id),
+        student_count:o.student_count||0
+      }));
+    }
+  }catch(_){}
+  /* احتياطي: استعلام مباشر من جدول الطلاب */
+  if(!stageIds||!stageIds.length)return[];
+  const {data,error}=await sb.from('students')
+    .select('stage_id,grade,class_name,section')
+    .in('stage_id',stageIds)
+    .eq('is_active',true);
+  if(error||!data)return[];
+  const map=new Map();
+  data.forEach(s=>{
+    if(!s.stage_id||!s.grade||!s.class_name)return;
+    const key=`${s.stage_id}|${s.grade}|${s.class_name}|${s.section||'arabic'}`;
+    if(!map.has(key))map.set(key,{stage_id:s.stage_id,grade:s.grade,class_name:s.class_name,section:s.section||'arabic',stage_name:stage(s.stage_id),student_count:0});
+    map.get(key).student_count++;
+  });
+  return[...map.values()].sort((a,b)=>String(a.stage_name).localeCompare(String(b.stage_name),'ar')||String(a.grade).localeCompare(String(b.grade),'ar')||String(a.class_name).localeCompare(String(b.class_name),'ar'));
+}
 function stage(id){return S.stages.find(x=>x.id===id)?.name_ar||id}
 function scope(u){if(u.role_type==='counselor')return S.classes.filter(x=>x.counselor_id===u.id).map(x=>`${stage(x.stage_id)} — ${x.grade} — ${x.class_name}`);return S.assign.filter(x=>x.profile_id===u.id).map(x=>stage(x.stage_id))}
 function table(role,id){const us=S.users.filter(x=>x.role_type===role);$(id).innerHTML=`<div class="table-wrap"><table class="data-table"><tr><th>الاسم</th><th>البريد</th><th>النطاق</th><th>الحالة</th><th></th></tr>${us.map(u=>`<tr><td><b>${esc(u.full_name)}</b></td><td dir="ltr">${esc(u.email||'—')}</td><td>${scope(u).map(x=>`<span class="badge">${esc(x)}</span>`).join('')||'—'}</td><td>${u.is_active?'نشط':'موقوف'}</td><td><button class="mini" onclick="editUser('${u.id}')">تعديل</button> <button class="mini" onclick="resetUserPassword('${u.id}')" title="إصدار كلمة مرور جديدة وإلغاء القديمة">كلمة مرور جديدة</button> <button class="mini" onclick="toggleUser('${u.id}')">${u.is_active?'إيقاف':'تفعيل'}</button></td></tr>`).join('')}</table></div>`}
@@ -120,7 +153,20 @@ const wa=u?.personal_whatsapp||u?.phone||'';$('personalWa').value=wa;
 $('waBox').hidden=false;$('waHint').hidden=role!=='counselor';
 $('stagesBox').hidden=role==='counselor';$('classesBox').hidden=role!=='counselor';$('sectionsBox').hidden=role!=='it';
 $('stages').innerHTML=S.stages.filter(x=>x.is_active).map(s=>`<label><input type="checkbox" value="${esc(s.id)}" ${u&&scope(u).includes(s.name_ar)?'checked':''}>${esc(s.name_ar)}</label>`).join('');
-if(role==='counselor'){$('classes').innerHTML=S.classes.length?S.classes.map(c=>`<label><input type="checkbox" value="${esc(c.stage_id+'|'+c.grade+'|'+c.class_name)}">${esc(stage(c.stage_id)+' — '+c.grade+' — '+c.class_name)}</label>`).join(''):'<span>ستظهر الفصول بعد رفع الطلاب في المرحلة 3.</span>'}}
+if(role==='counselor'){
+  const assigned=new Set((S.classes||[]).filter(c=>u&&c.counselor_id===u.id).map(c=>`${c.stage_id}|${c.grade}|${c.class_name}`));
+  const list=S.availableClasses||[];
+  if(!list.length){
+    $('classes').innerHTML='<span>لا توجد فصول بعد. ارفع الطلاب أولاً من صفحة الطلاب ثم أعد فتح هذه النافذة.</span>';
+  }else{
+    $('classes').innerHTML=list.map(c=>{
+      const val=`${c.stage_id}|${c.grade}|${c.class_name}`;
+      const label=`${c.stage_name||stage(c.stage_id)} — ${c.grade} — ${c.class_name}${c.section&&c.section!=='arabic'?' · '+c.section:''}${c.student_count?` (${c.student_count})`:''}`;
+      const checked=assigned.has(val)?'checked':'';
+      return`<label><input type="checkbox" value="${esc(val)}" ${checked}>${esc(label)}</label>`;
+    }).join('');
+  }
+}}
 function closeUser(){$('modal').hidden=true}window.closeUser=closeUser;
 window.openUser=openUser;
 window.editUser=id=>openUser(S.users.find(u=>u.id===id)?.role_type,S.users.find(u=>u.id===id));
@@ -214,7 +260,9 @@ if(role==='counselor'){
   await sb.from('counselor_class_assignments').delete().eq('counselor_id',id);
   const rows=[...($('classes')?$('classes').querySelectorAll('input:checked'):[])].map(x=>{
     const [stage_id,grade,class_name]=x.value.split('|');
-    return{counselor_id:id,stage_id,grade,class_name,class_key:stage_id+':'+grade+':'+class_name,section:'arabic',assigned_by:S.profile.id};
+    const match=(S.availableClasses||[]).find(c=>c.stage_id===stage_id&&c.grade===grade&&c.class_name===class_name);
+    const section=match?.section||'arabic';
+    return{counselor_id:id,stage_id,grade,class_name,class_key:stage_id+':'+grade+':'+class_name,section,assigned_by:S.profile.id};
   });
   if(rows.length)await sb.from('counselor_class_assignments').insert(rows);
 }
