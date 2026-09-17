@@ -6,6 +6,7 @@
   let rows = [];
   let bulkQueue = [];
   let bulkIndex = 0;
+  let waWindow = null;
   const WA_WIN = 'solouki_whatsapp'; // نفس النافذة دائماً
   const $ = id => document.getElementById(id);
   const note = (id, text, show = true) => {
@@ -17,7 +18,12 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[c]);
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => {
+    // تاريخ محلي (مهم في مصر: لا نستخدم UTC حتى لا تنتقل إشعارات بعد منتصف الليل لليوم السابق)
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
   const digits = v => String(v ?? '')
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/\D/g, '');
@@ -85,15 +91,23 @@
       return false;
     }
     const url = waLink(p, row.message);
-    // نفس اسم النافذة → يعيد استخدام التبويب/النافذة بدل فتح العشرات
-    const w = window.open(url, WA_WIN);
-    if (!w) {
-      note('error', 'المتصفح منع النافذة المنبثقة. اسمح بالنوافذ لهذا الموقع ثم أعد المحاولة.');
+    // افتح أول مرة من ضغطة المستخدم، ثم أعد استخدام نفس نافذة واتساب
+    // بدلاً من إنشاء تبويب جديد لكل طالب.
+    try {
+      if (!waWindow || waWindow.closed) {
+        waWindow = window.open(url, WA_WIN);
+      } else {
+        waWindow.location.href = url;
+        waWindow.focus();
+      }
+    } catch (_) {
+      waWindow = null;
+    }
+    if (!waWindow) {
+      note('error', 'المتصفح منع نافذة واتساب. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');
       return false;
     }
-    try {
-      w.focus();
-    } catch (_) { /* ignore */ }
+    try { waWindow.focus(); } catch (_) { /* ignore */ }
     return true;
   }
 

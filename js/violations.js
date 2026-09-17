@@ -309,7 +309,8 @@
 
   function setDefaultDate() {
     const d = new Date();
-    const iso = d.toISOString().slice(0, 10);
+    const pad = n => String(n).padStart(2, '0');
+    const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     $('violationDate').value = iso;
     if ($('bulkViolationDate')) $('bulkViolationDate').value = iso;
   }
