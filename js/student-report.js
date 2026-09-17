@@ -135,7 +135,7 @@
       الفصل: ${esc(st.class_name || '—')} ·
       القسم: ${esc(sectionLabel(st.section))}<br>
       الرقم القومي: ${esc(st.national_id || '—')} ·
-      رقم الجلوس: ${esc(st.student_code || '—')} ·
+      كود الطالب: ${esc(st.student_code || '—')} ·
       العام: ${esc(st.academic_year || state.settings?.academic_year || '—')}
     `;
 
@@ -305,7 +305,7 @@
         </div>
         <div class="row">
           <b>الرقم القومي:</b> ${esc(st.national_id || '—')}
-          &nbsp;·&nbsp; <b>رقم الجلوس:</b> ${esc(st.student_code || '—')}
+          &nbsp;·&nbsp; <b>كود الطالب:</b> ${esc(st.student_code || '—')}
         </div>
       </div>
       <div class="solouki-stats">

@@ -1455,45 +1455,6 @@
     detailStudentKey = null;
   }
 
-  function printStudentDetail() {
-    const s = current.find(x => studentKey(x) === detailStudentKey);
-    if (!s) return msg('error', 'اختر طالباً أولاً');
-    const sheet = $('studentPrintSheet');
-    if (!sheet) return msg('error', 'عنصر الطباعة غير متاح');
-    const pretty = v => {
-      const d = digits(v);
-      if (d.startsWith('20') && d.length === 12) return '0' + d.slice(2);
-      return v || '—';
-    };
-    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-    sheet.innerHTML = `
-      <div class="solouki-sheet">
-        <div class="solouki-doc-title"><h1>بطاقة بيانات طالب</h1>
-          <div class="meta">التاريخ: <b>${escapeHtml(today)}</b></div>
-        </div>
-        <div class="solouki-student-box">
-          <div class="name">${escapeHtml(s.full_name || '—')}</div>
-          <div class="row">
-            <b>الرقم القومي:</b> ${escapeHtml(s.national_id || '—')} ·
-            <b>الكود:</b> ${escapeHtml(s.student_code || '—')} ·
-            <b>النوع:</b> ${escapeHtml(s.gender || '—')}
-          </div>
-          <div class="row">
-            <b>المرحلة:</b> ${escapeHtml(s.stage || '—')} ·
-            <b>القسم:</b> ${escapeHtml(s.section || '—')} ·
-            <b>الصف:</b> ${escapeHtml(s.grade || '—')} ·
-            <b>الفصل:</b> ${escapeHtml(s.class || '—')}
-          </div>
-          <div class="row">
-            <b>هاتف الأب:</b> ${escapeHtml(pretty(s.father_phone))} ·
-            <b>هاتف الأم:</b> ${escapeHtml(pretty(s.mother_phone))}
-          </div>
-          <div class="row"><b>الحالة:</b> ${s.is_active !== false ? 'نشط' : 'منسحب'}</div>
-        </div>
-        <div class="solouki-footer">مُنشأ عبر <strong>سلوكي Solouki</strong></div>
-      </div>`;
-    setTimeout(() => window.print(), 150);
-  }
 
   function openEditStudent(key) {
     const s = current.find(x => studentKey(x) === key);
@@ -1678,7 +1639,6 @@
     renderRoster();
   });
   on('closeDetail', 'click', closeStudentDetail);
-  on('detailPrintBtn', 'click', printStudentDetail);
   on('closeEdit', 'click', closeEditStudent);
   on('cancelEdit', 'click', closeEditStudent);
   if ($('editForm')) $('editForm').onsubmit = saveEditStudent;
