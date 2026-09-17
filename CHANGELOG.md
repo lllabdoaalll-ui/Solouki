@@ -1,3 +1,10 @@
+
+## STEP 60.1 — بطاقات أعضاء الطاقم
+- إضافة زر «طباعة البطاقة» لكل عضو نشط بعد تجهيز كلمة المرور.
+- «طباعة البطاقات الجاهزة» تطبع الحسابات النشطة التي تم إصدار كلمة مرور لها فقط.
+- منع طباعة بطاقات الحسابات الموقوفة.
+- تحسين التعامل مع أخطاء `admin-manage-staff` لعرض رسالة Edge Function الفعلية بدل رسالة 400 عامة.
+- التحقق من وجود حساب Auth المرتبط بالـ profile قبل تحديث كلمة المرور، مع رسالة تشخيصية واضحة عند غياب الربط.
 # STEP 60 — WhatsApp delivery tracking
 - Add provider delivery status fields and webhook event history.
 - Add secure `whatsapp-webhook` Edge Function with Meta verification.
