@@ -3,6 +3,18 @@ const S={profile:null,stages:[],users:[],assign:[],classes:[],revealedPasswords:
 const esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const rn=r=>({stage_manager:'مدير مرحلة',it_officer:'مسؤول حاسب',counselor:'أخصائي اجتماعي'})[r]||r;
 function note(id,t){$(id).textContent=t;$(id).hidden=false;setTimeout(()=>$(id).hidden=true,3500)}
+async function invokeStaff(action, profile_id, password=''){
+  const body={action,profile_id}; if(password) body.password=password;
+  const {data,error}=await sb.functions.invoke('admin-manage-staff',{body});
+  if(error){
+    let detail=error.message||String(error);
+    try{const r=error.context;if(r&&typeof r.json==='function'){const b=await r.json();if(b?.error)detail=b.error;}}catch(_){ }
+    throw new Error(detail);
+  }
+  if(data?.error) throw new Error(data.error);
+  if(!data?.ok) throw new Error('لم تنجح العملية');
+  return data;
+}
 async function boot(){const {data:{session}}=await sb.auth.getSession();if(!session)return location.href='index.html';
 const p=await sb.from('profiles').select('*').eq('id',session.user.id).eq('is_active',true).single();if(p.error||p.data.role_type!=='superadmin'){alert('المسؤول العام فقط.');return location.href='dashboard.html'}S.profile=p.data;
 const a=await Promise.all([sb.from('stages').select('*').eq('school_id',p.data.school_id).order('sort_order'),sb.from('profiles').select('*').eq('school_id',p.data.school_id).in('role_type',['stage_manager','it_officer','counselor']).order('full_name')]);
@@ -34,7 +46,7 @@ function render(){
       <div class="pin" dir="ltr">${ready?esc(password):'غير متاحة'}</div>
       <small>${scope(u).map(esc).join(' • ')||'لم يُسند بعد'}</small>
       ${ready?'<div class="ready-note no-print">جاهزة للطباعة</div>':'<div class="missing-note no-print">أصدر كلمة مرور جديدة أولًا</div>'}
-      <button type="button" class="mini no-print" onclick="regeneratePassword('${u.id}')">كلمة مرور جديدة</button>
+      <div class="card-actions no-print"><button type="button" class="mini" onclick="printSingleCard('${u.id}')" ${ready?'':'disabled'}>طباعة البطاقة</button><button type="button" class="mini" onclick="regeneratePassword('${u.id}')">كلمة مرور جديدة</button></div>
     </article>`;
   }).join('');
 }
@@ -45,47 +57,50 @@ window.resetUserPassword=async id=>{
   if(me.role_type==='it_officer'&&u.role_type==='superadmin')return note('error','لا يمكن لمسؤول الحاسب إعادة تعيين كلمة سر المسؤول العام');
   if(!confirm('سيتم إصدار كلمة مرور جديدة لـ '+u.full_name+' وإلغاء القديمة فورًا. تأكيد؟'))return;
   try{
-    const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'reset_password',profile_id:id}});
-    if(error)throw error;
-    const payload=data?.error?null:data;
-    if(!payload?.ok)throw new Error(data?.error||'فشل إعادة التعيين');
+    const payload=await invokeStaff('reset_password',id);
     const pw=payload.password;
     if(!pw)throw new Error('لم تُرجع كلمة مرور جديدة');
-    S.revealedPasswords[id]=pw;
-    render();
+    S.revealedPasswords[id]=pw; render();
     note('ok','تم إصدار كلمة مرور جديدة لـ '+u.full_name+' وهي جاهزة للطباعة.');
     try{await navigator.clipboard.writeText(pw);}catch(_){ }
-    alert('كلمة المرور الجديدة لـ '+u.full_name+':\n\n'+pw+'\n\nتم وضعها في بطاقة الدخول وجاهزة للطباعة. لن تظهر مرة أخرى بعد إعادة تحميل الصفحة.');
-  }catch(e){
-    note('error',(e.message||String(e))+' — تأكد من نشر Edge Function: admin-manage-staff');
-  }
+    alert('كلمة المرور الجديدة لـ '+u.full_name+':\n\n'+pw+'\n\nتم وضعها في بطاقة الدخول وجاهزة للطباعة.');
+  }catch(e){note('error','تعذر تجهيز بطاقة الدخول: '+(e.message||String(e)))}
 };
 
 window.regeneratePassword=async id=>{
   const u=S.users.find(x=>x.id===id);if(!u)return;
+  if(!S.profile||!['superadmin','it_officer'].includes(S.profile.role_type))return note('error','غير مصرح');
+  if(S.profile.role_type==='it_officer'&&u.role_type==='superadmin')return note('error','لا يمكن لمسؤول الحاسب إعادة تعيين كلمة سر المسؤول العام');
   if(!confirm('سيتم إصدار كلمة مرور مؤقتة جديدة لـ '+u.full_name+' وإلزامه بتغييرها عند الدخول. تأكيد؟'))return;
   try{
-    const {data,error}=await sb.functions.invoke('admin-manage-staff',{body:{action:'reset_password',profile_id:id}});
-    if(error)throw error;
-    if(data?.error)throw new Error(data.error);
-    const pw=data?.password;
-    if(!pw)throw new Error('لم تُرجع كلمة مرور');
-    S.revealedPasswords[id]=pw;
-    render();
+    const data=await invokeStaff('reset_password',id);
+    const pw=data.password;if(!pw)throw new Error('لم تُرجع كلمة مرور');
+    S.revealedPasswords[id]=pw; render();
     note('ok','كلمة مرور مؤقتة لـ '+u.full_name+' أصبحت جاهزة للطباعة.');
     try{await navigator.clipboard.writeText(pw)}catch(_){ }
-    alert('كلمة المرور المؤقتة:\n'+pw+'\n\nتم وضعها في بطاقة الدخول. انسخها أو اطبع البطاقة الآن — سيُطلب تغييرها عند أول دخول.');
-  }catch(err){note('error',err.message||String(err))}
+    alert('كلمة المرور المؤقتة:\n'+pw+'\n\nتم وضعها في بطاقة الدخول. سيُطلب تغييرها عند أول دخول.');
+  }catch(err){note('error','تعذر تجهيز بطاقة الدخول: '+(err.message||String(err)))}
 };
 
+window.printSingleCard=id=>{
+  const u=S.users.find(x=>x.id===id); if(!u)return;
+  if(!u.is_active)return alert('لا يمكن طباعة بطاقة دخول لحساب موقوف.');
+  if(!S.revealedPasswords[id])return alert('أصدر كلمة مرور جديدة أولًا، ثم اطبع البطاقة.');
+  const source=document.querySelector(`.access-card[data-user-id=\"${CSS.escape(id)}\"]`);
+  if(!source)return alert('تعذر العثور على بطاقة العضو.');
+  const old=document.getElementById('singlePrintCard'); if(old)old.remove();
+  const wrap=document.createElement('div'); wrap.id='singlePrintCard'; wrap.className='single-print-card';
+  const clone=source.cloneNode(true); clone.querySelectorAll('.no-print').forEach(x=>x.remove()); wrap.appendChild(clone); document.body.appendChild(wrap);
+  document.body.classList.add('printing-one-card');
+  window.print();
+  setTimeout(()=>{document.body.classList.remove('printing-one-card');wrap.remove()},500);
+};
 window.printCards=()=>{
-  const ready=S.users.filter(u=>S.revealedPasswords[u.id]);
-  if(!ready.length){
-    alert('لا توجد بطاقات جاهزة للطباعة. استخدم «كلمة مرور جديدة» بجوار الحساب المطلوب أولًا.');
-    return;
-  }
-  const missing=S.users.length-ready.length;
-  if(missing>0&&!confirm(`سيتم طباعة ${ready.length} بطاقة جاهزة فقط.\n\nهناك ${missing} بطاقة بدون كلمة مرور ولن تُطبع.\n\nهل تريد المتابعة؟`))return;
+  const ready=S.users.filter(u=>u.is_active&&S.revealedPasswords[u.id]);
+  if(!ready.length){alert('لا توجد بطاقات دخول جاهزة للطباعة. استخدم «كلمة مرور جديدة» للحساب المطلوب أولًا.');return;}
+  const eligible=S.users.filter(u=>u.is_active).length;
+  const missing=eligible-ready.length;
+  if(missing>0&&!confirm(`سيتم طباعة ${ready.length} بطاقة دخول جاهزة فقط.\n\nهناك ${missing} حساب نشط بدون كلمة مرور جاهزة، ولن تُطبع بطاقاته.\n\nهل تريد المتابعة؟`))return;
   document.body.classList.add('printing-cards');
   window.print();
   setTimeout(()=>document.body.classList.remove('printing-cards'),500);

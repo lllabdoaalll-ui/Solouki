@@ -254,10 +254,21 @@ Deno.serve(async (req) => {
         return json({ error: 'cannot reset superadmin' }, 403)
       }
 
+      // التحقق من وجود حساب Auth المقابل قبل محاولة تحديث كلمة المرور.
+      // هذا يمنع ظهور 400 غامضة عندما يوجد profile بدون مستخدم Auth.
+      const { data: authTarget, error: authLookupErr } = await admin.auth.admin.getUserById(profile_id)
+      if (authLookupErr || !authTarget?.user) {
+        return json({
+          error: 'لا يوجد حساب دخول Auth مرتبط بهذا العضو. يجب إصلاح ربط الحساب أولًا.',
+          code: 'AUTH_USER_NOT_FOUND',
+          details: authLookupErr?.message || null,
+        }, 404)
+      }
+
       const { error: updErr } = await admin.auth.admin.updateUserById(profile_id, {
         password,
       })
-      if (updErr) return json({ error: updErr.message }, 400)
+      if (updErr) return json({ error: `فشل تحديث كلمة المرور: ${updErr.message}`, code: 'AUTH_PASSWORD_UPDATE_FAILED' }, 400)
 
       await admin
         .from('profiles')
