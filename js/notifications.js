@@ -1,4 +1,4 @@
-/* Solouki 4.62.8 — WhatsApp notification center
+/* Solouki 4.62.10 — Smart WhatsApp notification center
  * Distinguishes: (1) access notice, (2) full written warning, (3) warning + escalation steps.
  * Manual sending always reuses the same named WhatsApp window.
  */
@@ -7,7 +7,7 @@
   const sb = window.SoloukiDB ? window.SoloukiDB.getClient() : null;
   let profile = null, rows = [], bulkQueue = [], bulkIndex = 0, waWindow = null;
   let sourceMode = 'db';
-  const MANUAL_SENT_KEY = 'solouki_manual_whatsapp_sent_v4629';
+  const MANUAL_SENT_KEY = 'solouki_manual_whatsapp_sent_v46210';
   let sendMode = 'access';
   const WA_WIN = 'solouki_whatsapp';
   const $ = id => document.getElementById(id);
@@ -22,11 +22,12 @@
   function manualSentMap(){
     try { return JSON.parse(localStorage.getItem(MANUAL_SENT_KEY) || '{}'); } catch(_) { return {}; }
   }
-  function isManuallySent(row){ return !!manualSentMap()[String(row.id)]; }
+  function manualKey(row, mode=sendMode){ return `${today()}|${mode}|${String(row.id)}`; }
+  function isManuallySent(row){ return !!manualSentMap()[manualKey(row)]; }
   function markManuallySent(row){
-    const m=manualSentMap(); m[String(row.id)]={at:new Date().toISOString(), mode:sendMode};
+    const m=manualSentMap(); m[manualKey(row)]={at:new Date().toISOString(), mode:sendMode, student_id:row.student_id, student_name:row.student_name};
     try { localStorage.setItem(MANUAL_SENT_KEY, JSON.stringify(m)); } catch(_) {}
-    row._manual_sent=true;
+    row._manual_sent=true; row._manual_sent_at=m[manualKey(row)].at; row._manual_sent_mode=sendMode;
   }
   function clearOldManualMarks(){
     const m=manualSentMap(), cutoff=Date.now()-1000*60*60*24*45, out={};
@@ -99,7 +100,7 @@
       else note('ok',rpcMessage||`تم تجهيز ${pendingRows().length} إشعارًا.`);
     }catch(e){note('error',e.message||String(e));} finally{if(b)b.disabled=false;}
   }
-  function pendingRows(){return rows.filter(r=>['queued','failed'].includes(r.status) && !r._manual_sent && normalizeRowPhone(r));}
+  function pendingRows(){return rows.filter(r=>['queued','failed'].includes(r.status) && !isManuallySent(r) && normalizeRowPhone(r));}
   function selectedRows(){return pendingRows().filter(r=>document.querySelector(`[data-select="${CSS.escape(String(r.id))}"]`)?.checked);}
 
   function getStudentCode(row){return row.student_code||row.code||row.studentCode||'—';}
@@ -151,10 +152,11 @@
   async function manualOne(row){ const text=await composeMessage(row); if(!openWa(row,text))return; note('ok',`تم فتح واتساب لـ «${row.student_name||''}» بنمط «${modeLabel(sendMode)}». أرسل الرسالة ثم عد إلى سلوكي.`); }
   function modeLabel(m){return m==='access'?'إشعار اطلاع على سلوكي':m==='warning'?'تنبيه كتابي كامل':'تنبيه كتابي + خطوات التصعيد';}
 
-  async function startBulk(){
+  async function startBulk(useSelection=true){
     const chosen=selectedRows();
-    bulkQueue=chosen.length?chosen:pendingRows();
-    if(!bulkQueue.length){note('error','حدد طالباً واحداً على الأقل، أو لا توجد إشعارات معلّقة.');return;}
+    if(useSelection && !chosen.length){note('error','حدد طالباً واحداً على الأقل من القائمة ثم اضغط «إرسال المحدد يدوياً».');return;}
+    bulkQueue=useSelection?chosen:pendingRows();
+    if(!bulkQueue.length){note('error','لا توجد إشعارات معلّقة للإرسال.');return;}
     bulkIndex=0; $('bulkBar').hidden=false; await openBulkCurrent();
   }
   async function openBulkCurrent(){
@@ -170,7 +172,7 @@
     await openBulkCurrent();
   }
   async function bulkPrev(){if(bulkIndex<=0)return;bulkIndex--;await openBulkCurrent();}
-  function finishBulk(){bulkQueue=[];bulkIndex=0;$('bulkBar').hidden=true;note('ok','انتهى مسار الإرسال اليدوي. تم إرسال ما أكّدته بنفسك داخل WhatsApp.');updateBulkBar();}
+  function finishBulk(){bulkQueue=[];bulkIndex=0;$('bulkBar').hidden=true;note('ok','انتهى مسار الإرسال اليدوي. تم تسجيل الحالات التي أكّدتها فقط.');render();}
   function updateBulkBar(){
     const prog=$('bulkProgress'),pending=pendingRows().length;
     if(prog)prog.textContent=bulkQueue.length?`النمط: ${modeLabel(sendMode)} — الحالي ${bulkIndex+1} من ${bulkQueue.length} — المتبقي ${Math.max(bulkQueue.length-bulkIndex-1,0)}`:(pending?`${pending} إشعاراً معلّقاً.`:'لا إشعارات معلّقة.');
@@ -178,19 +180,38 @@
     if($('bulkPrevBtn'))$('bulkPrevBtn').disabled=!bulkQueue.length||bulkIndex<=0;
   }
   function statusLabel(s){return ({queued:'مجهز — بانتظار الإرسال اليدوي',sending:'جاري الإرسال',sent:'تم الإرسال (API)',failed:'فشل API — يمكن الفتح يدوياً'}[s]||s);}
+  async function refreshMessagePreviews(){
+    for(const r of rows){
+      const el=document.querySelector(`[data-preview="${CSS.escape(String(r.id))}"]`);
+      if(!el) continue;
+      try{ el.textContent=await composeMessage(r); }catch(_){ el.textContent=r.message||'تعذر إنشاء المعاينة.'; }
+    }
+  }
   function render(){
-    const pending=pendingRows(); $('pendingCount').textContent=pending.length; $('openedCount').textContent=rows.filter(r=>r.status==='sent'||r._manual_sent).length; $('violCount').textContent=rows.reduce((n,r)=>n+(r.violation_count||0),0);
+    const pending=pendingRows();
+    $('pendingCount').textContent=pending.length;
+    $('openedCount').textContent=rows.filter(r=>r.status==='sent'||isManuallySent(r)).length;
+    $('violCount').textContent=rows.reduce((n,r)=>n+(r.violation_count||0),0);
     const list=$('list'); if(!list)return;
-    list.innerHTML=rows.length?rows.map(r=>`<article class="notif-item ${(r.status==='sent'||r._manual_sent)?'sent':''}">
-      <div class="notif-select">${['queued','failed'].includes(r.status)?`<input type="checkbox" data-select="${esc(r.id)}" aria-label="اختيار ${esc(r.student_name||'الطالب')}">`:''}</div>
-      <h3>${esc(r.student_name||'—')} <span class="badge-count">${r.violation_count||0} مخالفة</span></h3>
-      <div class="notif-meta">${esc(r.grade||'')} ${esc(r.class_name||'')} — ${r.parent_type==='father'?'الأب':r.parent_type==='mother'?'الأم':'ولي الأمر'} — <span dir="ltr">${esc(r.recipient_phone||'—')}</span> — <strong>${r._manual_sent?'تم التأكيد يدويًا في هذا المتصفح':esc(statusLabel(r.status))}</strong></div>
-      <div class="notif-msg"><b>رسالة الطابور الحالية:</b><br>${esc(r.message)}</div>
-      ${r.error_text?`<div class="error-box">${esc(r.error_text)}</div>`:''}
-      <div class="notif-actions">${['queued','failed'].includes(r.status)?`<button type="button" class="btn btn-primary" data-manual="${esc(r.id)}">فتح واتساب</button><button type="button" class="btn btn-outline" data-copy="${esc(r.id)}">نسخ النمط الحالي</button>`:''}</div>
-    </article>`).join(''):'<div class="empty-state">لم يتم تجهيز إشعارات اليوم بعد. اضغط «تجهيز إشعارات اليوم».</div>';
-    rows.forEach(r=>{document.querySelector(`[data-manual="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',()=>manualOne(r));document.querySelector(`[data-copy="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(await composeMessage(r));note('ok','تم نسخ الرسالة بالنمط المختار.');}catch(_){note('error','تعذر النسخ.');}});});
+    list.innerHTML=rows.length?rows.map(r=>{
+      const sent=isManuallySent(r)||r.status==='sent';
+      const selectable=['queued','failed'].includes(r.status)&&!sent&&normalizeRowPhone(r);
+      const reason=r.error_text||(!normalizeRowPhone(r)?'لا يوجد رقم هاتف صالح لولي الأمر':'');
+      return `<article class="notif-item ${sent?'sent':''}">
+        <div class="notif-select">${selectable?`<input type="checkbox" data-select="${esc(r.id)}" aria-label="اختيار ${esc(r.student_name||'الطالب')}">`:''}</div>
+        <h3>${esc(r.student_name||'—')} <span class="badge-count">${r.violation_count||0} مخالفة</span></h3>
+        <div class="notif-meta">${esc(r.grade||'')} ${esc(r.class_name||'')} — ${r.parent_type==='father'?'الأب':r.parent_type==='mother'?'الأم':'ولي الأمر'} — <span dir="ltr">${esc(r.recipient_phone||'—')}</span> — <strong>${sent?(r.status==='sent'?'تم الإرسال عبر API':'تم التأكيد يدويًا'):esc(statusLabel(r.status))}</strong></div>
+        <div class="notif-msg"><b>معاينة الرسالة بالنمط المختار:</b><br><span data-preview="${esc(r.id)}">${esc(r.message||'جاري إعداد المعاينة…')}</span></div>
+        ${reason?`<div class="error-box">${esc(reason)}</div>`:''}
+        <div class="notif-actions">${selectable?`<button type="button" class="btn btn-primary" data-manual="${esc(r.id)}">فتح واتساب</button><button type="button" class="btn btn-outline" data-copy="${esc(r.id)}">نسخ النمط الحالي</button>`:''}</div>
+      </article>`;
+    }).join(''):'<div class="empty-state">لم يتم تجهيز إشعارات اليوم بعد. اضغط «تجهيز إشعارات اليوم».</div>';
+    rows.forEach(r=>{
+      document.querySelector(`[data-manual="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',()=>manualOne(r));
+      document.querySelector(`[data-copy="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(await composeMessage(r));note('ok','تم نسخ الرسالة بالنمط المختار.');}catch(_){note('error','تعذر النسخ.');}});
+    });
     updateSelectAll(); updateBulkBar();
+    refreshMessagePreviews();
   }
   function updateSelectAll(){const checks=[...document.querySelectorAll('[data-select]')], checked=checks.filter(x=>x.checked).length; if($('selectedCount'))$('selectedCount').textContent=checked; if($('selectAll'))$('selectAll').checked=checks.length>0&&checked===checks.length;}
   function showSender(){const el=$('senderWa');if(el&&profile)el.textContent=profile.personal_whatsapp||profile.whatsapp_phone||profile.phone||'رقم واتساب المستخدم على الجهاز';}
@@ -198,6 +219,6 @@
   $('selectAll')?.addEventListener('change',e=>document.querySelectorAll('[data-select]').forEach(x=>x.checked=e.target.checked));
   document.querySelectorAll('input[name="sendMode"]').forEach(r=>r.addEventListener('change',()=>{sendMode=r.value; $('modeDescription').textContent=modeDescription(sendMode); updateBulkBar();}));
   function modeDescription(m){return m==='access'?'إشعار مختصر: يطلب من ولي الأمر الاطلاع على سلوكي باستخدام الرقم القومي وكود الطالب. لا نرسل التقرير الكامل.':m==='warning'?'تنبيه كتابي كامل: يرسل نص التنبيه والمخالفات ذات الصلة إلى ولي الأمر.':'تنبيه كتابي كامل مع ملخص خطوات المتابعة والتصعيد المقترحة من ملف الطالب.';}
-  $('prepareAllBtn')?.addEventListener('click',prepareAll); $('refreshBtn')?.addEventListener('click',load); $('startBulkBtn')?.addEventListener('click',startBulk); $('bulkNextBtn')?.addEventListener('click',bulkNext); $('bulkPrevBtn')?.addEventListener('click',bulkPrev); $('bulkStopBtn')?.addEventListener('click',finishBulk); $('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
+  $('prepareAllBtn')?.addEventListener('click',prepareAll); $('refreshBtn')?.addEventListener('click',load); $('startBulkBtn')?.addEventListener('click',()=>startBulk(true)); $('startAllBtn')?.addEventListener('click',()=>startBulk(false)); $('bulkNextBtn')?.addEventListener('click',bulkNext); $('bulkPrevBtn')?.addEventListener('click',bulkPrev); $('bulkStopBtn')?.addEventListener('click',finishBulk); $('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
   load().then(showSender).catch(e=>note('error',e.message||String(e)));
 })();
