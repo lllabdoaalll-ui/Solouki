@@ -423,20 +423,42 @@
         ' — نفّذ sql/phase4-step42-students-columns.sql في محرر SQL إن كان العمود ناقصًا.');
       return;
     }
-    // أسماء المراحل من جدول stages (إن وُجد stage_id دون stage_name)
+    // أسماء المراحل: محلي + سحابي
+    // ملاحظة: stage_id قد يكون نصاً قديماً (stage_primary_ar) أو UUID حقيقي
+    const isUuid = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v || ''));
     let stageNameById = {};
+    // 1) من القوائم المحلية الثابتة
+    STAGE_OPTIONS.forEach((st) => {
+      stageNameById[st.id] = st.name_ar || st.name || st.id;
+    });
+    // 2) من cloudStages إن كانت محمّلة مسبقاً
+    (typeof cloudStages !== 'undefined' ? cloudStages : []).forEach((st) => {
+      if (st && st.id) stageNameById[st.id] = st.name_ar || st.name || stageNameById[st.id] || '';
+    });
+    // 3) من جدول stages فقط للمعرّفات من نوع UUID (تجنّب خطأ 400)
     try {
-      const ids = [...new Set((data || []).map(s => s.stage_id).filter(Boolean))];
-      if (ids.length) {
-        const { data: stgs } = await sb.from('stages').select('id,name_ar,name').in('id', ids);
-        (stgs || []).forEach(st => {
-          stageNameById[st.id] = st.name_ar || st.name || '';
-        });
+      const ids = [...new Set((data || []).map((s) => s.stage_id).filter(Boolean))];
+      const uuidIds = ids.filter(isUuid);
+      if (uuidIds.length) {
+        const { data: stgs, error: stErr } = await sb.from('stages').select('id,name_ar').in('id', uuidIds);
+        if (!stErr) {
+          (stgs || []).forEach((st) => {
+            stageNameById[st.id] = st.name_ar || stageNameById[st.id] || '';
+          });
+        } else {
+          console.warn('stages lookup skipped', stErr.message);
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      console.warn('stages lookup', e);
+    }
 
-    current = (data || []).map(s => {
-      const stageName = s.stage_name || stageNameById[s.stage_id] || '';
+    current = (data || []).map((s) => {
+      const stageName =
+        s.stage_name ||
+        stageNameById[s.stage_id] ||
+        (s.stage_id && String(s.stage_id).startsWith('stage_') ? stageNameById[s.stage_id] : '') ||
+        '';
       return {
         id: s.id,
         national_id: s.national_id,
