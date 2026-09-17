@@ -72,7 +72,7 @@
   <div class="head">
     <div>
       <h2>قائمة الطلاب وتعديل البيانات</h2>
-      <p>فلاتر حسب نطاق صلاحياتك — اضغط على اسم الطالب لفتح ملفه الكامل والطباعة.</p>
+      <p>فلاتر حسب نطاق صلاحياتك — اضغط على اسم الطالب لفتح ملفه، أو انتقل لملف السلوك الكامل للطباعة الرسمية.</p>
     </div>
     <div class="actions">
       <input id="rosterSearch" type="search" placeholder="بحث بالاسم / الرقم القومي / الكود..." style="min-width:200px;padding:0.45rem 0.7rem;border:1px solid #cbd5e1;border-radius:8px">
@@ -154,7 +154,6 @@
     <div class="head" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap">
       <h2 id="detailTitle" style="margin:0">ملف الطالب</h2>
       <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-        <button type="button" class="btn btn-primary btn-sm" id="detailPrintBtn">🖨️ طباعة</button>
         <a class="btn btn-outline btn-sm" id="detailReportLink" href="student-report.html" target="_blank">ملف السلوك الكامل</a>
         <button type="button" class="btn btn-outline btn-sm" id="detailEditBtn">تعديل البيانات</button>
         <button type="button" class="btn btn-outline" id="closeDetail" style="padding:0.2rem 0.6rem">×</button>
@@ -165,9 +164,6 @@
     </div>
   </div>
 </div>
-
-<!-- قالب طباعة بطاقة الطالب -->
-<div id="studentPrintSheet" class="print-only" aria-hidden="true"></div>
 
 <div id="editModal" class="modal" hidden>
   <form id="editForm" class="modal-card" style="max-width:520px">
