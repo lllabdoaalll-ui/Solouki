@@ -10,3 +10,12 @@ body{display:block;background:#f0f4f8}.roles-page{max-width:1150px;margin:auto;p
   body.printing-cards .access-card{break-inside:avoid;page-break-inside:avoid;border:1px solid #555;padding:12mm}
   body.printing-cards .access-card .pin{font-size:22px}
 }
+
+.card-actions{display:flex;justify-content:center;gap:7px;margin-top:8px}.card-actions .mini:disabled{opacity:.45;cursor:not-allowed}.access-card{position:relative}.access-card::before{content:'بطاقة دخول الطاقم';display:block;text-align:center;font-size:12px;font-weight:700;color:var(--primary);border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-bottom:10px}
+.single-print-card{display:none}
+@media print{
+  body.printing-one-card .roles-page{display:none!important}
+  body.printing-one-card .single-print-card{display:block!important;padding:20mm}
+  body.printing-one-card .single-print-card .access-card{display:block!important;max-width:90mm;margin:auto;border:1px solid #333;padding:12mm;break-inside:avoid}
+  body.printing-one-card .single-print-card .pin{font-size:22px}
+}
