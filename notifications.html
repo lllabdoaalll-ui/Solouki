@@ -37,6 +37,8 @@
   background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
   padding: 0.85rem 1rem; margin: 0.75rem 0 1rem;
 }
+
+.template-guide{background:#fff;border:1px solid #cbd5e1;border-radius:12px;padding:1rem;margin:1rem 0}.template-guide h3{margin:.1rem 0 .7rem;color:#1e3a5f}.template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem}.template-grid>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem}.template-grid b{display:block;margin-bottom:.3rem}.template-grid span{display:block;color:#64748b;font-size:.84rem;line-height:1.6}.preview-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:9999}.preview-card{background:#fff;border-radius:16px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:1.1rem;box-shadow:0 20px 50px rgba(0,0,0,.25)}.preview-head{display:flex;justify-content:space-between;align-items:center;gap:1rem}.preview-head b{font-size:1.15rem;color:#1e3a5f}.preview-type{display:inline-block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:.3rem .7rem;margin:.8rem 0;font-weight:700}.preview-recipient{background:#f8fafc;border-radius:8px;padding:.55rem .7rem;margin-bottom:.7rem}.preview-text{width:100%;min-height:340px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:.8rem;font:inherit;line-height:1.7;resize:vertical;direction:rtl}.preview-note{font-size:.82rem;color:#64748b;margin:.55rem 0}.preview-actions{display:flex;gap:.5rem;justify-content:flex-start;flex-wrap:wrap}@media(max-width:700px){.template-grid{grid-template-columns:1fr}.preview-card{max-height:95vh}.preview-text{min-height:280px}}
 </style>
 </head>
 <body>
@@ -58,6 +60,8 @@
   <div id="error" class="error-box" hidden></div>
   <div id="ok" class="success-box" hidden></div>
 
+  <div class="notice" style="margin-top:.6rem"><strong>مزامنة الإرسال:</strong> حالة «تم التأكيد/الإرسال» تُحفظ في قاعدة بيانات النظام عند توفر مزامنة 4.62.12، لذلك تظهر الحالة نفسها عند استخدام الحساب من الكمبيوتر أو الهاتف.</div>
+
   <div class="sender-card">
     <div>رقم واتساب الأخصائي (المرسل): <strong id="senderWa">—</strong></div>
     <div class="small-note">يُسجَّل من إدارة الأدوار بواسطة المسؤول العام / مسؤول الحاسب / الأخصائي</div>
@@ -77,6 +81,16 @@
     <p id="modeDescription" class="small-note">إشعار مختصر: يطلب من ولي الأمر الاطلاع على سلوكي باستخدام الرقم القومي وكود الطالب. لا نرسل التقرير الكامل.</p>
   </section>
 
+
+  <section class="template-guide">
+    <h3>قوالب الرسائل</h3>
+    <div class="template-grid">
+      <div><b>📢 إشعار الاطلاع</b><span>رسالة مختصرة توجه ولي الأمر إلى سلوكي، وتحتوي على الرقم القومي وكود الطالب فقط، دون تفاصيل المخالفة.</span></div>
+      <div><b>📝 التنبيه الكامل</b><span>يعرض بيانات الواقعة والمخالفات والإجراء المسجل، بحسب البيانات المتاحة في النظام.</span></div>
+      <div><b>⚠️ التنبيه والمتابعة</b><span>يضيف خطوات المتابعة والتصعيد بصياغة واضحة، مع عدم اختراع مستوى تصعيد غير مسجل بالنظام.</span></div>
+    </div>
+  </section>
+
   <div class="head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin:1rem 0">
     <div>
       <h2 style="margin:0">إشعارات اليوم</h2>
@@ -84,7 +98,7 @@
     </div>
     <div class="actions">
       <button type="button" id="prepareAllBtn" class="btn btn-outline">① تجهيز إشعارات اليوم</button>
-      <button type="button" id="refreshBtn" class="btn btn-outline">تحديث</button>
+      <button type="button" id="refreshBtn" class="btn btn-outline">تحديث ومزامنة</button>
       <button type="button" id="startBulkBtn" class="btn btn-primary">② إرسال المحدد يدوياً</button>
       <button type="button" id="startAllBtn" class="btn btn-outline">إرسال جميع المعلّقين</button>
     </div>
@@ -104,15 +118,26 @@
   </div>
 
   <div id="list" class="notif-list"></div>
+
+  <div id="previewModal" class="preview-modal" hidden aria-modal="true" role="dialog">
+    <div class="preview-card">
+      <div class="preview-head"><div><b>معاينة الرسالة قبل الإرسال</b><div id="previewStudent" class="small-note"></div></div><button type="button" id="closePreview" class="btn btn-outline">إغلاق</button></div>
+      <div id="previewType" class="preview-type"></div>
+      <div id="previewRecipient" class="preview-recipient"></div>
+      <textarea id="previewText" class="preview-text" aria-label="نص الرسالة"></textarea>
+      <div class="preview-note">يمكنك مراجعة النص قبل فتح WhatsApp. التعديل هنا يخص هذه الرسالة فقط ولا يغيّر بيانات الطالب أو سجل المخالفة.</div>
+      <div class="preview-actions"><button type="button" id="copyPreview" class="btn btn-outline">نسخ الرسالة</button><button type="button" id="sendPreview" class="btn btn-primary">فتح WhatsApp بعد المعاينة</button></div>
+    </div>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.62.9"></script>
+  <script src="js/config.js?v=4.62.12"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/notifications.js?v=4.62.9"></script>
+  <script src="js/notifications.js?v=4.62.12"></script>
   <script src="js/pwa.js"></script>
 </body>
 </html>
