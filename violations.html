@@ -8,9 +8,10 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/catalog.css">
   <link rel="stylesheet" href="css/violations.css">
+  <link rel="stylesheet" href="css/print-official.css">
 </head>
 <body class="catalog-page">
-  <header class="catalog-header">
+  <header class="catalog-header no-print">
     <div class="catalog-header-inner">
       <div>
         <p class="section-kicker">نظام سلوكي لإدارة السلوك والانضباط المدرسي</p>
@@ -204,6 +205,9 @@
         <p class="empty-row">جاري التحميل…</p>
       </div>
     </section>
+
+    <!-- قالب طباعة التنبيه الكتابي — يظهر عند الطباعة فقط -->
+    <div id="printSheet" class="print-only solouki-sheet" aria-hidden="true"></div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

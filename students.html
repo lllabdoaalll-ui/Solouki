@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سلوكي | رفع الطلاب وWhatsApp</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/students.css">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/students.css"><link rel="stylesheet" href="css/print-official.css">
 </head>
 <body>
 <main class="students-page">
@@ -72,16 +72,32 @@
   <div class="head">
     <div>
       <h2>قائمة الطلاب وتعديل البيانات</h2>
-      <p>ابحث وعدّل أي حقل بعد الاستيراد — الخانات تُحفظ فور الضغط على «حفظ التعديل».</p>
+      <p>فلاتر حسب نطاق صلاحياتك — اضغط على اسم الطالب لفتح ملفه الكامل والطباعة.</p>
     </div>
     <div class="actions">
-      <input id="rosterSearch" type="search" placeholder="بحث بالاسم / الرقم القومي / الفصل..." style="min-width:220px;padding:0.45rem 0.7rem;border:1px solid #cbd5e1;border-radius:8px">
+      <input id="rosterSearch" type="search" placeholder="بحث بالاسم / الرقم القومي / الكود..." style="min-width:200px;padding:0.45rem 0.7rem;border:1px solid #cbd5e1;border-radius:8px">
       <select id="rosterFilter" style="padding:0.45rem 0.6rem;border-radius:8px;border:1px solid #cbd5e1">
         <option value="active">النشطون فقط</option>
         <option value="all">الكل</option>
         <option value="withdrawn">المنسحبون</option>
       </select>
     </div>
+  </div>
+  <div class="roster-filters" id="rosterFilters">
+    <label>المرحلة
+      <select id="filterStage"><option value="">— الكل —</option></select>
+    </label>
+    <label>القسم
+      <select id="filterSection"><option value="">— الكل —</option></select>
+    </label>
+    <label>الصف
+      <select id="filterGrade"><option value="">— الكل —</option></select>
+    </label>
+    <label>الفصل
+      <select id="filterClass"><option value="">— الكل —</option></select>
+    </label>
+    <button type="button" class="btn btn-outline btn-sm" id="clearRosterFilters">مسح الفلاتر</button>
+    <span class="roster-count" id="rosterCount"></span>
   </div>
   <div id="rosterTable" class="table-wrap"></div>
 </section>
@@ -132,6 +148,26 @@
 </section>
 <section id="logs" class="panel"><div class="head"><div><h2>سجل عمليات الاستيراد</h2><p>كل عملية تعتمد التغييرات تُسجل بتاريخها وملخصها.</p></div></div><div id="logsList"></div></section>
 </main>
+
+<div id="studentDetailModal" class="modal" hidden>
+  <div class="modal-card student-detail-card" style="max-width:720px">
+    <div class="head" style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap">
+      <h2 id="detailTitle" style="margin:0">ملف الطالب</h2>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary btn-sm" id="detailPrintBtn">🖨️ طباعة</button>
+        <a class="btn btn-outline btn-sm" id="detailReportLink" href="student-report.html" target="_blank">ملف السلوك الكامل</a>
+        <button type="button" class="btn btn-outline btn-sm" id="detailEditBtn">تعديل البيانات</button>
+        <button type="button" class="btn btn-outline" id="closeDetail" style="padding:0.2rem 0.6rem">×</button>
+      </div>
+    </div>
+    <div id="detailBody" class="student-detail-body">
+      <p class="small-note">جاري التحميل…</p>
+    </div>
+  </div>
+</div>
+
+<!-- قالب طباعة بطاقة الطالب -->
+<div id="studentPrintSheet" class="print-only" aria-hidden="true"></div>
 
 <div id="editModal" class="modal" hidden>
   <form id="editForm" class="modal-card" style="max-width:520px">
