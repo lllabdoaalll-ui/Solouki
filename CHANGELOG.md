@@ -1,3 +1,14 @@
+# Changelog
+
+## 4.62.9 — WhatsApp notification preparation reliability
+- Fixed zero-prepared notification cases by adding an RLS-protected fallback from `violation_records` when the queue/list RPC returns no rows or fails.
+- Groups today's violations by student and selects a valid guardian phone (father, then mother, then guardian fallback).
+- Normalizes Egyptian WhatsApp numbers before opening `wa.me`.
+- Shows explicit no-phone reasons instead of silently skipping.
+- Preserves three message modes: access notice, full written warning, and written warning + escalation.
+- Manual bulk flow reuses the same WhatsApp window and marks only explicitly confirmed items as locally confirmed.
+- Removed duplicate `senderWa` element from `notifications.html`.
+
 
 ## 4.62.8 — فصل إشعار الاطلاع عن التنبيه الكتابي
 - شاشة واتساب أصبحت تفرق بين: إشعار اطلاع على سلوكي، تنبيه كتابي كامل، وتنبيه كتابي مع خطوات التصعيد.
