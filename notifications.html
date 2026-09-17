@@ -32,6 +32,10 @@
   border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 700;
 }
 .empty-state { text-align: center; padding: 2.5rem 1rem; color: #64748b; }
+.bulk-bar {
+  background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
+  padding: 0.85rem 1rem; margin: 0.75rem 0 1rem;
+}
 </style>
 </head>
 <body>
@@ -45,7 +49,9 @@
   </header>
 
   <div class="notice">
-    <strong>مركز إشعارات WhatsApp:</strong> يتم تجهيز إشعارات اليوم من المخالفات المسجلة، ثم إرسالها عبر WhatsApp Cloud API من الخادم الآمن. إذا لم يتم إعداد API بعد، يمكنك استخدام فتح WhatsApp يدويًا كبديل.
+    <strong>إرسال يدوي من رقم الأخصائي:</strong>
+    جهّز إشعارات اليوم، ثم افتح المحادثات واحداً تلو الآخر عبر <b>wa.me</b> من واتساب على هاتفك أو واتساب ويب.
+    تُفتح الرسائل في <b>نفس النافذة</b> لتسهيل الإرسال المتتابع. (Cloud API غير مفعّل حالياً.)
   </div>
 
   <div id="error" class="error-box" hidden></div>
@@ -69,22 +75,32 @@
     </div>
     <div class="actions">
       <button type="button" id="prepareAllBtn" class="btn btn-outline">① تجهيز إشعارات اليوم</button>
-      <button id="refreshBtn" class="btn btn-outline">تحديث</button>
-      <button id="sendPendingBtn" class="btn btn-primary">② إرسال المعلّق عبر API</button>
+      <button type="button" id="refreshBtn" class="btn btn-outline">تحديث</button>
+      <button type="button" id="startBulkBtn" class="btn btn-primary">② بدء الإرسال اليدوي</button>
     </div>
   </div>
 
+
+
+  <div id="bulkBar" class="bulk-bar" hidden>
+    <p id="bulkProgress" class="small-note" style="margin:0 0 0.5rem"></p>
+    <div class="actions" style="gap:0.4rem">
+      <button type="button" id="bulkPrevBtn" class="btn btn-outline">السابق</button>
+      <button type="button" id="bulkNextBtn" class="btn btn-primary">التالي (افتح واتساب)</button>
+      <button type="button" id="bulkStopBtn" class="btn btn-outline">إنهاء</button>
+    </div>
+  </div>
 
   <div id="list" class="notif-list"></div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.62.3"></script>
+  <script src="js/config.js?v=4.62.5"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/notifications.js?v=4.62.3"></script>
+  <script src="js/notifications.js?v=4.62.5"></script>
   <script src="js/pwa.js"></script>
 </body>
 </html>
