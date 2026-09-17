@@ -1,224 +1,78 @@
-/* Solouki 4.62.10 — Smart WhatsApp notification center
- * Distinguishes: (1) access notice, (2) full written warning, (3) warning + escalation steps.
- * Manual sending always reuses the same named WhatsApp window.
- */
+/* Solouki 4.62.14 — WhatsApp message templates + full preview before sending. */
 (() => {
-  const cfg = window.SOLOUKI_CONFIG || {};
-  const sb = window.SoloukiDB ? window.SoloukiDB.getClient() : null;
-  let profile = null, rows = [], bulkQueue = [], bulkIndex = 0, waWindow = null;
-  let sourceMode = 'db';
-  const MANUAL_SENT_KEY = 'solouki_manual_whatsapp_sent_v46210';
-  let sendMode = 'access';
-  const WA_WIN = 'solouki_whatsapp';
-  const $ = id => document.getElementById(id);
-  const note = (id, text, show = true) => { const el=$(id); if(!el)return; el.textContent=text; el.hidden=!show; };
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const today = () => { const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
-  const digits = v => String(v ?? '').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g,'');
-  const toWa = v => { let d=digits(v); if(d.startsWith('20'))return d; if(d.startsWith('0'))return '20'+d.slice(1); if(d.length===10)return '20'+d; return d; };
-  const waLink = (phone,text) => `https://wa.me/${toWa(phone)}?text=${encodeURIComponent(text||'')}`;
-
-  async function session(){ const r=await SoloukiSession.requireSession({roles:['superadmin','stage_manager','counselor']}); if(!r)return false; profile=r.profile; return true; }
-  function manualSentMap(){
-    try { return JSON.parse(localStorage.getItem(MANUAL_SENT_KEY) || '{}'); } catch(_) { return {}; }
+  const cfg=window.SOLOUKI_CONFIG||{}; const sb=window.SoloukiDB?window.SoloukiDB.getClient():null;
+  let profile=null,rows=[],bulkQueue=[],bulkIndex=0,waWindow=null,sourceMode='db',sendMode='access',previewRow=null;
+  const MANUAL_SENT_KEY='solouki_manual_whatsapp_sent_v46211', WA_WIN='solouki_whatsapp', $=id=>document.getElementById(id);
+  let dbManualKeys=new Set(), dbSyncAvailable=false;
+  const note=(id,text,show=true)=>{const el=$(id);if(el){el.textContent=text;el.hidden=!show;}};
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;};
+  const digits=v=>String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g,'');
+  const toWa=v=>{let d=digits(v);if(d.startsWith('20'))return d;if(d.startsWith('0'))return '20'+d.slice(1);if(d.length===10)return '20'+d;return d;};
+  const waLink=(phone,text)=>`https://wa.me/${toWa(phone)}?text=${encodeURIComponent(text||'')}`;
+  async function session(){const r=await SoloukiSession.requireSession({roles:['superadmin','stage_manager','counselor']});if(!r)return false;profile=r.profile;return true;}
+  const manualSentMap=()=>{try{return JSON.parse(localStorage.getItem(MANUAL_SENT_KEY)||'{}')}catch(_){return {}}};
+  const manualKey=(row,mode=sendMode)=>`${today()}|${mode}|${String(row.id)}`;
+  const isManuallySent=row=>!!manualSentMap()[manualKey(row)]||dbManualSent(row);
+  async function syncManualConfirmation(row,mode=sendMode){
+    const key=String(row.notification_key||row.id||`${today()}|${row.student_id}`);
+    try{
+      const {data,error}=await sb.rpc('confirm_manual_whatsapp_send',{p_notification_key:key,p_student_id:String(row.student_id||''),p_student_name:row.student_name||'',p_date:today(),p_mode:mode});
+      if(error)throw error;
+      dbManualKeys.add(`${key}|${mode}`); dbSyncAvailable=true; return true;
+    }catch(_){ dbSyncAvailable=false; return false; }
   }
-  function manualKey(row, mode=sendMode){ return `${today()}|${mode}|${String(row.id)}`; }
-  function isManuallySent(row){ return !!manualSentMap()[manualKey(row)]; }
-  function markManuallySent(row){
-    const m=manualSentMap(); m[manualKey(row)]={at:new Date().toISOString(), mode:sendMode, student_id:row.student_id, student_name:row.student_name};
-    try { localStorage.setItem(MANUAL_SENT_KEY, JSON.stringify(m)); } catch(_) {}
-    row._manual_sent=true; row._manual_sent_at=m[manualKey(row)].at; row._manual_sent_mode=sendMode;
+  async function markManuallySent(row){
+    const m=manualSentMap();m[manualKey(row)]={at:new Date().toISOString(),mode:sendMode,student_id:row.student_id,student_name:row.student_name};
+    try{localStorage.setItem(MANUAL_SENT_KEY,JSON.stringify(m))}catch(_){}
+    row._manual_sent=true;
+    await syncManualConfirmation(row,sendMode);
   }
-  function clearOldManualMarks(){
-    const m=manualSentMap(), cutoff=Date.now()-1000*60*60*24*45, out={};
-    Object.entries(m).forEach(([k,v])=>{ if(v && Date.parse(v.at||0)>=cutoff) out[k]=v; });
-    try { localStorage.setItem(MANUAL_SENT_KEY, JSON.stringify(out)); } catch(_) {}
+  async function loadDbManualConfirmations(){
+    try{const {data,error}=await sb.rpc('list_my_manual_whatsapp_confirmations',{p_date:today(),p_mode:null});if(error)throw error;dbManualKeys=new Set((data||[]).map(x=>`${x.notification_key}|${x.message_mode}`));dbSyncAvailable=true;return data||[]}catch(_){dbSyncAvailable=false;return []}
   }
-  function normalizeRowPhone(row){
-    const candidates=[row.recipient_phone,row.father_phone,row.mother_phone,row.guardian_phone];
-    for(const v of candidates){ const p=toWa(v); if(p && p.length>=12 && p.startsWith('20')) return p; }
-    return '';
-  }
+  function dbManualSent(row){const key=String(row.notification_key||row.id||`${today()}|${row.student_id}`);return dbManualKeys.has(`${key}|${sendMode}`);}
+  function effectiveSent(row){return !!row._manual_sent||dbManualSent(row)||row.status==='sent';}
+  function clearOldManualMarks(){const m=manualSentMap(),cut=Date.now()-45*86400000,o={};Object.entries(m).forEach(([k,v])=>{if(v&&Date.parse(v.at||0)>=cut)o[k]=v});try{localStorage.setItem(MANUAL_SENT_KEY,JSON.stringify(o))}catch(_){} }
+  function normalizeRowPhone(row){for(const v of [row.recipient_phone,row.father_phone,row.mother_phone,row.guardian_phone]){const p=toWa(v);if(p&&p.length>=12&&p.startsWith('20'))return p}return '';}
   async function fallbackPrepareFromViolations(){
-    // Fallback for installations where the queue RPC is stale/misconfigured.
-    // It prepares today's notifications in the browser from the same RLS-protected tables.
-    const date=today();
-    const select=`id,student_id,violation_date,registration_date,degree_id,violation_id,applied_penalty_id,notes,custom_violation_ar,custom_location_ar,students(id,national_id,student_code,full_name,grade,class_name,section,father_phone,mother_phone,guardian_phone)`;
-    const q=sb.from('violation_records').select(select).eq('violation_date',date).order('registration_date',{ascending:false}).limit(500);
-    const {data,error}=await q;
-    if(error) throw error;
-    const grouped=new Map();
-    (data||[]).forEach(v=>{
-      const st=Array.isArray(v.students)?v.students[0]:v.students;
-      if(!st) return;
-      const key=String(st.id);
-      if(!grouped.has(key)) grouped.set(key,{student_id:st.id,student_name:st.full_name,national_id:st.national_id,student_code:st.student_code,grade:st.grade,class_name:st.class_name,section:st.section,father_phone:st.father_phone,mother_phone:st.mother_phone,guardian_phone:st.guardian_phone,violation_count:0,_violations:[]});
-      const r=grouped.get(key); r.violation_count++; r._violations.push(v);
-    });
-    const out=[];
-    for(const r of grouped.values()){
-      const phone=normalizeRowPhone(r);
-      const parentType=toWa(r.father_phone)?'father':(toWa(r.mother_phone)?'mother':'guardian');
-      const id=`local-${date}-${r.student_id}`;
-      out.push({id,student_id:r.student_id,student_name:r.student_name,national_id:r.national_id,student_code:r.student_code,grade:r.grade,class_name:r.class_name,section:r.section,recipient_phone:phone,parent_type:parentType,violation_count:r.violation_count,status:phone?'queued':'failed',error_text:phone?'':'لا يوجد رقم هاتف صالح لولي الأمر',message:`تم تسجيل ${r.violation_count} مخالفة/متابعة سلوكية للطالب/ة ${r.student_name}.`,_violations:r._violations,_local:true});
-    }
-    return out;
+    const date=today();const select=`id,student_id,violation_date,registration_date,degree_id,violation_id,applied_penalty_id,notes,custom_violation_ar,custom_location_ar,students(id,national_id,student_code,full_name,grade,class_name,section,father_phone,mother_phone,guardian_phone)`;
+    const {data,error}=await sb.from('violation_records').select(select).eq('violation_date',date).order('registration_date',{ascending:false}).limit(500);if(error)throw error;
+    const grouped=new Map();(data||[]).forEach(v=>{const st=Array.isArray(v.students)?v.students[0]:v.students;if(!st)return;const key=String(st.id);if(!grouped.has(key))grouped.set(key,{student_id:st.id,student_name:st.full_name,national_id:st.national_id,student_code:st.student_code,grade:st.grade,class_name:st.class_name,section:st.section,father_phone:st.father_phone,mother_phone:st.mother_phone,guardian_phone:st.guardian_phone,violation_count:0,_violations:[]});const r=grouped.get(key);r.violation_count++;r._violations.push(v)});
+    return [...grouped.values()].map(r=>{const phone=normalizeRowPhone(r);return {...r,id:`local-${date}-${r.student_id}`,recipient_phone:phone,parent_type:toWa(r.father_phone)?'father':toWa(r.mother_phone)?'mother':'guardian',status:phone?'queued':'failed',error_text:phone?'':'لا يوجد رقم هاتف صالح لولي الأمر',message:`تم تسجيل ${r.violation_count} مخالفة/متابعة سلوكية للطالب/ة ${r.student_name}.`,_local:true}});
   }
-  async function load(){
-    if(!await session())return; note('error','',false); clearOldManualMarks();
-    sourceMode='db';
-    try{
-      const {data,error}=await sb.rpc('list_my_whatsapp_notifications',{p_date:today(),p_status:null,p_limit:200});
-      if(error) throw error;
-      rows=(data||[]).map(r=>({...r,_manual_sent:isManuallySent(r)}));
-      // If the queue contains no rows while today's violations exist, use the safe fallback.
-      if(!rows.length){
-        const fallback=await fallbackPrepareFromViolations();
-        if(fallback.length){ rows=fallback.map(r=>({...r,_manual_sent:isManuallySent(r)})); sourceMode='fallback'; note('ok',`تم العثور على ${fallback.length} طالبًا لديهم مخالفات اليوم، وتم تجهيزهم محليًا لأن قائمة إشعارات قاعدة البيانات لم تُرجع سجلات.`); }
-      }
-      render(); updateBulkBar();
-    }catch(e){
-      try{
-        const fallback=await fallbackPrepareFromViolations();
-        rows=fallback.map(r=>({...r,_manual_sent:isManuallySent(r)})); sourceMode='fallback';
-        if(rows.length) note('ok',`تم استخدام تجهيز بديل آمن من مخالفات اليوم (${rows.length} طالبًا) لأن خدمة تجهيز الإشعارات أعادت خطأ.`);
-        else note('error',e.message||String(e));
-      }catch(e2){ note('error',`${e.message||e} — وتعذر التجهيز البديل: ${e2.message||e2}`); }
-      render(); updateBulkBar();
-    }
-  }
-  async function prepareAll(){
-    const b=$('prepareAllBtn'); if(b)b.disabled=true;
-    try{
-      let rpcOk=false, rpcMessage='';
-      try{
-        const {data,error}=await sb.rpc('queue_daily_whatsapp_notifications',{p_date:today()});
-        if(!error){ rpcOk=true; rpcMessage=data?.[0]?.message||'تم تجهيز الإشعارات.'; }
-      }catch(_){ }
-      await load();
-      if(sourceMode==='fallback') note('ok',`تم تجهيز ${pendingRows().length} إشعارًا من مخالفات اليوم مباشرة. ${rpcOk?'تعذر على قائمة قاعدة البيانات عكسها؛ استُخدم التجهيز البديل.':'خدمة التجهيز الخلفية غير متاحة حاليًا، فاستُخدم التجهيز البديل.'}`);
-      else note('ok',rpcMessage||`تم تجهيز ${pendingRows().length} إشعارًا.`);
-    }catch(e){note('error',e.message||String(e));} finally{if(b)b.disabled=false;}
-  }
-  function pendingRows(){return rows.filter(r=>['queued','failed'].includes(r.status) && !isManuallySent(r) && normalizeRowPhone(r));}
-  function selectedRows(){return pendingRows().filter(r=>document.querySelector(`[data-select="${CSS.escape(String(r.id))}"]`)?.checked);}
-
-  function getStudentCode(row){return row.student_code||row.code||row.studentCode||'—';}
-  function getNationalId(row){return row.national_id||row.nationalId||row.nationalid||'—';}
-  function portalUrl(){
-    return cfg.guardianUrl || cfg.guardian_url || `${location.origin}${location.pathname.replace(/[^/]*$/,'')}guardian.html`;
-  }
-  function accessMessage(row){
-    const name=row.student_name||'الطالب/الطالبة';
-    const code=getStudentCode(row), nid=getNationalId(row);
-    if((code==='—'||nid==='—') && row.student_id && row._local){
-      // Values are already returned by the RLS-protected students join in fallback mode.
-    }
-    return `السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${name}\n\nنحيطكم علماً بأنه تم تسجيل متابعة سلوكية للطالب/ة لدى المدرسة.\n\nللاطلاع على تفاصيل السجل السلوكي والمخالفات والتكريمات والمتابعات، يرجى الدخول إلى نظام سلوكي باستخدام:\n• الرقم القومي: ${nid}\n• كود الطالب: ${code}\n\nرابط الاطلاع: ${portalUrl()}\n\nهذه الرسالة للإخطار فقط، والتفاصيل الكاملة متاحة داخل ملف الطالب في نظام سلوكي.\n\nمع خالص التحية.\nإدارة المدرسة`;
-  }
-  function fullWarningMessage(row, report, includeEscalation){
-    const name=row.student_name||report?.student?.full_name||'الطالب/ة';
-    const st=report?.student||{}; const recs=Array.isArray(report?.records)?report.records:(Array.isArray(row._violations)?row._violations:[]);
-    const recent=recs.slice(0,8).map((r,i)=>`${i+1}) ${r.violation_date||'—'} — ${r.violation_label||r.custom_violation_ar||'مخالفة سلوكية'}${r.degree_id?' — الدرجة '+r.degree_id:''}${r.penalty_label?' — الإجراء: '+r.penalty_label:''}`).join('\n');
-    let msg=`السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${name}\nالصف: ${st.grade||row.grade||'—'} — الفصل: ${st.class_name||row.class_name||'—'}\n\nنحيطكم علماً بأنه تم تسجيل المخالفات/المتابعة السلوكية التالية في نظام سلوكي:\n${recent||row.message||'تم تسجيل متابعة سلوكية للطالب/ة.'}\n\nيرجى الاطلاع على التفاصيل والتعاون مع المدرسة في متابعة السلوك وتعديله.`;
-    if(includeEscalation){
-      const e=report?.escalation||row.escalation||{};
-      msg += `\n\nخطوات المتابعة والتصعيد:\n• مستوى المتابعة المقترح: ${e.level||'حسب لائحة المدرسة'}\n• الإجراء المقترح: ${e.suggestion||'تُراجع الحالة مع الأخصائي وإدارة المرحلة وفق اللائحة.'}\n• سبب الاقتراح: ${e.reason||'يُحدد بناءً على تراكم المخالفات والإجراءات السابقة.'}`;
-    }
-    msg += `\n\nيمكن الاطلاع على السجل الكامل من خلال نظام سلوكي باستخدام الرقم القومي وكود الطالب.\n\nمع خالص التحية،\nإدارة المدرسة`;
-    return msg;
-  }
-  async function composeMessage(row){
-    if(sendMode==='access') return accessMessage(row);
-    // Enrich the full warning with the same authoritative report used by the student file.
-    if(row._report) return fullWarningMessage(row,row._report,sendMode==='warning_escalation');
-    if(row.student_id){
-      try{
-        const {data,error}=await sb.rpc('get_student_behavior_report',{p_student_id:row.student_id});
-        if(!error) row._report=data||{};
-      }catch(_){/* fallback to queued message */}
-    }
-    if(!row._report) return `${row.message||''}\n\nللاطلاع على السجل الكامل يرجى استخدام الرقم القومي وكود الطالب داخل نظام سلوكي.`;
-    return fullWarningMessage(row,row._report,sendMode==='warning_escalation');
-  }
-  function openWa(row,text){
-    const p=toWa(row.recipient_phone); if(!p||p.length<10){note('error','رقم غير صالح: '+(row.recipient_phone||'—'));return false;}
-    const url=waLink(p,text);
-    try{ if(!waWindow||waWindow.closed) waWindow=window.open(url,WA_WIN); else {waWindow.location.href=url;waWindow.focus();} }catch(_){waWindow=null;}
-    if(!waWindow){note('error','المتصفح منع نافذة واتساب. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');return false;}
-    try{waWindow.focus();}catch(_){ }
-    return true;
-  }
-  async function manualOne(row){ const text=await composeMessage(row); if(!openWa(row,text))return; note('ok',`تم فتح واتساب لـ «${row.student_name||''}» بنمط «${modeLabel(sendMode)}». أرسل الرسالة ثم عد إلى سلوكي.`); }
-  function modeLabel(m){return m==='access'?'إشعار اطلاع على سلوكي':m==='warning'?'تنبيه كتابي كامل':'تنبيه كتابي + خطوات التصعيد';}
-
-  async function startBulk(useSelection=true){
-    const chosen=selectedRows();
-    if(useSelection && !chosen.length){note('error','حدد طالباً واحداً على الأقل من القائمة ثم اضغط «إرسال المحدد يدوياً».');return;}
-    bulkQueue=useSelection?chosen:pendingRows();
-    if(!bulkQueue.length){note('error','لا توجد إشعارات معلّقة للإرسال.');return;}
-    bulkIndex=0; $('bulkBar').hidden=false; await openBulkCurrent();
-  }
-  async function openBulkCurrent(){
-    if(!bulkQueue.length||bulkIndex>=bulkQueue.length){finishBulk();return;}
-    const row=bulkQueue[bulkIndex], text=await composeMessage(row); openWa(row,text); updateBulkBar();
-    note('ok',`يدوي ${bulkIndex+1} / ${bulkQueue.length} — «${row.student_name||''}». أرسل الرسالة من WhatsApp ثم اضغط «تم الإرسال، التالي».`);
-  }
-  async function bulkNext(){
-    const current=bulkQueue[bulkIndex];
-    if(current) markManuallySent(current);
-    bulkIndex++;
-    if(bulkIndex>=bulkQueue.length){finishBulk();return;}
-    await openBulkCurrent();
-  }
-  async function bulkPrev(){if(bulkIndex<=0)return;bulkIndex--;await openBulkCurrent();}
-  function finishBulk(){bulkQueue=[];bulkIndex=0;$('bulkBar').hidden=true;note('ok','انتهى مسار الإرسال اليدوي. تم تسجيل الحالات التي أكّدتها فقط.');render();}
-  function updateBulkBar(){
-    const prog=$('bulkProgress'),pending=pendingRows().length;
-    if(prog)prog.textContent=bulkQueue.length?`النمط: ${modeLabel(sendMode)} — الحالي ${bulkIndex+1} من ${bulkQueue.length} — المتبقي ${Math.max(bulkQueue.length-bulkIndex-1,0)}`:(pending?`${pending} إشعاراً معلّقاً.`:'لا إشعارات معلّقة.');
-    if($('bulkNextBtn'))$('bulkNextBtn').disabled=!bulkQueue.length;
-    if($('bulkPrevBtn'))$('bulkPrevBtn').disabled=!bulkQueue.length||bulkIndex<=0;
-  }
-  function statusLabel(s){return ({queued:'مجهز — بانتظار الإرسال اليدوي',sending:'جاري الإرسال',sent:'تم الإرسال (API)',failed:'فشل API — يمكن الفتح يدوياً'}[s]||s);}
-  async function refreshMessagePreviews(){
-    for(const r of rows){
-      const el=document.querySelector(`[data-preview="${CSS.escape(String(r.id))}"]`);
-      if(!el) continue;
-      try{ el.textContent=await composeMessage(r); }catch(_){ el.textContent=r.message||'تعذر إنشاء المعاينة.'; }
-    }
-  }
-  function render(){
-    const pending=pendingRows();
-    $('pendingCount').textContent=pending.length;
-    $('openedCount').textContent=rows.filter(r=>r.status==='sent'||isManuallySent(r)).length;
-    $('violCount').textContent=rows.reduce((n,r)=>n+(r.violation_count||0),0);
-    const list=$('list'); if(!list)return;
-    list.innerHTML=rows.length?rows.map(r=>{
-      const sent=isManuallySent(r)||r.status==='sent';
-      const selectable=['queued','failed'].includes(r.status)&&!sent&&normalizeRowPhone(r);
-      const reason=r.error_text||(!normalizeRowPhone(r)?'لا يوجد رقم هاتف صالح لولي الأمر':'');
-      return `<article class="notif-item ${sent?'sent':''}">
-        <div class="notif-select">${selectable?`<input type="checkbox" data-select="${esc(r.id)}" aria-label="اختيار ${esc(r.student_name||'الطالب')}">`:''}</div>
-        <h3>${esc(r.student_name||'—')} <span class="badge-count">${r.violation_count||0} مخالفة</span></h3>
-        <div class="notif-meta">${esc(r.grade||'')} ${esc(r.class_name||'')} — ${r.parent_type==='father'?'الأب':r.parent_type==='mother'?'الأم':'ولي الأمر'} — <span dir="ltr">${esc(r.recipient_phone||'—')}</span> — <strong>${sent?(r.status==='sent'?'تم الإرسال عبر API':'تم التأكيد يدويًا'):esc(statusLabel(r.status))}</strong></div>
-        <div class="notif-msg"><b>معاينة الرسالة بالنمط المختار:</b><br><span data-preview="${esc(r.id)}">${esc(r.message||'جاري إعداد المعاينة…')}</span></div>
-        ${reason?`<div class="error-box">${esc(reason)}</div>`:''}
-        <div class="notif-actions">${selectable?`<button type="button" class="btn btn-primary" data-manual="${esc(r.id)}">فتح واتساب</button><button type="button" class="btn btn-outline" data-copy="${esc(r.id)}">نسخ النمط الحالي</button>`:''}</div>
-      </article>`;
-    }).join(''):'<div class="empty-state">لم يتم تجهيز إشعارات اليوم بعد. اضغط «تجهيز إشعارات اليوم».</div>';
-    rows.forEach(r=>{
-      document.querySelector(`[data-manual="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',()=>manualOne(r));
-      document.querySelector(`[data-copy="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(await composeMessage(r));note('ok','تم نسخ الرسالة بالنمط المختار.');}catch(_){note('error','تعذر النسخ.');}});
-    });
-    updateSelectAll(); updateBulkBar();
-    refreshMessagePreviews();
-  }
-  function updateSelectAll(){const checks=[...document.querySelectorAll('[data-select]')], checked=checks.filter(x=>x.checked).length; if($('selectedCount'))$('selectedCount').textContent=checked; if($('selectAll'))$('selectAll').checked=checks.length>0&&checked===checks.length;}
-  function showSender(){const el=$('senderWa');if(el&&profile)el.textContent=profile.personal_whatsapp||profile.whatsapp_phone||profile.phone||'رقم واتساب المستخدم على الجهاز';}
-  document.addEventListener('change',e=>{if(e.target.matches('[data-select]'))updateSelectAll();});
+  async function load(){if(!await session())return;note('error','',false);clearOldManualMarks();await loadDbManualConfirmations();sourceMode='db';try{const {data,error}=await sb.rpc('list_my_whatsapp_notifications',{p_date:today(),p_status:null,p_limit:200});if(error)throw error;rows=(data||[]).map(r=>({...r,_manual_sent:isManuallySent(r)}));
+      // One-time best effort migration: confirmations previously stored only on this browser are copied to Supabase.
+      for(const r of rows){if(manualSentMap()[manualKey(r)]&&!dbManualSent(r)) await syncManualConfirmation(r,manualSentMap()[manualKey(r)].mode||sendMode); }
+      await loadDbManualConfirmations(); rows=rows.map(r=>({...r,_manual_sent:isManuallySent(r)}));if(!rows.length){const f=await fallbackPrepareFromViolations();if(f.length){rows=f.map(r=>({...r,_manual_sent:isManuallySent(r)}));sourceMode='fallback';note('ok',`تم العثور على ${f.length} طالبًا لديهم مخالفات اليوم وتجهيزها مباشرة.`)}}render();updateBulkBar()}catch(e){try{const f=await fallbackPrepareFromViolations();rows=f.map(r=>({...r,_manual_sent:isManuallySent(r)}));sourceMode='fallback';if(rows.length)note('ok',`تم استخدام التجهيز المباشر من مخالفات اليوم (${rows.length} طالبًا).`);else note('error',e.message||String(e))}catch(e2){note('error',`${e.message||e} — وتعذر التجهيز البديل: ${e2.message||e2}`)}render();updateBulkBar()}}
+  async function prepareAll(){const b=$('prepareAllBtn');if(b)b.disabled=true;try{let msg='';try{const {data,error}=await sb.rpc('queue_daily_whatsapp_notifications',{p_date:today()});if(!error)msg=data?.[0]?.message||'تم تجهيز الإشعارات.'}catch(_){}await load();note('ok',sourceMode==='fallback'?`تم تجهيز ${pendingRows().length} إشعارًا من مخالفات اليوم مباشرة.`:(msg||`تم تجهيز ${pendingRows().length} إشعارًا.`))}catch(e){note('error',e.message||String(e))}finally{if(b)b.disabled=false}}
+  const pendingRows=()=>rows.filter(r=>['queued','failed'].includes(r.status)&&!isManuallySent(r)&&normalizeRowPhone(r));
+  const selectedRows=()=>pendingRows().filter(r=>document.querySelector(`[data-select="${CSS.escape(String(r.id))}"]`)?.checked);
+  const getCode=r=>r.student_code||r.code||r.studentCode||'—', getNid=r=>r.national_id||r.nationalId||r.nationalid||'—';
+  const portalUrl=()=>cfg.guardianUrl||cfg.guardian_url||`${location.origin}${location.pathname.replace(/[^/]*$/,'')}guardian.html`;
+  function violationLines(row){const recs=Array.isArray(row._violations)?row._violations:[];return recs.slice(0,12).map((r,i)=>{const label=r.violation_label||r.custom_violation_ar||r.violation_desc||'مخالفة سلوكية';const deg=r.degree_ar||r.degree_id||'';const loc=r.location_ar||r.custom_location_ar||'';const pen=r.penalty_label||r.penalty_ar||'';return `${i+1}) ${label}${deg?` — الدرجة: ${deg}`:''}${loc?` — المكان: ${loc}`:''}${pen?` — الإجراء المسجل: ${pen}`:''}${r.notes?` — ملاحظات: ${r.notes}`:''}`}).join('\n');}
+  function accessMessage(row){return `السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${row.student_name||'الطالب/ة'}\n\nنحيطكم علمًا بأنه تم تسجيل متابعة سلوكية للطالب/ة لدى المدرسة.\n\nللاطلاع على التفاصيل من خلال نظام سلوكي، يرجى استخدام:\n• الرقم القومي: ${getNid(row)}\n• كود الطالب: ${getCode(row)}\n\nرابط الاطلاع: ${portalUrl()}\n\nهذه الرسالة للإخطار فقط، ولا تتضمن تفاصيل المخالفة. التفاصيل الكاملة متاحة داخل نظام سلوكي.\n\nمع خالص التحية،\nإدارة المدرسة`}
+  function fullWarning(row,withEsc){const lines=violationLines(row)||row.message||'تم تسجيل متابعة سلوكية للطالب/ة.';let m=`السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${row.student_name||'الطالب/ة'}\nالصف: ${row.grade||'—'} — الفصل: ${row.class_name||'—'}\n\nنحيطكم علمًا بأنه تم تسجيل المتابعة السلوكية التالية في نظام سلوكي:\n${lines}\n\nنرجو الاطلاع على الأمر والتعاون مع المدرسة في المتابعة التربوية للطالب/ة.`;if(withEsc)m+=`\n\nخطوات المتابعة والتصعيد:\n• مراجعة تفاصيل الحالة في نظام سلوكي.\n• التواصل مع الأخصائي عند الحاجة لمناقشة الحالة.\n• تُتخذ أي إجراءات تصعيدية رسمية وفق اللائحة وقرارات المدرسة والحالة المسجلة؛ ولا يُفترض مستوى تصعيد غير مسجل في النظام.`;m+=`\n\nيمكن الاطلاع على السجل الكامل باستخدام الرقم القومي وكود الطالب داخل نظام سلوكي.\n\nمع خالص التحية،\nإدارة المدرسة`;return m}
+  async function composeMessage(row){if(sendMode==='access')return accessMessage(row);return fullWarning(row,sendMode==='warning_escalation')}
+  const modeLabel=m=>m==='access'?'إشعار اطلاع على سلوكي':m==='warning'?'تنبيه كتابي كامل':'تنبيه كتابي + خطوات التصعيد';
+  function openWa(row,text){const p=toWa(row.recipient_phone);if(!p||p.length<12){note('error','رقم غير صالح لولي الأمر: '+(row.recipient_phone||'—'));return false}const url=waLink(p,text);try{if(!waWindow||waWindow.closed)waWindow=window.open(url,WA_WIN);else{waWindow.location.href=url;waWindow.focus()}}catch(_){waWindow=null}if(!waWindow){note('error','المتصفح منع نافذة WhatsApp. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');return false}try{waWindow.focus()}catch(_){}return true}
+  async function showPreview(row,after){previewRow=row;const text=await composeMessage(row);$('previewStudent').textContent=`الطالب: ${row.student_name||'—'} — ولي الأمر: ${row.parent_type==='father'?'الأب':row.parent_type==='mother'?'الأم':'ولي الأمر'}`;$('previewType').textContent=modeLabel(sendMode);$('previewRecipient').innerHTML=`رقم المستلم: <span dir="ltr">${esc(row.recipient_phone||'—')}</span>`;$('previewText').value=text;$('previewModal').hidden=false;$('previewModal').classList.add('is-open');$('previewModal').setAttribute('aria-hidden','false');document.body.classList.add('preview-open');$('previewText').focus();$('sendPreview').onclick=()=>{const finalText=$('previewText').value.trim();if(!finalText){note('error','لا يمكن إرسال رسالة فارغة.');return}if(openWa(row,finalText)){ closePreview(); if(after)after(row)}};$('copyPreview').onclick=async()=>{try{await navigator.clipboard.writeText($('previewText').value);note('ok','تم نسخ النص بعد مراجعته.')}catch(_){note('error','تعذر النسخ.')}}}
+  function manualOne(row){showPreview(row)}
+  function startBulk(useSelection){const chosen=selectedRows();if(useSelection&&!chosen.length){note('error','حدد طالبًا واحدًا على الأقل.');return}bulkQueue=useSelection?chosen:pendingRows();if(!bulkQueue.length){note('error','لا توجد إشعارات معلقة.');return}bulkIndex=0;$('bulkBar').hidden=false;showBulkCurrent()}
+  async function showBulkCurrent(){if(!bulkQueue.length||bulkIndex>=bulkQueue.length){finishBulk();return}const row=bulkQueue[bulkIndex];await showPreview(row,(r)=>{note('ok',`تم فتح WhatsApp لـ «${r.student_name||''}». أرسل الرسالة ثم اضغط «تم الإرسال، التالي».`);updateBulkBar()});updateBulkBar()}
+  async function bulkNext(){const r=bulkQueue[bulkIndex];if(r)await markManuallySent(r);bulkIndex++;if(bulkIndex>=bulkQueue.length)finishBulk();else showBulkCurrent()}
+  function bulkPrev(){if(bulkIndex<=0)return;bulkIndex--;showBulkCurrent()}
+  function finishBulk(){bulkQueue=[];bulkIndex=0;$('bulkBar').hidden=true;note('ok','انتهى مسار الإرسال اليدوي. تم تسجيل الحالات التي أكدتها فقط.');render()}
+  function updateBulkBar(){const p=$('bulkProgress');p.textContent=bulkQueue.length?`النمط: ${modeLabel(sendMode)} — الحالي ${bulkIndex+1} من ${bulkQueue.length} — المتبقي ${Math.max(bulkQueue.length-bulkIndex-1,0)}`:`${pendingRows().length} إشعارًا معلّقًا.`;$('bulkNextBtn').disabled=!bulkQueue.length;$('bulkPrevBtn').disabled=!bulkQueue.length||bulkIndex<=0}
+  const statusLabel=s=>({queued:'مجهز — بانتظار الإرسال اليدوي',sending:'جاري الإرسال',sent:'تم الإرسال عبر API',failed:'يحتاج إرسالًا يدويًا'}[s]||s);
+  function render(){const pending=pendingRows();$('pendingCount').textContent=pending.length;$('openedCount').textContent=rows.filter(r=>effectiveSent(r)).length;$('violCount').textContent=rows.reduce((n,r)=>n+(r.violation_count||0),0);const list=$('list');list.innerHTML=rows.length?rows.map(r=>{const sent=effectiveSent(r),sel=['queued','failed'].includes(r.status)&&!sent&&normalizeRowPhone(r),reason=r.error_text||(!normalizeRowPhone(r)?'لا يوجد رقم هاتف صالح لولي الأمر':'');return `<article class="notif-item ${sent?'sent':''}"><div class="notif-select">${sel?`<input type="checkbox" data-select="${esc(r.id)}" aria-label="اختيار ${esc(r.student_name||'الطالب')}">`:''}</div><h3>${esc(r.student_name||'—')} <span class="badge-count">${r.violation_count||0} مخالفة</span></h3><div class="notif-meta">${esc(r.grade||'')} ${esc(r.class_name||'')} — ${r.parent_type==='father'?'الأب':r.parent_type==='mother'?'الأم':'ولي الأمر'} — <span dir="ltr">${esc(r.recipient_phone||'—')}</span> — <strong>${sent?(r.status==='sent'?'تم الإرسال عبر API':'تم التأكيد يدويًا'):esc(statusLabel(r.status))}</strong></div><div class="notif-msg"><b>المعاينة الحالية:</b><br><span data-preview="${esc(r.id)}">جاري إعداد المعاينة…</span></div>${reason?`<div class="error-box">${esc(reason)}</div>`:''}<div class="notif-actions">${sel?`<button type="button" class="btn btn-primary" data-preview-open="${esc(r.id)}">معاينة قبل الإرسال</button><button type="button" class="btn btn-outline" data-copy="${esc(r.id)}">نسخ</button>`:''}</div></article>`}).join(''):'<div class="empty-state">لم يتم تجهيز إشعارات اليوم بعد. اضغط «تجهيز إشعارات اليوم».</div>';
+    rows.forEach(r=>{document.querySelector(`[data-preview-open="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',()=>showPreview(r));document.querySelector(`[data-copy="${CSS.escape(String(r.id))}"]`)?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(await composeMessage(r));note('ok','تم نسخ الرسالة.')}catch(_){note('error','تعذر النسخ.')}});const el=document.querySelector(`[data-preview="${CSS.escape(String(r.id))}"]`);if(el)composeMessage(r).then(t=>el.textContent=t).catch(()=>el.textContent=r.message||'تعذر إعداد المعاينة.')});updateSelectAll();updateBulkBar()}
+  function updateSelectAll(){const c=[...document.querySelectorAll('[data-select]')],n=c.filter(x=>x.checked).length;$('selectedCount').textContent=n;$('selectAll').checked=c.length>0&&n===c.length}
+  function modeDescription(m){return m==='access'?'إشعار مختصر: يطلب من ولي الأمر الاطلاع على سلوكي باستخدام الرقم القومي وكود الطالب، دون إرسال تفاصيل المخالفة.':m==='warning'?'تنبيه كتابي كامل: يرسل تفاصيل المتابعة والمخالفات المتاحة في النظام.':'تنبيه كتابي كامل مع خطوات المتابعة والتصعيد بصياغة تحفظ أن القرار الرسمي يظل وفق اللائحة والحالة المسجلة.'}
+  function showSender(){const el=$('senderWa');if(el&&profile)el.textContent=profile.personal_whatsapp||profile.whatsapp_phone||profile.phone||'رقم واتساب المستخدم على الجهاز'}
   $('selectAll')?.addEventListener('change',e=>document.querySelectorAll('[data-select]').forEach(x=>x.checked=e.target.checked));
-  document.querySelectorAll('input[name="sendMode"]').forEach(r=>r.addEventListener('change',()=>{sendMode=r.value; $('modeDescription').textContent=modeDescription(sendMode); updateBulkBar();}));
-  function modeDescription(m){return m==='access'?'إشعار مختصر: يطلب من ولي الأمر الاطلاع على سلوكي باستخدام الرقم القومي وكود الطالب. لا نرسل التقرير الكامل.':m==='warning'?'تنبيه كتابي كامل: يرسل نص التنبيه والمخالفات ذات الصلة إلى ولي الأمر.':'تنبيه كتابي كامل مع ملخص خطوات المتابعة والتصعيد المقترحة من ملف الطالب.';}
-  $('prepareAllBtn')?.addEventListener('click',prepareAll); $('refreshBtn')?.addEventListener('click',load); $('startBulkBtn')?.addEventListener('click',()=>startBulk(true)); $('startAllBtn')?.addEventListener('click',()=>startBulk(false)); $('bulkNextBtn')?.addEventListener('click',bulkNext); $('bulkPrevBtn')?.addEventListener('click',bulkPrev); $('bulkStopBtn')?.addEventListener('click',finishBulk); $('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
+  document.addEventListener('change',e=>{if(e.target.matches('[data-select]'))updateSelectAll();if(e.target.matches('input[name="sendMode"]')){sendMode=e.target.value;$('modeDescription').textContent=modeDescription(sendMode);updateBulkBar();render()}});
+  const closePreview=()=>{const m=$('previewModal');if(!m)return;m.hidden=true;m.classList.remove('is-open');m.setAttribute('aria-hidden','true');document.body.classList.remove('preview-open')};$('closePreview')?.addEventListener('click',closePreview);$('previewModal')?.addEventListener('click',e=>{if(e.target===$('previewModal'))closePreview()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('previewModal')?.hidden)closePreview()});
+  $('prepareAllBtn')?.addEventListener('click',prepareAll);$('refreshBtn')?.addEventListener('click',load);$('startBulkBtn')?.addEventListener('click',()=>startBulk(true));$('startAllBtn')?.addEventListener('click',()=>startBulk(false));$('bulkNextBtn')?.addEventListener('click',bulkNext);$('bulkPrevBtn')?.addEventListener('click',bulkPrev);$('bulkStopBtn')?.addEventListener('click',finishBulk);$('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
   load().then(showSender).catch(e=>note('error',e.message||String(e)));
 })();
