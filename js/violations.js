@@ -247,12 +247,43 @@
       const { data, error } = await sb().rpc('record_violation', payload);
       if (error) return note('error', error.message);
       const sid = state.selectedStudent && state.selectedStudent.id;
-      note('ok', 'تم حفظ المخالفة بنجاح' + (sid ? ' — <a href="student-report.html?id=' + sid + '">عرض ملف السلوك</a>' : ''));
-      // allow HTML in note
+      const savedStudent = state.selectedStudent ? { ...state.selectedStudent } : null;
+      const penLabel = penaltyLabelById(penaltyVal);
+      const isWW = isWrittenWarningLabel(penLabel);
+      const vOpt = $('violationSelect').selectedOptions[0];
+      const locOpt = $('locationSelect').selectedOptions[0];
+      const recordHint = {
+        violation_date: $('violationDate').value || null,
+        degree_id: vOpt && vOpt.dataset ? vOpt.dataset.degree : null,
+        violation_code: vOpt ? (vOpt.dataset.code || '') : '',
+        violation_label: vOpt ? vOpt.textContent : '',
+        location_label: locOpt && locOpt.value === 'custom'
+          ? ($('customLocation').value || '—')
+          : (locOpt ? locOpt.textContent : '—'),
+        penalty_label: penLabel || 'تنبيه كتابي',
+        notes: $('notes').value.trim() || null
+      };
+      note('ok', 'تم حفظ المخالفة بنجاح');
       const okEl = $('ok');
       if (okEl && sid) {
         okEl.hidden = false;
-        okEl.innerHTML = 'تم حفظ المخالفة بنجاح — <a href="student-report.html?id=' + sid + '" style="color:inherit;font-weight:800;text-decoration:underline">عرض ملف السلوك وإشعار ولي الأمر</a>';
+        let html = 'تم حفظ المخالفة بنجاح — <a href="student-report.html?id=' + sid + '" style="color:inherit;font-weight:800;text-decoration:underline">عرض ملف السلوك</a>';
+        if (isWW) {
+          html += ' &nbsp;|&nbsp; <button type="button" class="mini" id="printWWNow" style="font-weight:800">🖨️ طباعة تنبيه كتابي للتوقيع</button>';
+        }
+        okEl.innerHTML = html;
+        if (isWW) {
+          const btn = $('printWWNow');
+          if (btn) {
+            btn.addEventListener('click', () => {
+              printWrittenWarningForStudent(sid, recordHint, []);
+            });
+          }
+          // عرض فوري اختياري
+          if (confirm('العقوبة: تنبيه كتابي.\nهل تريد طباعة نموذج التنبيه الآن ليوقّع عليه الطالب؟')) {
+            await printWrittenWarningForStudent(sid, recordHint, []);
+          }
+        }
       }
       resetForm(false);
       await loadRecords();
@@ -520,7 +551,40 @@
       if (error) return note('error', error.message);
       const row = Array.isArray(data) ? data[0] : data;
       const msg = (row && row.message) || 'تم التسجيل الجماعي';
-      note('ok', msg + ' — يمكنك فتح ملف سلوك أي طالب من قائمة السجل أو صفحة ملف السلوك');
+      const penLabel = penaltyLabelById(penaltyVal);
+      const isWW = isWrittenWarningLabel(penLabel);
+      const ids = [...state.basket.keys()];
+      const vOpt = $('bulkViolationSelect').selectedOptions[0];
+      const locOpt = $('bulkLocationSelect').selectedOptions[0];
+      const recordHint = {
+        violation_date: $('bulkViolationDate').value || null,
+        degree_id: vOpt && vOpt.dataset ? vOpt.dataset.degree : null,
+        violation_code: vOpt ? (vOpt.dataset.code || '') : '',
+        violation_label: vOpt ? vOpt.textContent : '',
+        location_label: locOpt && locOpt.value === 'custom'
+          ? ($('bulkCustomLocation').value || '—')
+          : (locOpt ? locOpt.textContent : '—'),
+        penalty_label: penLabel || 'تنبيه كتابي',
+        notes: $('bulkNotes').value.trim() || null
+      };
+      const okEl = $('ok');
+      if (okEl) {
+        okEl.hidden = false;
+        let html = esc(msg);
+        if (isWW && ids.length) {
+          html += ' &nbsp;|&nbsp; <button type="button" class="mini" id="printWWBatch" style="font-weight:800">🖨️ طباعة تنبيه كتابي لكل المشاركين (' + ids.length + ')</button>';
+        }
+        okEl.innerHTML = html;
+        if (isWW && ids.length) {
+          const btn = $('printWWBatch');
+          if (btn) {
+            btn.addEventListener('click', () => printWrittenWarningBatch(ids, recordHint));
+          }
+          if (confirm('العقوبة: تنبيه كتابي لـ ' + ids.length + ' طالباً.\nهل تريد طباعة نماذج التنبيه الآن ليوقّع عليها الطلاب؟')) {
+            await printWrittenWarningBatch(ids, recordHint);
+          }
+        }
+      }
       state.basket.clear();
       renderBasket();
       renderBulkStudentList($('bulkListSearch').value);
@@ -573,6 +637,267 @@
   }
 
   /* ---------- Records list ---------- */
+
+  /* ---------- تنبيه كتابي: طباعة ورقية للتوقيع ---------- */
+  function isWrittenWarningLabel(label) {
+    return /تنبيه\s*كتابي/i.test(String(label || ''));
+  }
+
+  function penaltyLabelById(id) {
+    if (!id) return '';
+    const p = state.penalties.find((x) => Number(x.id) === Number(id));
+    return p ? (p.name_ar || '') : '';
+  }
+
+  function sectionLabel(sec) {
+    if (sec === 'languages') return 'لغات';
+    if (sec === 'arabic') return 'عربي';
+    return sec || '—';
+  }
+
+  function buildWrittenWarningSheet(opts) {
+    const st = opts.student || {};
+    const rec = opts.record || {};
+    const peers = opts.peers || []; // طلاب آخرون في نفس الواقعة (جماعي)
+    const s = opts.settings || {};
+    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    const year = st.academic_year || s.academic_year || '—';
+    const body = s.intro_text ||
+      'يُنذَر الطالب/ة كتابياً بما ثبت بحقه/ها من مخالفات سلوكية، ويُطلب الالتزام بلائحة الانضباط المدرسي الصادرة بالقرار الوزاري رقم (150) لسنة 2024، والتعاون مع إدارة المدرسة لتعديل السلوك.';
+
+    const peersBlock = peers.length
+      ? `<div style="margin:10px 0 6px;font-weight:700;font-size:13px">الطلاب المشاركون في الواقعة</div>
+         <table class="solouki-table"><thead><tr><th style="width:8%">م</th><th>الاسم</th><th>الصف / الفصل</th><th>التوقيع</th></tr></thead>
+         <tbody>${peers.map((p, i) => `<tr>
+           <td style="text-align:center">${i + 1}</td>
+           <td>${esc(p.full_name || p.student_name || '—')}</td>
+           <td>${esc((p.grade || '') + (p.class_name ? ' / ' + p.class_name : ''))}</td>
+           <td style="min-width:90px;height:28px"></td>
+         </tr>`).join('')}</tbody></table>`
+      : '';
+
+    return `
+      <div class="solouki-sheet" style="page-break-after:always">
+      <div class="solouki-letterhead">
+        <div class="org-block" style="width:100%;text-align:center">
+          <div class="org-republic">جمهورية مصر العربية</div>
+          <div class="org-ministry">وزارة التربية والتعليم والتعليم الفني</div>
+          <div class="org-dir">${esc(s.directorate || 'مديرية التربية والتعليم')}${s.governorate ? ' — ' + esc(s.governorate) : ''}</div>
+          <div class="org-dir">${esc(s.administration || 'الإدارة التعليمية')}</div>
+          <div class="org-school">${esc(s.school_name || 'اسم المدرسة')}</div>
+        </div>
+      </div>
+      <div class="solouki-brand-bar">
+        <span>نظام <strong>سلوكي Solouki</strong></span>
+        <span>القرار الوزاري <strong>150 لسنة 2024</strong></span>
+      </div>
+      <div class="solouki-doc-title">
+        <h1>تنبيه كتابي</h1>
+        <div class="meta">العام الدراسي: <b>${esc(year)}</b> &nbsp;|&nbsp; التاريخ: <b>${esc(today)}</b></div>
+      </div>
+      <div class="solouki-student-box">
+        <div class="name">${esc(st.full_name || st.student_name || '—')}</div>
+        <div class="row">
+          <b>الصف:</b> ${esc(st.grade || '—')} ·
+          <b>الفصل:</b> ${esc(st.class_name || '—')} ·
+          <b>القسم:</b> ${esc(sectionLabel(st.section))} ·
+          <b>الرقم القومي:</b> ${esc(st.national_id || '—')}
+        </div>
+      </div>
+      <p class="solouki-prose">${esc(body)}</p>
+      <table class="solouki-table">
+        <thead>
+          <tr>
+            <th style="width:14%">التاريخ</th>
+            <th style="width:10%">الدرجة</th>
+            <th>المخالفة</th>
+            <th style="width:16%">المكان</th>
+            <th style="width:18%">العقوبة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${esc(rec.violation_date || today)}</td>
+            <td class="deg" style="text-align:center">${esc(rec.degree_id || '—')}</td>
+            <td>${rec.violation_code ? '<strong>' + esc(rec.violation_code) + '</strong> — ' : ''}${esc(rec.violation_label || '—')}</td>
+            <td>${esc(rec.location_label || '—')}</td>
+            <td>${esc(rec.penalty_label || 'تنبيه كتابي')}</td>
+          </tr>
+        </tbody>
+      </table>
+      ${rec.notes ? `<p class="solouki-prose"><b>ملاحظات:</b> ${esc(rec.notes)}</p>` : ''}
+      ${peersBlock}
+      <div class="solouki-ack" style="border:1px solid #334155;padding:12px 14px;margin:14px 0;border-radius:6px;background:#f8fafc">
+        <div style="font-weight:800;margin-bottom:8px">إقرار الطالب / الطالبة</div>
+        <p style="margin:0 0 10px;line-height:1.7;font-size:13.5px">
+          أقرّ أنا الموقع أدناه بأنني اطّلعت على مضمون هذا التنبيه الكتابي والمخالفة الموضّحة أعلاه،
+          وأتعهّد بالالتزام بلائحة الانضباط المدرسي وعدم تكرار المخالفة.
+        </p>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:12px;color:#475569">اسم الطالب</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px">${esc(st.full_name || st.student_name || '')}</div>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <div style="font-size:12px;color:#475569">التوقيع</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:12px;color:#475569">التاريخ</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;font-weight:700;font-size:13px">ولي الأمر (للاطلاع والتوقيع إن لزم)</div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:12px;color:#475569">اسم ولي الأمر</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <div style="font-size:12px;color:#475569">التوقيع</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:12px;color:#475569">التاريخ</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+        </div>
+      </div>
+      <p class="solouki-notice">${esc(s.notice_text || 'لذا لزم الإحاطة والتنويه بالعلم، مع رجاء المتابعة والتعاون.')}</p>
+      <p class="solouki-date-line">تحريراً في: <b>${esc(today)}</b></p>
+      <div class="solouki-signs">
+        <div class="sign">
+          <div class="title">${esc(s.sign_counselor_title || 'الأخصائي الاجتماعي')}</div>
+          <div class="line">الاسم / التوقيع</div>
+        </div>
+        <div class="sign">
+          <div class="title">${esc(s.sign_stage_manager_title || 'مدير المرحلة')}</div>
+          <div class="line">الاسم / التوقيع</div>
+        </div>
+        <div class="sign">
+          <div class="title">${esc(s.sign_principal_title || 'مدير المدرسة')}</div>
+          <div class="line">الاسم / التوقيع / الخاتم</div>
+        </div>
+      </div>
+      <div class="solouki-footer">
+        مُنشأ عبر <strong>سلوكي Solouki</strong> — يُعتمد بعد التوقيع والخاتم · يُسلَّم للطالب للتوقيع عليه
+      </div>
+      </div>`;
+  }
+
+  async function loadReportSettings() {
+    try {
+      const { data } = await sb().rpc('get_report_settings');
+      return data || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  async function printWrittenWarningForStudent(studentId, recordHint, peers) {
+    if (!$('printSheet')) {
+      note('error', 'عنصر الطباعة غير متاح — حدّث الصفحة');
+      return;
+    }
+    note('ok', 'جاري تجهيز التنبيه الكتابي للطباعة…');
+    try {
+      const settings = await loadReportSettings();
+      let student = { id: studentId };
+      let record = recordHint || {};
+
+      // تحميل بيانات الطالب والتقرير إن أمكن
+      try {
+        const { data } = await sb().rpc('get_student_behavior_report', { p_student_id: studentId });
+        if (data && data.student) {
+          student = data.student;
+          if (!record.violation_label && data.records && data.records.length) {
+            // أحدث مخالفة أو المطابقة
+            const match = record.id
+              ? data.records.find((r) => r.id === record.id)
+              : data.records[0];
+            if (match) {
+              record = {
+                ...record,
+                violation_date: match.violation_date || record.violation_date,
+                degree_id: match.degree_id || record.degree_id,
+                violation_code: match.violation_code || record.violation_code,
+                violation_label: match.violation_label || record.violation_label,
+                location_label: match.location_label || record.location_label,
+                penalty_label: match.penalty_label || record.penalty_label || 'تنبيه كتابي',
+                notes: match.notes || record.notes
+              };
+            }
+          }
+        }
+      } catch (_) { /* نكمل بالبيانات المتوفرة */ }
+
+      if (!student.full_name && record.student_name) {
+        student.full_name = record.student_name;
+        student.grade = record.grade;
+        student.class_name = record.class_name;
+        student.section = record.section;
+        student.national_id = record.national_id;
+      }
+
+      const html = buildWrittenWarningSheet({
+        student,
+        record: { ...record, penalty_label: record.penalty_label || 'تنبيه كتابي' },
+        peers: peers || [],
+        settings
+      });
+      $('printSheet').innerHTML = html;
+      setTimeout(() => window.print(), 200);
+      note('ok', 'تم فتح نافذة الطباعة — سلّم النموذج للطالب للتوقيع');
+    } catch (e) {
+      note('error', e.message || 'تعذّرت الطباعة');
+    }
+  }
+
+  async function printWrittenWarningBatch(studentIds, recordHint) {
+    if (!studentIds || !studentIds.length) return;
+    if (!$('printSheet')) return note('error', 'عنصر الطباعة غير متاح');
+    note('ok', 'جاري تجهيز ' + studentIds.length + ' تنبيهاً كتابياً…');
+    try {
+      const settings = await loadReportSettings();
+      const sheets = [];
+      // قائمة المشاركين كاملة لعرضها في كل ورقة (اختياري)
+      const peerList = [];
+      for (const id of studentIds) {
+        const fromBasket = state.basket.get(id);
+        if (fromBasket) peerList.push(fromBasket);
+      }
+      for (const id of studentIds) {
+        let student = state.basket.get(id) || { id };
+        let record = { ...(recordHint || {}) };
+        try {
+          const { data } = await sb().rpc('get_student_behavior_report', { p_student_id: id });
+          if (data && data.student) {
+            student = data.student;
+            if (data.records && data.records.length) {
+              const m = data.records[0];
+              record = {
+                violation_date: m.violation_date || record.violation_date,
+                degree_id: m.degree_id || record.degree_id,
+                violation_code: m.violation_code || record.violation_code,
+                violation_label: m.violation_label || record.violation_label,
+                location_label: m.location_label || record.location_label,
+                penalty_label: m.penalty_label || record.penalty_label || 'تنبيه كتابي',
+                notes: m.notes || record.notes
+              };
+            }
+          }
+        } catch (_) {}
+        const peers = peerList.filter((p) => p.id !== id);
+        sheets.push(buildWrittenWarningSheet({ student, record, peers, settings }));
+      }
+      $('printSheet').innerHTML = sheets.join('');
+      setTimeout(() => window.print(), 250);
+      note('ok', 'تم تجهيز ' + sheets.length + ' نموذجاً للطباعة والتوقيع');
+    } catch (e) {
+      note('error', e.message || 'تعذّرت الطباعة الجماعية');
+    }
+  }
+
   async function loadRecords() {
     const box = $('recordsList');
     const { data, error } = await sb().rpc('list_recent_violations', { p_limit: 40 });
@@ -596,11 +921,13 @@
             <th>المكان</th>
             <th>العقوبة</th>
             <th>سجّلها</th>
-            ${canDel ? '<th></th>' : ''}
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          ${data.map((r) => `
+          ${data.map((r) => {
+            const ww = isWrittenWarningLabel(r.penalty_label);
+            return `
             <tr>
               <td>${esc(r.violation_date)}</td>
               <td>${esc(r.student_name)}<br><small>${esc(r.grade)} / ${esc(r.class_name)}</small></td>
@@ -609,12 +936,37 @@
               <td>${esc(r.location_label || '—')}</td>
               <td>${esc(r.penalty_label || '—')}</td>
               <td>${esc(r.recorder_name || '—')}</td>
-              ${canDel ? `<td><button type="button" class="mini mini-danger" data-del="${r.id}">حذف</button></td>` : ''}
-            </tr>
-          `).join('')}
+              <td style="white-space:nowrap">
+                ${ww ? `<button type="button" class="mini" data-print-ww="${esc(r.student_id || '')}" data-rec-id="${esc(r.id || '')}" title="طباعة تنبيه كتابي">🖨️ تنبيه</button>` : ''}
+                ${canDel ? ` <button type="button" class="mini mini-danger" data-del="${esc(r.id)}">حذف</button>` : ''}
+              </td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     `;
+    box.querySelectorAll('[data-print-ww]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.printWw;
+        if (!sid) return note('error', 'معرف الطالب غير متاح');
+        const row = data.find((x) => String(x.id) === String(btn.dataset.recId)) || {};
+        printWrittenWarningForStudent(sid, {
+          id: row.id,
+          violation_date: row.violation_date,
+          degree_id: row.degree_id,
+          violation_code: row.violation_code,
+          violation_label: row.violation_label,
+          location_label: row.location_label,
+          penalty_label: row.penalty_label || 'تنبيه كتابي',
+          notes: row.notes,
+          student_name: row.student_name,
+          grade: row.grade,
+          class_name: row.class_name,
+          section: row.section,
+          national_id: row.national_id
+        }, []);
+      });
+    });
     if (canDel) {
       box.querySelectorAll('[data-del]').forEach((btn) => {
         btn.addEventListener('click', async () => {

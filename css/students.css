@@ -573,3 +573,149 @@ pre {
 .roster-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
 .btn-sm { padding: 0.25rem 0.55rem; font-size: 0.8rem; }
 tr.inactive { opacity: 0.72; }
+
+/* فلاتر قائمة الطلاب */
+.roster-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.85rem;
+  align-items: flex-end;
+  padding: 0.75rem 0 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
+}
+.roster-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+}
+.roster-filters select {
+  min-width: 130px;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-family: inherit;
+  font-size: 0.88rem;
+  background: #fff;
+}
+.roster-count {
+  margin-inline-start: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f766e;
+  align-self: center;
+}
+
+a.student-name-link {
+  color: #0f5c56;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px dashed #0f766e55;
+}
+a.student-name-link:hover {
+  color: #0a413d;
+  border-bottom-style: solid;
+}
+
+/* نافذة تفاصيل الطالب */
+.student-detail-card {
+  max-height: 90vh;
+  overflow: auto;
+}
+.student-detail-body {
+  margin-top: 0.75rem;
+}
+.detail-block {
+  margin-bottom: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.detail-block h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: #0f5c56;
+}
+.detail-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.55rem 1rem;
+  margin: 0;
+}
+.detail-dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.detail-dl dt {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.detail-dl dd {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+.detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+}
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: #fff;
+}
+.detail-table th,
+.detail-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.55rem;
+  text-align: right;
+}
+.detail-table th {
+  background: #0f5c56;
+  color: #fff;
+  font-weight: 700;
+}
+.badge-ok {
+  color: #065f46;
+  background: #ecfdf5;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.badge-off {
+  color: #991b1b;
+  background: #fef2f2;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.print-only { display: none !important; }
+@media print {
+  body * { visibility: hidden; }
+  #studentPrintSheet,
+  #studentPrintSheet * {
+    visibility: visible;
+  }
+  #studentPrintSheet {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    padding: 12mm;
+  }
+  .modal, .students-page, .page-head, .tabs, .sync-bar {
+    display: none !important;
+  }
+}

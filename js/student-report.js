@@ -619,6 +619,42 @@
         <tbody>${rows}</tbody>
       </table>
       <p class="solouki-notice">${esc(s.notice_text || 'لذا لزم الإحاطة والتنويه بالعلم، مع رجاء المتابعة والتعاون.')}</p>
+      <div class="solouki-ack" style="border:1px solid #334155;padding:12px 14px;margin:14px 0;border-radius:6px;background:#f8fafc">
+        <div style="font-weight:800;margin-bottom:8px">إقرار الطالب / الطالبة</div>
+        <p style="margin:0 0 10px;line-height:1.7;font-size:13.5px">
+          أقرّ أنا الموقع أدناه بأنني اطّلعت على مضمون هذا التنبيه الكتابي والمخالفات الموضّحة أعلاه،
+          وأتعهّد بالالتزام بلائحة الانضباط المدرسي وعدم تكرار المخالفة.
+        </p>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:12px;color:#475569">اسم الطالب</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px">${esc(st.full_name || '')}</div>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <div style="font-size:12px;color:#475569">التوقيع</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:12px;color:#475569">التاريخ</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;font-weight:700;font-size:13px">ولي الأمر (للاطلاع والتوقيع إن لزم)</div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:12px;color:#475569">اسم ولي الأمر</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:140px">
+            <div style="font-size:12px;color:#475569">التوقيع</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:12px;color:#475569">التاريخ</div>
+            <div style="border-bottom:1px solid #64748b;min-height:28px;margin-top:4px"></div>
+          </div>
+        </div>
+      </div>
       <p class="solouki-closing">${esc(s.closing_text || 'وتفضلوا بقبول فائق الاحترام والتقدير.')}</p>
       <p class="solouki-date-line">تحريراً في: <b>${esc(today)}</b></p>
       <div class="solouki-signs">
@@ -636,7 +672,7 @@
         </div>
       </div>
       <div class="solouki-footer">
-        مُنشأ عبر <strong>سلوكي Solouki</strong> — يُعتمد بعد التوقيع والخاتم
+        مُنشأ عبر <strong>سلوكي Solouki</strong> — يُعتمد بعد التوقيع والخاتم · يُسلَّم للطالب للتوقيع عليه
       </div>
       </div>`;
   }

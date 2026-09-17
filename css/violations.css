@@ -277,3 +277,16 @@
 #bulkPanel.active {
   display: block !important;
 }
+
+/* طباعة التنبيه الكتابي من صفحة المخالفات */
+@media print {
+  .catalog-main > .panel,
+  .catalog-main > .mode-tabs,
+  .catalog-main > .note {
+    display: none !important;
+  }
+  #printSheet.print-only,
+  #printSheet {
+    display: block !important;
+  }
+}

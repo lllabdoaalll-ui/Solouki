@@ -423,23 +423,41 @@
         ' — نفّذ sql/phase4-step42-students-columns.sql في محرر SQL إن كان العمود ناقصًا.');
       return;
     }
-    current = (data || []).map(s => ({
-      id: s.id,
-      national_id: s.national_id,
-      student_code: s.student_code || s.seat_number || '',
-      full_name: s.full_name,
-      gender: genderFromDb(s.gender),
-      grade: s.grade,
-      stage: s.stage_name || s.grade,
-      section: sectionFromDb(s.section),
-      class: s.class_name || s.class || '',
-      father_phone: s.father_phone || s.guardian_phone || '',
-      mother_phone: s.mother_phone || '',
-      is_active: s.is_active !== false,
-      status: s.status || (s.is_active === false ? 'withdrawn' : 'active')
-    }));
+    // أسماء المراحل من جدول stages (إن وُجد stage_id دون stage_name)
+    let stageNameById = {};
+    try {
+      const ids = [...new Set((data || []).map(s => s.stage_id).filter(Boolean))];
+      if (ids.length) {
+        const { data: stgs } = await sb.from('stages').select('id,name_ar,name').in('id', ids);
+        (stgs || []).forEach(st => {
+          stageNameById[st.id] = st.name_ar || st.name || '';
+        });
+      }
+    } catch (_) {}
+
+    current = (data || []).map(s => {
+      const stageName = s.stage_name || stageNameById[s.stage_id] || '';
+      return {
+        id: s.id,
+        national_id: s.national_id,
+        student_code: s.student_code || s.seat_number || '',
+        full_name: s.full_name,
+        gender: genderFromDb(s.gender),
+        grade: s.grade || '',
+        stage: stageName || '',
+        stage_id: s.stage_id || null,
+        section: sectionFromDb(s.section),
+        class: s.class_name || s.class || '',
+        father_phone: s.father_phone || s.guardian_phone || '',
+        mother_phone: s.mother_phone || '',
+        is_active: s.is_active !== false,
+        status: s.status || (s.is_active === false ? 'withdrawn' : 'active')
+      };
+    });
     renderStats();
     setSyncStatus({ net: navigator.onLine ? 'online' : 'offline', db: 'ok' });
+    // دائماً أعد رسم القائمة والفلاتر بعد التحميل
+    try { renderRoster(); } catch (e) { console.warn('renderRoster after load', e); }
   }
 
   function renderStats() {
@@ -1167,47 +1185,113 @@
     }
   }
 
-  function renderRoster() {
-    const q = normalize($('rosterSearch')?.value || '').toLowerCase();
+
+  /* —— فلاتر القائمة (مرحلة / قسم / صف / فصل) ضمن البيانات المتاحة للصلاحية —— */
+  function uniqueSorted(arr) {
+    return [...new Set(arr.filter(Boolean).map(x => String(x).trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'ar'));
+  }
+
+  function baseRosterList() {
     const filter = $('rosterFilter')?.value || 'active';
     let list = [...current];
     if (filter === 'active') list = list.filter(s => s.is_active !== false);
     else if (filter === 'withdrawn') list = list.filter(s => s.is_active === false);
+    return list;
+  }
 
-    if (q) {
-      list = list.filter(s => {
-        const blob = [s.full_name, s.national_id, s.student_code, s.class, s.grade, s.section, s.father_phone, s.mother_phone]
+  function fillRosterFilterOptions() {
+    const base = baseRosterList();
+    const stageVal = $('filterStage')?.value || '';
+    const secVal = $('filterSection')?.value || '';
+    const gradeVal = $('filterGrade')?.value || '';
+    const classVal = $('filterClass')?.value || '';
+
+    const fillSel = (id, values, current) => {
+      const el = $(id);
+      if (!el) return;
+      const vals = values || [];
+      const keep = current && vals.includes(current) ? current : '';
+      el.innerHTML = '<option value="">— الكل —</option>' +
+        vals.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+      el.value = keep;
+    };
+
+    let pool = base;
+    // المرحلة: من stage، وإن خلت نعرض «غير محددة» فقط إن وُجد طلاب بلا مرحلة
+    const stages = uniqueSorted(pool.map(s => s.stage).filter(Boolean));
+    fillSel('filterStage', stages, stageVal);
+
+    pool = stageVal ? base.filter(s => (s.stage || '') === stageVal) : base;
+    const sections = uniqueSorted(pool.map(s => s.section).filter(Boolean));
+    fillSel('filterSection', sections, secVal);
+
+    pool = pool.filter(s => !secVal || (s.section || '') === secVal);
+    const grades = uniqueSorted(pool.map(s => s.grade).filter(Boolean));
+    fillSel('filterGrade', grades, gradeVal);
+
+    pool = pool.filter(s => !gradeVal || (s.grade || '') === gradeVal);
+    const classes = uniqueSorted(pool.map(s => s.class).filter(Boolean));
+    fillSel('filterClass', classes, classVal);
+  }
+
+  function applyRosterFilters(list) {
+    const stageVal = $('filterStage')?.value || '';
+    const secVal = $('filterSection')?.value || '';
+    const gradeVal = $('filterGrade')?.value || '';
+    const classVal = $('filterClass')?.value || '';
+    const q = normalize($('rosterSearch')?.value || '').toLowerCase();
+
+    return list.filter(s => {
+      if (stageVal && (s.stage || '') !== stageVal) return false;
+      if (secVal && (s.section || '') !== secVal) return false;
+      if (gradeVal && (s.grade || '') !== gradeVal) return false;
+      if (classVal && (s.class || '') !== classVal) return false;
+      if (q) {
+        const blob = [s.full_name, s.national_id, s.student_code, s.class, s.grade, s.section, s.stage, s.father_phone, s.mother_phone]
           .map(x => normalize(x).toLowerCase()).join(' ');
-        return blob.includes(q);
-      });
-    }
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderRoster() {
+    fillRosterFilterOptions();
+    const filter = $('rosterFilter')?.value || 'active';
+    let list = baseRosterList();
+    list = applyRosterFilters(list);
+
+    const countEl = $('rosterCount');
+    if (countEl) countEl.textContent = list.length ? `${list.length} طالباً` : '';
 
     if (!list.length) {
-      $('rosterTable').innerHTML = '<p class="small-note">لا يوجد طلاب مطابقون.</p>';
+      $('rosterTable').innerHTML = '<p class="small-note">لا يوجد طلاب مطابقون للفلاتر الحالية.</p>';
       return;
     }
 
     const editBtn = canEditStudents()
       ? '<button type="button" class="btn btn-primary btn-sm btn-edit-student">تعديل</button>'
       : (canViewStudentDetails() ? '<button type="button" class="btn btn-outline btn-sm btn-edit-student">عرض</button>' : '');
-    // زر الحذف يُبنى لكل صف حسب الحالة
-    const actionCell = editBtn; // يُكمَل داخل الحلقة
 
     let html = `<table class="roster-table"><thead><tr>
-      <th>الاسم</th><th>الرقم القومي</th><th>الكود</th><th>الصف / الفصل</th><th>هاتف الأب</th><th>هاتف الأم</th><th>الحالة</th><th></th>
+      <th>الاسم</th><th>الرقم القومي</th><th>الكود</th><th>المرحلة</th><th>الصف / الفصل</th><th>هاتف الأب</th><th>هاتف الأم</th><th>الحالة</th><th></th>
     </tr></thead><tbody>`;
     list.forEach(s => {
       const key = studentKey(s);
       const active = s.is_active !== false;
-      html += `<tr class="${active ? '' : 'inactive'}" data-key="${key}">
-        <td>${escapeHtml(s.full_name || '—')}</td>
+      const nameCell = `<a href="#" class="student-name-link" data-key="${escapeHtml(key)}" title="فتح ملف الطالب">${escapeHtml(s.full_name || '—')}</a>`;
+      html += `<tr class="${active ? '' : 'inactive'}" data-key="${escapeHtml(key)}">
+        <td>${nameCell}</td>
         <td dir="ltr">${escapeHtml(s.national_id || '')}</td>
         <td dir="ltr">${escapeHtml(s.student_code || '—')}</td>
-        <td>${escapeHtml((s.grade || '') + ' / ' + (s.class || ''))}</td>
+        <td>${escapeHtml(s.stage || '—')}</td>
+        <td>${escapeHtml((s.grade || '') + ' / ' + (s.class || ''))}${s.section ? '<br><small>' + escapeHtml(s.section) + '</small>' : ''}</td>
         <td dir="ltr">${escapeHtml(s.father_phone || '—')}</td>
         <td dir="ltr">${escapeHtml(s.mother_phone || '—')}</td>
         <td>${active ? 'نشط' : 'منسحب'}</td>
         <td class="roster-actions">
+          <button type="button" class="btn btn-outline btn-sm btn-open-detail">ملف</button>
           ${editBtn}
           ${canDeleteStudents() && active ? '<button type="button" class="btn btn-danger btn-sm btn-withdraw-student">حذف</button>' : ''}
           ${canDeleteStudents() && !active ? '<button type="button" class="btn btn-outline btn-sm btn-restore-student">استعادة</button>' : ''}
@@ -1216,24 +1300,177 @@
     });
     html += '</tbody></table>';
     $('rosterTable').innerHTML = html;
-    $('rosterTable').querySelectorAll('.btn-edit-student').forEach(btn => {
-      btn.onclick = () => {
-        const tr = btn.closest('tr');
-        openEditStudent(tr.getAttribute('data-key'));
+
+    const bind = (sel, fn) => {
+      $('rosterTable').querySelectorAll(sel).forEach(btn => {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          const tr = btn.closest('tr');
+          const key = tr?.getAttribute('data-key') || btn.getAttribute('data-key');
+          if (key) fn(key);
+        };
+      });
+    };
+    bind('.student-name-link', openStudentDetail);
+    bind('.btn-open-detail', openStudentDetail);
+    bind('.btn-edit-student', openEditStudent);
+    bind('.btn-withdraw-student', withdrawStudentByKey);
+    bind('.btn-restore-student', restoreStudentByKey);
+  }
+
+  let detailStudentKey = null;
+
+  async function openStudentDetail(key) {
+    const s = current.find(x => studentKey(x) === key);
+    if (!s) return msg('error', 'الطالب غير موجود.');
+    detailStudentKey = key;
+    const modal = $('studentDetailModal');
+    if (!modal) return;
+    $('detailTitle').textContent = s.full_name || 'ملف الطالب';
+    $('detailBody').innerHTML = '<p class="small-note">جاري تحميل بيانات الطالب…</p>';
+    const reportLink = $('detailReportLink');
+    if (reportLink) {
+      reportLink.href = s.id ? ('student-report.html?id=' + encodeURIComponent(s.id)) : 'student-report.html';
+    }
+    const editBtn = $('detailEditBtn');
+    if (editBtn) {
+      editBtn.hidden = !(canEditStudents() || canViewStudentDetails());
+      editBtn.onclick = () => {
+        closeStudentDetail();
+        openEditStudent(key);
       };
-    });
-    $('rosterTable').querySelectorAll('.btn-withdraw-student').forEach(btn => {
-      btn.onclick = () => {
-        const tr = btn.closest('tr');
-        withdrawStudentByKey(tr.getAttribute('data-key'));
-      };
-    });
-    $('rosterTable').querySelectorAll('.btn-restore-student').forEach(btn => {
-      btn.onclick = () => {
-        const tr = btn.closest('tr');
-        restoreStudentByKey(tr.getAttribute('data-key'));
-      };
-    });
+    }
+    modal.hidden = false;
+
+    let violations = [];
+    let merits = [];
+    let summary = null;
+    if (sb && s.id) {
+      try {
+        const { data } = await sb.rpc('get_student_behavior_report', { p_student_id: s.id });
+        if (data) {
+          summary = data.summary || data.stats || null;
+          violations = (data.records || data.violations || []).slice(0, 8);
+          merits = (data.merits || []).slice(0, 5);
+        }
+      } catch (err) {
+        console.warn('detail report', err);
+      }
+    }
+
+    const pretty = v => {
+      const d = digits(v);
+      if (d.startsWith('20') && d.length === 12) return '0' + d.slice(2);
+      return v || '—';
+    };
+
+    const active = s.is_active !== false;
+    let body = `
+      <div class="detail-grid">
+        <div class="detail-block">
+          <h3>البيانات الأساسية</h3>
+          <dl class="detail-dl">
+            <div><dt>الاسم</dt><dd>${escapeHtml(s.full_name || '—')}</dd></div>
+            <div><dt>الرقم القومي</dt><dd dir="ltr">${escapeHtml(s.national_id || '—')}</dd></div>
+            <div><dt>الكود</dt><dd dir="ltr">${escapeHtml(s.student_code || '—')}</dd></div>
+            <div><dt>النوع</dt><dd>${escapeHtml(s.gender || '—')}</dd></div>
+            <div><dt>المرحلة</dt><dd>${escapeHtml(s.stage || '—')}</dd></div>
+            <div><dt>القسم</dt><dd>${escapeHtml(s.section || '—')}</dd></div>
+            <div><dt>الصف</dt><dd>${escapeHtml(s.grade || '—')}</dd></div>
+            <div><dt>الفصل</dt><dd>${escapeHtml(s.class || '—')}</dd></div>
+            <div><dt>هاتف الأب</dt><dd dir="ltr">${escapeHtml(pretty(s.father_phone))}</dd></div>
+            <div><dt>هاتف الأم</dt><dd dir="ltr">${escapeHtml(pretty(s.mother_phone))}</dd></div>
+            <div><dt>الحالة</dt><dd>${active ? '<span class="badge-ok">نشط</span>' : '<span class="badge-off">منسحب</span>'}</dd></div>
+          </dl>
+        </div>
+      </div>`;
+
+    if (summary) {
+      body += `<div class="detail-block"><h3>ملخص السلوك</h3>
+        <div class="detail-stats">
+          <span>مخالفات: <b>${escapeHtml(summary.total_violations ?? summary.violations_count ?? '—')}</b></span>
+          <span>تكريمات: <b>${escapeHtml(summary.total_merits ?? summary.merits_count ?? '—')}</b></span>
+          <span>رصيد: <b>${escapeHtml(summary.behavior_balance ?? summary.points ?? '—')}</b></span>
+        </div></div>`;
+    }
+
+    body += `<div class="detail-block"><h3>آخر المخالفات</h3>`;
+    if (!violations.length) {
+      body += '<p class="small-note">لا توجد مخالفات مسجّلة أو تعذّر التحميل.</p>';
+    } else {
+      body += `<table class="detail-table"><thead><tr><th>التاريخ</th><th>الدرجة</th><th>المخالفة</th><th>العقوبة</th></tr></thead><tbody>`;
+      violations.forEach(r => {
+        body += `<tr>
+          <td>${escapeHtml(r.violation_date || '—')}</td>
+          <td>${escapeHtml(r.degree_id || '—')}</td>
+          <td>${r.violation_code ? '<strong>' + escapeHtml(r.violation_code) + '</strong> — ' : ''}${escapeHtml(r.violation_label || r.label || '—')}</td>
+          <td>${escapeHtml(r.penalty_label || '—')}</td>
+        </tr>`;
+      });
+      body += '</tbody></table>';
+    }
+    body += '</div>';
+
+    if (merits.length) {
+      body += `<div class="detail-block"><h3>آخر التكريمات</h3>
+        <table class="detail-table"><thead><tr><th>التاريخ</th><th>التكريم</th><th>النقاط</th></tr></thead><tbody>`;
+      merits.forEach(m => {
+        body += `<tr>
+          <td>${escapeHtml(m.merit_date || m.created_at || '—')}</td>
+          <td>${escapeHtml(m.label || m.category || m.title || '—')}</td>
+          <td>${escapeHtml(m.points ?? '—')}</td>
+        </tr>`;
+      });
+      body += '</tbody></table></div>';
+    }
+
+    $('detailBody').innerHTML = body;
+  }
+
+  function closeStudentDetail() {
+    const modal = $('studentDetailModal');
+    if (modal) modal.hidden = true;
+    detailStudentKey = null;
+  }
+
+  function printStudentDetail() {
+    const s = current.find(x => studentKey(x) === detailStudentKey);
+    if (!s) return msg('error', 'اختر طالباً أولاً');
+    const sheet = $('studentPrintSheet');
+    if (!sheet) return msg('error', 'عنصر الطباعة غير متاح');
+    const pretty = v => {
+      const d = digits(v);
+      if (d.startsWith('20') && d.length === 12) return '0' + d.slice(2);
+      return v || '—';
+    };
+    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    sheet.innerHTML = `
+      <div class="solouki-sheet">
+        <div class="solouki-doc-title"><h1>بطاقة بيانات طالب</h1>
+          <div class="meta">التاريخ: <b>${escapeHtml(today)}</b></div>
+        </div>
+        <div class="solouki-student-box">
+          <div class="name">${escapeHtml(s.full_name || '—')}</div>
+          <div class="row">
+            <b>الرقم القومي:</b> ${escapeHtml(s.national_id || '—')} ·
+            <b>الكود:</b> ${escapeHtml(s.student_code || '—')} ·
+            <b>النوع:</b> ${escapeHtml(s.gender || '—')}
+          </div>
+          <div class="row">
+            <b>المرحلة:</b> ${escapeHtml(s.stage || '—')} ·
+            <b>القسم:</b> ${escapeHtml(s.section || '—')} ·
+            <b>الصف:</b> ${escapeHtml(s.grade || '—')} ·
+            <b>الفصل:</b> ${escapeHtml(s.class || '—')}
+          </div>
+          <div class="row">
+            <b>هاتف الأب:</b> ${escapeHtml(pretty(s.father_phone))} ·
+            <b>هاتف الأم:</b> ${escapeHtml(pretty(s.mother_phone))}
+          </div>
+          <div class="row"><b>الحالة:</b> ${s.is_active !== false ? 'نشط' : 'منسحب'}</div>
+        </div>
+        <div class="solouki-footer">مُنشأ عبر <strong>سلوكي Solouki</strong></div>
+      </div>`;
+    setTimeout(() => window.print(), 150);
   }
 
   function openEditStudent(key) {
@@ -1409,6 +1646,17 @@
   });
   on('rosterSearch', 'input', renderRoster);
   on('rosterFilter', 'change', renderRoster);
+  on('filterStage', 'change', () => { if ($('filterSection')) $('filterSection').value = ''; if ($('filterGrade')) $('filterGrade').value = ''; if ($('filterClass')) $('filterClass').value = ''; renderRoster(); });
+  on('filterSection', 'change', () => { if ($('filterGrade')) $('filterGrade').value = ''; if ($('filterClass')) $('filterClass').value = ''; renderRoster(); });
+  on('filterGrade', 'change', () => { if ($('filterClass')) $('filterClass').value = ''; renderRoster(); });
+  on('filterClass', 'change', renderRoster);
+  on('clearRosterFilters', 'click', () => {
+    ['filterStage','filterSection','filterGrade','filterClass','rosterSearch'].forEach(id => { if ($(id)) $(id).value = ''; });
+    if ($('rosterFilter')) $('rosterFilter').value = 'active';
+    renderRoster();
+  });
+  on('closeDetail', 'click', closeStudentDetail);
+  on('detailPrintBtn', 'click', printStudentDetail);
   on('closeEdit', 'click', closeEditStudent);
   on('cancelEdit', 'click', closeEditStudent);
   if ($('editForm')) $('editForm').onsubmit = saveEditStudent;
