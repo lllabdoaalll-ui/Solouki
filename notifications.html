@@ -52,7 +52,7 @@
   <div class="notice">
     <strong>إرسال يدوي من رقم الأخصائي:</strong>
     جهّز إشعارات اليوم، ثم افتح المحادثات واحداً تلو الآخر عبر <b>wa.me</b> من واتساب على هاتفك أو واتساب ويب.
-    تُفتح الرسائل في <b>نفس النافذة</b> لتسهيل الإرسال المتتابع. (Cloud API غير مفعّل حالياً.)
+    تُفتح الرسائل في <b>نفس نافذة WhatsApp</b> لتسهيل الإرسال المتتابع، ولا يُحسب الإرسال نجاحًا إلا بعد تأكيد الأخصائي. (Cloud API غير مفعّل حالياً.)
   </div>
 
   <div id="error" class="error-box" hidden></div>
@@ -65,7 +65,7 @@
 
   <section class="stats">
     <div><small>طلاب بانتظار الإشعار</small><strong id="pendingCount">0</strong></div>
-    <div><small>تم الإرسال بنجاح</small><strong id="openedCount">0</strong></div>
+    <div><small>تم التأكيد/الإرسال</small><strong id="openedCount">0</strong></div>
     <div><small>مخالفات اليوم</small><strong id="violCount">0</strong></div>
   </section>
 
@@ -86,12 +86,13 @@
       <button type="button" id="prepareAllBtn" class="btn btn-outline">① تجهيز إشعارات اليوم</button>
       <button type="button" id="refreshBtn" class="btn btn-outline">تحديث</button>
       <button type="button" id="startBulkBtn" class="btn btn-primary">② إرسال المحدد يدوياً</button>
+      <button type="button" id="startAllBtn" class="btn btn-outline">إرسال جميع المعلّقين</button>
     </div>
   </div>
 
 
 
-  <div class="selection-bar"><label><input id="selectAll" type="checkbox"> تحديد كل المعلّقين</label> <span>المحدد: <b id="selectedCount">0</b></span></div>
+  <div class="selection-bar"><label><input id="selectAll" type="checkbox"> تحديد كل المعلّقين</label> <span>المحدد: <b id="selectedCount">0</b></span><span class="small-note">اختر نوع الرسالة أولاً، ثم حدد الطلاب المطلوبين.</span></div>
 
   <div id="bulkBar" class="bulk-bar" hidden>
     <p id="bulkProgress" class="small-note" style="margin:0 0 0.5rem"></p>
