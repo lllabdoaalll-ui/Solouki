@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/students.css">
 <style>
+.message-modes{background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px;padding:1rem;margin:1rem 0}.message-modes h3{margin:0 0 .7rem;color:#1e3a5f}.message-modes label{display:block;padding:.55rem .65rem;margin:.35rem 0;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer}.message-modes label b{display:inline-block;margin:0 .35rem}.message-modes label span{display:block;color:#64748b;font-size:.84rem;margin:.25rem 1.65rem 0}.selection-bar{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:.7rem 1rem;margin:.75rem 0}.notif-select{float:right}.notif-select input{width:20px;height:20px}
 .notif-page { max-width: 960px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
 .sender-card {
   background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;
@@ -68,6 +69,15 @@
     <div><small>مخالفات اليوم</small><strong id="violCount">0</strong></div>
   </section>
 
+  <div class="sender-card"><strong>مرسل واتساب:</strong> <span id="senderWa">—</span></div>
+  <section class="message-modes">
+    <h3>نوع الرسالة — اختر قبل الإرسال</h3>
+    <label><input type="radio" name="sendMode" value="access" checked> <b>إشعار اطلاع على سلوكي</b><span>إبلاغ ولي الأمر بوجود متابعة، مع الرقم القومي وكود الطالب للوصول إلى التفاصيل داخل سلوكي.</span></label>
+    <label><input type="radio" name="sendMode" value="warning"> <b>تنبيه كتابي كامل</b><span>إرسال التنبيه المكتوب والمخالفات ذات الصلة كنص كامل عبر واتساب.</span></label>
+    <label><input type="radio" name="sendMode" value="warning_escalation"> <b>تنبيه كتابي + خطوات التصعيد</b><span>التنبيه الكامل مع مستوى المتابعة والإجراء المقترح وخطوات التصعيد.</span></label>
+    <p id="modeDescription" class="small-note">إشعار مختصر: يطلب من ولي الأمر الاطلاع على سلوكي باستخدام الرقم القومي وكود الطالب. لا نرسل التقرير الكامل.</p>
+  </section>
+
   <div class="head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin:1rem 0">
     <div>
       <h2 style="margin:0">إشعارات اليوم</h2>
@@ -76,17 +86,19 @@
     <div class="actions">
       <button type="button" id="prepareAllBtn" class="btn btn-outline">① تجهيز إشعارات اليوم</button>
       <button type="button" id="refreshBtn" class="btn btn-outline">تحديث</button>
-      <button type="button" id="startBulkBtn" class="btn btn-primary">② بدء الإرسال اليدوي</button>
+      <button type="button" id="startBulkBtn" class="btn btn-primary">② إرسال المحدد يدوياً</button>
     </div>
   </div>
 
 
 
+  <div class="selection-bar"><label><input id="selectAll" type="checkbox"> تحديد كل المعلّقين</label> <span>المحدد: <b id="selectedCount">0</b></span></div>
+
   <div id="bulkBar" class="bulk-bar" hidden>
     <p id="bulkProgress" class="small-note" style="margin:0 0 0.5rem"></p>
     <div class="actions" style="gap:0.4rem">
       <button type="button" id="bulkPrevBtn" class="btn btn-outline">السابق</button>
-      <button type="button" id="bulkNextBtn" class="btn btn-primary">التالي (افتح واتساب)</button>
+      <button type="button" id="bulkNextBtn" class="btn btn-primary">تم الإرسال، التالي (افتح واتساب)</button>
       <button type="button" id="bulkStopBtn" class="btn btn-outline">إنهاء</button>
     </div>
   </div>
@@ -95,12 +107,12 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.62.7"></script>
+  <script src="js/config.js?v=4.62.8"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/notifications.js?v=4.62.7"></script>
+  <script src="js/notifications.js?v=4.62.8"></script>
   <script src="js/pwa.js"></script>
 </body>
 </html>
