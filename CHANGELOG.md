@@ -1,3 +1,15 @@
+
+## 4.62.14 — إصلاح نافذة معاينة WhatsApp
+- إصلاح جذري لعدم استجابة زر «إغلاق» على الكمبيوتر والموبايل.
+- استخدام class `is-open` كآلية عرض/إخفاء صريحة للنافذة.
+- تحديث cache-busting إلى 4.62.14 لمنع تحميل نسخة JavaScript قديمة.
+- دعم الإغلاق بالزر، وبالنقر على الخلفية، وبمفتاح Escape.
+
+## 4.62.13 — Preview modal close fix
+- Fixed the preview dialog not closing because the `.preview-modal` CSS display rule could override the HTML `hidden` attribute.
+- Added an explicit `.preview-modal[hidden] { display:none !important; }` rule.
+- Added Escape-key support and centralized preview close handling.
+
 ## 4.62.12 — مزامنة تأكيدات WhatsApp بين الأجهزة
 
 - نقل حالة التأكيد اليدوي من localStorage-only إلى جدول Supabase مخصص.
