@@ -1,4 +1,4 @@
-/* Solouki 4.62.14 — WhatsApp message templates + full preview before sending. */
+/* Solouki 4.62.15 — Fast bulk WhatsApp workflow: one batch preview, then send/next. */
 (() => {
   const cfg=window.SOLOUKI_CONFIG||{}; const sb=window.SoloukiDB?window.SoloukiDB.getClient():null;
   let profile=null,rows=[],bulkQueue=[],bulkIndex=0,waWindow=null,sourceMode='db',sendMode='access',previewRow=null;
@@ -58,9 +58,25 @@
   function openWa(row,text){const p=toWa(row.recipient_phone);if(!p||p.length<12){note('error','رقم غير صالح لولي الأمر: '+(row.recipient_phone||'—'));return false}const url=waLink(p,text);try{if(!waWindow||waWindow.closed)waWindow=window.open(url,WA_WIN);else{waWindow.location.href=url;waWindow.focus()}}catch(_){waWindow=null}if(!waWindow){note('error','المتصفح منع نافذة WhatsApp. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');return false}try{waWindow.focus()}catch(_){}return true}
   async function showPreview(row,after){previewRow=row;const text=await composeMessage(row);$('previewStudent').textContent=`الطالب: ${row.student_name||'—'} — ولي الأمر: ${row.parent_type==='father'?'الأب':row.parent_type==='mother'?'الأم':'ولي الأمر'}`;$('previewType').textContent=modeLabel(sendMode);$('previewRecipient').innerHTML=`رقم المستلم: <span dir="ltr">${esc(row.recipient_phone||'—')}</span>`;$('previewText').value=text;$('previewModal').hidden=false;$('previewModal').classList.add('is-open');$('previewModal').setAttribute('aria-hidden','false');document.body.classList.add('preview-open');$('previewText').focus();$('sendPreview').onclick=()=>{const finalText=$('previewText').value.trim();if(!finalText){note('error','لا يمكن إرسال رسالة فارغة.');return}if(openWa(row,finalText)){ closePreview(); if(after)after(row)}};$('copyPreview').onclick=async()=>{try{await navigator.clipboard.writeText($('previewText').value);note('ok','تم نسخ النص بعد مراجعته.')}catch(_){note('error','تعذر النسخ.')}}}
   function manualOne(row){showPreview(row)}
-  function startBulk(useSelection){const chosen=selectedRows();if(useSelection&&!chosen.length){note('error','حدد طالبًا واحدًا على الأقل.');return}bulkQueue=useSelection?chosen:pendingRows();if(!bulkQueue.length){note('error','لا توجد إشعارات معلقة.');return}bulkIndex=0;$('bulkBar').hidden=false;showBulkCurrent()}
-  async function showBulkCurrent(){if(!bulkQueue.length||bulkIndex>=bulkQueue.length){finishBulk();return}const row=bulkQueue[bulkIndex];await showPreview(row,(r)=>{note('ok',`تم فتح WhatsApp لـ «${r.student_name||''}». أرسل الرسالة ثم اضغط «تم الإرسال، التالي».`);updateBulkBar()});updateBulkBar()}
-  async function bulkNext(){const r=bulkQueue[bulkIndex];if(r)await markManuallySent(r);bulkIndex++;if(bulkIndex>=bulkQueue.length)finishBulk();else showBulkCurrent()}
+  function startBulk(useSelection){const chosen=selectedRows();if(useSelection&&!chosen.length){note('error','حدد طالبًا واحدًا على الأقل.');return}bulkQueue=useSelection?chosen:pendingRows();if(!bulkQueue.length){note('error','لا توجد إشعارات معلقة.');return}bulkIndex=0;$('bulkBar').hidden=false;openBulkPreview();updateBulkBar()}
+  async function showBulkCurrent(){if(!bulkQueue.length||bulkIndex>=bulkQueue.length){finishBulk();return}const row=bulkQueue[bulkIndex];const text=await composeMessage(row);if(openWa(row,text)){note('ok',`تم فتح WhatsApp لـ «${rName(row)}». أرسل الرسالة ثم اضغط «تم الإرسال، التالي».`)}updateBulkBar()}
+  const rName=r=>r?.student_name||'الطالب';
+  async function openBulkPreview(){
+    if(!bulkQueue.length){note('error','لا توجد رسائل محددة للإرسال.');return false}
+    const first=bulkQueue[0];
+    const text=await composeMessage(first);
+    const modal=$('bulkPreviewModal');
+    if(!modal)return showBulkCurrent();
+    $('bulkPreviewCount').textContent=`سيتم إرسال ${bulkQueue.length} رسالة يدويًا بنفس نافذة WhatsApp.`;
+    $('bulkPreviewMode').textContent=modeLabel(sendMode);
+    $('bulkPreviewStudent').textContent=`مثال الرسالة الأولى: ${rName(first)} — ${first.recipient_phone||'—'}`;
+    $('bulkPreviewText').value=text;
+    modal.hidden=false; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false');
+    return true;
+  }
+  function closeBulkPreview(){const m=$('bulkPreviewModal');if(!m)return;m.hidden=true;m.classList.remove('is-open');m.setAttribute('aria-hidden','true')}
+  async function confirmBulkStart(){closeBulkPreview();await showBulkCurrent()}
+  async function bulkNext(){const r=bulkQueue[bulkIndex];if(r)await markManuallySent(r);bulkIndex++;if(bulkIndex>=bulkQueue.length)finishBulk();else await showBulkCurrent()}
   function bulkPrev(){if(bulkIndex<=0)return;bulkIndex--;showBulkCurrent()}
   function finishBulk(){bulkQueue=[];bulkIndex=0;$('bulkBar').hidden=true;note('ok','انتهى مسار الإرسال اليدوي. تم تسجيل الحالات التي أكدتها فقط.');render()}
   function updateBulkBar(){const p=$('bulkProgress');p.textContent=bulkQueue.length?`النمط: ${modeLabel(sendMode)} — الحالي ${bulkIndex+1} من ${bulkQueue.length} — المتبقي ${Math.max(bulkQueue.length-bulkIndex-1,0)}`:`${pendingRows().length} إشعارًا معلّقًا.`;$('bulkNextBtn').disabled=!bulkQueue.length;$('bulkPrevBtn').disabled=!bulkQueue.length||bulkIndex<=0}
@@ -73,6 +89,6 @@
   $('selectAll')?.addEventListener('change',e=>document.querySelectorAll('[data-select]').forEach(x=>x.checked=e.target.checked));
   document.addEventListener('change',e=>{if(e.target.matches('[data-select]'))updateSelectAll();if(e.target.matches('input[name="sendMode"]')){sendMode=e.target.value;$('modeDescription').textContent=modeDescription(sendMode);updateBulkBar();render()}});
   const closePreview=()=>{const m=$('previewModal');if(!m)return;m.hidden=true;m.classList.remove('is-open');m.setAttribute('aria-hidden','true');document.body.classList.remove('preview-open')};$('closePreview')?.addEventListener('click',closePreview);$('previewModal')?.addEventListener('click',e=>{if(e.target===$('previewModal'))closePreview()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('previewModal')?.hidden)closePreview()});
-  $('prepareAllBtn')?.addEventListener('click',prepareAll);$('refreshBtn')?.addEventListener('click',load);$('startBulkBtn')?.addEventListener('click',()=>startBulk(true));$('startAllBtn')?.addEventListener('click',()=>startBulk(false));$('bulkNextBtn')?.addEventListener('click',bulkNext);$('bulkPrevBtn')?.addEventListener('click',bulkPrev);$('bulkStopBtn')?.addEventListener('click',finishBulk);$('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
+  $('prepareAllBtn')?.addEventListener('click',prepareAll);$('refreshBtn')?.addEventListener('click',load);$('startBulkBtn')?.addEventListener('click',()=>startBulk(true));$('startAllBtn')?.addEventListener('click',()=>startBulk(false));$('bulkNextBtn')?.addEventListener('click',bulkNext);$('bulkPrevBtn')?.addEventListener('click',bulkPrev);$('bulkStopBtn')?.addEventListener('click',finishBulk);$('bulkPreviewStart')?.addEventListener('click',confirmBulkStart);$('bulkPreviewClose')?.addEventListener('click',closeBulkPreview);$('bulkPreviewModal')?.addEventListener('click',e=>{if(e.target===$('bulkPreviewModal'))closeBulkPreview()});$('logout')?.addEventListener('click',()=>SoloukiSession.logout('index.html'));
   load().then(showSender).catch(e=>note('error',e.message||String(e)));
 })();
