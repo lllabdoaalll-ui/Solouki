@@ -579,3 +579,9 @@
 - تحسين التنبيه الكامل لعرض البيانات المتاحة عن المخالفات والإجراء المسجل.
 - صياغة خطوات التصعيد بحذر دون افتراض مستوى رسمي غير مسجل.
 - الحفاظ على الإرسال الجماعي اليدوي في نافذة WhatsApp واحدة مع تأكيد الأخصائي.
+
+## 4.62.17
+- Fixed analytics RPC ambiguity caused by legacy `get_behavior_analytics` definitions.
+- Added unique `get_behavior_analytics_v2(date,date,text)` RPC and switched `analytics.js` to it.
+- Added PostgREST schema-cache reload to the analytics SQL migration.
+- Unified cache-busting/version references to 4.62.17.
