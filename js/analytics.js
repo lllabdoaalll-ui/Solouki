@@ -1,4 +1,4 @@
-/* Solouki 4.62.18 — Connected behavioral analytics */
+/* Solouki 4.62.20 — Analytics scope audit + deployment-safe bindings */
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
@@ -97,9 +97,13 @@
       console.error('[Solouki analytics init]',e);
       msg('تبويب التحليلات متصل بقاعدة البيانات، لكن دالة التحليلات تحتاج إلى تثبيت SQL الخاص بـ 4.62.17 (الإصدار الجديد v2): '+(e?.message||'خطأ غير معروف'));
     }
-    $('loadBtn').onclick=load;
-    $('auditScopeBtn').onclick=auditScope;
-    $('last30Btn').onclick=()=>{setLast30();load()};
+    const loadBtn=$('loadBtn'), auditBtn=$('auditScopeBtn'), lastBtn=$('last30Btn');
+    if(loadBtn) loadBtn.onclick=load;
+    if(auditBtn) auditBtn.onclick=auditScope;
+    if(lastBtn) lastBtn.onclick=()=>{setLast30();load()};
+    // Deployment-safe: an older cached HTML page may not contain the scope-audit button.
+    // Never let a missing optional control abort the entire analytics page.
+    if(!auditBtn) console.warn('[Solouki analytics] Optional scope-audit button is missing from this HTML deployment.');
   }
   init();
 })();
