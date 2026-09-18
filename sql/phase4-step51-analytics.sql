@@ -1,11 +1,15 @@
--- Solouki 4.62.16 — Behavioral Analytics RPC
--- Run once in Supabase SQL Editor. This does NOT delete or modify existing data.
--- The function uses the authenticated user's profile and stage/class assignments.
+-- Solouki 4.62.17 — Behavioral Analytics RPC (v2)
+-- IMPORTANT: This version uses a NEW RPC name to avoid PostgreSQL/PostgREST
+-- function-overload ambiguity left by older get_behavior_analytics functions.
+-- Safe: does NOT delete or modify existing students/violations.
 
-CREATE OR REPLACE FUNCTION public.get_behavior_analytics(
+DROP FUNCTION IF EXISTS public.get_behavior_analytics(date,date,text);
+DROP FUNCTION IF EXISTS public.get_behavior_analytics(date,date,text,text);
+
+CREATE OR REPLACE FUNCTION public.get_behavior_analytics_v2(
   p_from date,
   p_to date,
-  p_stage_id text DEFAULT NULL
+  p_stage_id text
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -100,11 +104,11 @@ BEGIN
     ),
     'stages', COALESCE((SELECT jsonb_agg(jsonb_build_object('id',id,'name',name) ORDER BY name) FROM allowed_stages),'[]'::jsonb),
     'top_violations', COALESCE((
-      SELECT jsonb_agg(jsonb_build_object('label',label,'count',count) ORDER BY count DESC, label)
+      SELECT jsonb_agg(jsonb_build_object('label',label,'count',cnt) ORDER BY cnt DESC, label)
       FROM (
         SELECT COALESCE(violation_code || ' — ' || violation_description, custom_violation_ar, 'مخالفة غير محددة') AS label,
-               count(*)::int AS count
-        FROM base GROUP BY 1 ORDER BY count DESC, label LIMIT 10
+               count(*)::int AS cnt
+        FROM base GROUP BY 1 ORDER BY cnt DESC, label LIMIT 10
       ) q
     ),'[]'::jsonb),
     'classes', COALESCE((
@@ -142,5 +146,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.get_behavior_analytics(date,date,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_behavior_analytics(date,date,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.get_behavior_analytics_v2(date,date,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_behavior_analytics_v2(date,date,text) TO authenticated;
+
+-- Ask PostgREST to refresh its schema cache immediately.
+NOTIFY pgrst, 'reload schema';

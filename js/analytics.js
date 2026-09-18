@@ -1,4 +1,4 @@
-/* Solouki 4.62.16 — Connected behavioral analytics */
+/* Solouki 4.62.17 — Connected behavioral analytics */
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
@@ -38,7 +38,7 @@
     if(from>to)return msg('تاريخ البداية يجب أن يسبق تاريخ النهاية.');
     $('loadBtn').disabled=true;
     try{
-      const {data,error}=await SoloukiDB.sb().rpc('get_behavior_analytics',{p_from:from,p_to:to,p_stage_id:stage});
+      const {data,error}=await SoloukiDB.sb().rpc('get_behavior_analytics_v2',{p_from:from,p_to:to,p_stage_id:stage});
       if(error) throw error;
       renderData(data||{});
       const total=Number(data?.summary?.total_violations||0);
@@ -52,13 +52,13 @@
     const session=await SoloukiSession.requireSession(); if(!session)return;
     setLast30();
     try{
-      const {data,error}=await SoloukiDB.sb().rpc('get_behavior_analytics',{p_from:$('fromDate').value,p_to:$('toDate').value,p_stage_id:null});
+      const {data,error}=await SoloukiDB.sb().rpc('get_behavior_analytics_v2',{p_from:$('fromDate').value,p_to:$('toDate').value,p_stage_id:null});
       if(error)throw error;
       stages=data?.stages||[]; populateStages(stages,false); renderData(data);
       if(Number(data?.summary?.total_violations||0)===0) msg('تم الاتصال بقاعدة البيانات، لكن لا توجد مخالفات ضمن آخر 30 يومًا للحساب الحالي.');
     }catch(e){
       console.error('[Solouki analytics init]',e);
-      msg('تبويب التحليلات متصل بقاعدة البيانات، لكن دالة التحليلات تحتاج إلى تثبيت SQL الخاص بـ 4.62.16: '+(e?.message||'خطأ غير معروف'));
+      msg('تبويب التحليلات متصل بقاعدة البيانات، لكن دالة التحليلات تحتاج إلى تثبيت SQL الخاص بـ 4.62.17 (الإصدار الجديد v2): '+(e?.message||'خطأ غير معروف'));
     }
     $('loadBtn').onclick=load;
     $('last30Btn').onclick=()=>{setLast30();load()};
