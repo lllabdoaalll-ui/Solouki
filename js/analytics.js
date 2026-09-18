@@ -1,4 +1,4 @@
-/* Solouki 4.62.17 — Connected behavioral analytics */
+/* Solouki 4.62.18 — Connected behavioral analytics */
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
@@ -42,7 +42,14 @@
       if(error) throw error;
       renderData(data||{});
       const total=Number(data?.summary?.total_violations||0);
-      if(total===0) msg('تم الاتصال بقاعدة البيانات، لكن لا توجد مخالفات ضمن الفترة/المرحلة المحددة.');
+      const raw=Number(data?.diagnostics?.raw_period_violations||0);
+      const allowedStages=Number(data?.scope?.allowed_stage_count||0);
+      const allowedClasses=data?.scope?.allowed_class_count;
+      if(total===0){
+        if(raw>0 && (allowedStages===0 || (data?.scope?.role_type==='counselor' && Number(allowedClasses||0)===0))) msg('تم الاتصال بقاعدة البيانات، لكن نطاق صلاحيات الحساب لا يحتوي على مراحل/فصول مسندة حاليًا. لم يتم تجاوز الصلاحيات لعرض البيانات.');
+        else if(raw>0) msg('توجد مخالفات في المدرسة ضمن الفترة، لكنها خارج نطاق الحساب الحالي؛ لم يتم عرضها حفاظًا على الصلاحيات.');
+        else msg('تم الاتصال بقاعدة البيانات، ولا توجد مخالفات ضمن الفترة/المرحلة المحددة داخل نطاق الحساب.');
+      }
     }catch(e){
       console.error('[Solouki analytics]',e);
       msg('تعذر تحميل التحليلات من قاعدة البيانات: '+(e?.message||'خطأ غير معروف'));
@@ -55,7 +62,14 @@
       const {data,error}=await SoloukiDB.sb().rpc('get_behavior_analytics_v2',{p_from:$('fromDate').value,p_to:$('toDate').value,p_stage_id:null});
       if(error)throw error;
       stages=data?.stages||[]; populateStages(stages,false); renderData(data);
-      if(Number(data?.summary?.total_violations||0)===0) msg('تم الاتصال بقاعدة البيانات، لكن لا توجد مخالفات ضمن آخر 30 يومًا للحساب الحالي.');
+      if(Number(data?.summary?.total_violations||0)===0){
+        const raw=Number(data?.diagnostics?.raw_period_violations||0);
+        const allowedStages=Number(data?.scope?.allowed_stage_count||0);
+        const allowedClasses=data?.scope?.allowed_class_count;
+        if(raw>0 && (allowedStages===0 || (data?.scope?.role_type==='counselor' && Number(allowedClasses||0)===0))) msg('تم الاتصال بقاعدة البيانات، لكن لا توجد مرحلة/فصول مسندة لهذا الحساب حاليًا؛ لذلك لم تُعرض بيانات خارج نطاق الصلاحيات.');
+        else if(raw>0) msg('توجد مخالفات في المدرسة، لكنها خارج نطاق الحساب الحالي.');
+        else msg('تم الاتصال بقاعدة البيانات، ولا توجد مخالفات ضمن آخر 30 يومًا داخل نطاق الحساب الحالي.');
+      }
     }catch(e){
       console.error('[Solouki analytics init]',e);
       msg('تبويب التحليلات متصل بقاعدة البيانات، لكن دالة التحليلات تحتاج إلى تثبيت SQL الخاص بـ 4.62.17 (الإصدار الجديد v2): '+(e?.message||'خطأ غير معروف'));

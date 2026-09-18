@@ -1,6 +1,6 @@
--- Solouki 4.62.17 — Behavioral Analytics RPC (v2)
--- IMPORTANT: This version uses a NEW RPC name to avoid PostgreSQL/PostgREST
--- function-overload ambiguity left by older get_behavior_analytics functions.
+-- Solouki 4.62.18 — Scoped Behavioral Analytics RPC (v2)
+-- IMPORTANT: The RPC enforces the current user's allowed stage/class scope inside the database.
+-- Counselors are restricted to their assigned classes; stage managers/IT officers to assigned stages.
 -- Safe: does NOT delete or modify existing students/violations.
 
 DROP FUNCTION IF EXISTS public.get_behavior_analytics(date,date,text);
@@ -21,17 +21,12 @@ DECLARE
   v_profile profiles%ROWTYPE;
   v_result jsonb;
 BEGIN
-  IF v_uid IS NULL THEN
-    RAISE EXCEPTION 'AUTH_REQUIRED';
-  END IF;
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED'; END IF;
 
   SELECT * INTO v_profile
   FROM profiles
   WHERE id = v_uid AND is_active = TRUE;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'PROFILE_NOT_FOUND';
-  END IF;
+  IF NOT FOUND THEN RAISE EXCEPTION 'PROFILE_NOT_FOUND'; END IF;
 
   IF p_from IS NULL OR p_to IS NULL OR p_from > p_to THEN
     RAISE EXCEPTION 'INVALID_DATE_RANGE';
@@ -41,11 +36,13 @@ BEGIN
     RAISE EXCEPTION 'ANALYTICS_NOT_ALLOWED';
   END IF;
 
-  WITH allowed_stages AS (
+  WITH
+  allowed_stages AS (
     SELECT s.id, s.name_ar AS name
     FROM stages s
     WHERE s.school_id = v_profile.school_id
       AND s.is_active = TRUE
+      AND (p_stage_id IS NULL OR s.id = p_stage_id)
       AND (
         v_profile.role_type = 'superadmin'
         OR EXISTS (
@@ -60,7 +57,11 @@ BEGIN
           )
         )
       )
-      AND (p_stage_id IS NULL OR s.id = p_stage_id)
+  ),
+  allowed_classes AS (
+    SELECT DISTINCT cca.stage_id, cca.grade, cca.class_name
+    FROM counselor_class_assignments cca
+    WHERE cca.counselor_id = v_uid
   ),
   base AS (
     SELECT
@@ -84,14 +85,19 @@ BEGIN
       AND (
         v_profile.role_type IN ('superadmin','stage_manager','it_officer')
         OR EXISTS (
-          SELECT 1 FROM counselor_class_assignments cca
-          WHERE cca.counselor_id = v_uid
-            AND cca.stage_id = vr.stage_id
-            AND cca.grade = s.grade
-            AND cca.class_name = s.class_name
-            AND cca.section = s.section
+          SELECT 1 FROM allowed_classes ac
+          WHERE ac.stage_id = vr.stage_id
+            AND ac.grade = s.grade
+            AND ac.class_name = s.class_name
         )
       )
+  ),
+  raw_period AS (
+    SELECT count(*)::int AS cnt
+    FROM violation_records vr
+    WHERE vr.school_id = v_profile.school_id
+      AND vr.violation_date BETWEEN p_from AND p_to
+      AND (p_stage_id IS NULL OR vr.stage_id = p_stage_id)
   )
   SELECT jsonb_build_object(
     'summary', jsonb_build_object(
@@ -101,6 +107,18 @@ BEGIN
       'degree_2', (SELECT count(*) FROM base WHERE degree_id = 2),
       'degree_3', (SELECT count(*) FROM base WHERE degree_id = 3),
       'degree_4', (SELECT count(*) FROM base WHERE degree_id = 4)
+    ),
+    'scope', jsonb_build_object(
+      'role_type', v_profile.role_type,
+      'school_id', v_profile.school_id,
+      'stage_filter', p_stage_id,
+      'allowed_stage_count', (SELECT count(*) FROM allowed_stages),
+      'allowed_class_count', CASE WHEN v_profile.role_type = 'counselor' THEN (SELECT count(*) FROM allowed_classes) ELSE NULL END
+    ),
+    'diagnostics', jsonb_build_object(
+      'raw_period_violations', (SELECT cnt FROM raw_period),
+      'scoped_period_violations', (SELECT count(*) FROM base),
+      'scope_empty', ((SELECT count(*) FROM allowed_stages) = 0 OR (v_profile.role_type = 'counselor' AND (SELECT count(*) FROM allowed_classes) = 0))
     ),
     'stages', COALESCE((SELECT jsonb_agg(jsonb_build_object('id',id,'name',name) ORDER BY name) FROM allowed_stages),'[]'::jsonb),
     'top_violations', COALESCE((
