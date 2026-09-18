@@ -1,3 +1,10 @@
+## 4.62.16 — إصلاح تبويب التحليلات وتوحيد الإصدار
+- توحيد نسخة المشروع إلى 4.62.16 بدل اختلاف 4.62.13/4.62.15.
+- إضافة `sql/phase4-step51-analytics.sql` لدالة التحليلات `get_behavior_analytics`.
+- ربط التحليلات بسجل `violation_records` مع احترام المدرسة والمرحلة وإسناد الفصول.
+- تحسين رسائل الخطأ لتوضيح ما إذا كانت المشكلة عدم وجود بيانات أم عدم تثبيت دالة SQL.
+- تحديث cache-busting للصفحات إلى 4.62.16.
+
 ## 4.62.15 — Fast bulk WhatsApp sending
 - One batch preview before bulk sending.
 - Removed repeated per-recipient preview from the bulk workflow.
