@@ -1,3 +1,15 @@
+## 4.67.0 — STEP 67: Complete visual UX pass
+
+- رؤوس موحّدة لـ diagnostics و backup.
+- جداول analytics و student-report كبطاقات على الشاشات الضيقة.
+- توسيع `app-shell.css` (جداول + نماذج).
+- ROADMAP محدّث (65–67 منجز).
+
+## 4.66.1 — report-settings header + superadmin-only
+
+- رأس موحّد لصفحة إعدادات الترويسة والشعارات.
+- الصلاحية: مسؤول عام النظام فقط (واجهة + إخفاء النموذج لغيره).
+
 ## 4.66.0 — STEP 66: Unified page headers + bottom nav on inner pages
 
 - رأس صفحة موحّد (`app-header`) بدل صفوف أزرار أفقية مقطوعة على الموبايل.

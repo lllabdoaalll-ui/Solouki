@@ -8,6 +8,7 @@
   <title>سلوكي | إعدادات التقارير الرسمية</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.66.1">
   <link rel="stylesheet" href="css/catalog.css">
   <link rel="stylesheet" href="css/violations.css">
   <style>
@@ -22,23 +23,27 @@
     textarea.form-ta { width: 100%; min-height: 90px; font: inherit; padding: 10px 12px; border: 1px solid #cbdad5; border-radius: 10px; line-height: 1.6; }
   </style>
 </head>
-<body class="catalog-page">
-  <header class="catalog-header">
-    <div class="catalog-header-inner">
-      <div>
-        <p class="section-kicker">هوية Solouki للتقارير</p>
+<body class="catalog-page app-page">
+    <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">المسؤول العام فقط · هوية التقارير</span>
         <h1>إعدادات الترويسة والشعارات</h1>
-        <p class="subtitle">تُستخدم في كل التقارير المطبوعة — شعار عربي / لغات منفصلان</p>
       </div>
-      <div class="header-actions">
+      <div class="app-header-actions">
         <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
-        <a class="btn btn-outline" href="student-report.html">ملف السلوك</a>
-        <button type="button" class="btn btn-outline" id="logout">خروج</button>
+        <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
       </div>
     </div>
   </header>
 
+
   <main class="catalog-main">
+    <div id="superadminOnlyNote" class="note" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;margin-bottom:12px">
+      هذه الصفحة مخصّصة <strong>لمسؤول عام النظام فقط</strong>. تُستخدم بياناتها في كل التقارير الرسمية المطبوعة.
+    </div>
+
     <div id="ok" class="note note-ok" hidden></div>
     <div id="error" class="note note-error" hidden></div>
 
@@ -143,5 +148,6 @@
   <script src="js/core/permissions.js"></script>
   <script src="js/report-settings.js"></script>
   <script src="js/pwa.js"></script>
+  <script src="js/app-shell.js?v=4.66.1"></script>
 </body>
 </html>

@@ -3,11 +3,25 @@
 <head>
 <meta charset="utf-8"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f766e"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سلوكي | النسخ الاحتياطي والتصدير</title>
-<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/backup.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/app-shell.css?v=4.67.0"><link rel="stylesheet" href="css/backup.css">
 </head>
-<body>
+<body class="app-page">
 <main class="backup-page">
-<header class="page-head"><div><b>سلوكي</b><h1>النسخ الاحتياطي والتصدير</h1></div><div class="head-actions"><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+<header class="app-header no-print">
+  <div class="app-header-inner">
+    <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+    <div class="app-header-titles">
+      <span class="kicker">تصدير تشغيلي آمن</span>
+      <h1>النسخ الاحتياطي والتصدير</h1>
+    </div>
+    <div class="app-header-actions">
+      <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+      <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
+    </div>
+  </div>
+</header>
+
 <section class="backup-note"><strong>نسخة تشغيلية آمنة</strong><p>يُصدّر هذا القسم البيانات التي يستطيع حسابك قراءتها وفق صلاحيات قاعدة البيانات. لا يتم تصدير كلمات المرور أو مفاتيح Supabase أو أسرار النظام.</p></section>
 <div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
 <section class="panel">
@@ -28,4 +42,5 @@
 <div id="progress" class="progress" hidden><span id="progressText">جاري تجهيز النسخة…</span></div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/config.js"></script><script src="js/core/utils.js"></script><script src="js/core/supabase-client.js"></script><script src="js/core/session.js"></script><script src="js/core/permissions.js"></script><script src="js/core/audit.js"></script><script src="js/backup.js"></script><script src="js/pwa.js"></script>
+<script src="js/app-shell.js?v=4.67.0"></script>
 </body></html>
