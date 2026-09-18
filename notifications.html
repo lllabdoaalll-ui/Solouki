@@ -107,17 +107,30 @@
 
 
   <div class="selection-bar"><label><input id="selectAll" type="checkbox"> تحديد كل المعلّقين</label> <span>المحدد: <b id="selectedCount">0</b></span><span class="small-note">اختر نوع الرسالة أولاً، ثم حدد الطلاب المطلوبين.</span></div>
+  <div class="notice" style="margin-top:.5rem"><strong>⚡ الإرسال الجماعي السريع:</strong> المعاينة تظهر مرة واحدة فقط قبل بدء الدفعة، ثم ينتقل النظام مباشرة بين الطلاب دون معاينة متكررة.</div>
 
   <div id="bulkBar" class="bulk-bar" hidden>
     <p id="bulkProgress" class="small-note" style="margin:0 0 0.5rem"></p>
     <div class="actions" style="gap:0.4rem">
       <button type="button" id="bulkPrevBtn" class="btn btn-outline">السابق</button>
-      <button type="button" id="bulkNextBtn" class="btn btn-primary">تم الإرسال، التالي (افتح واتساب)</button>
+      <button type="button" id="bulkNextBtn" class="btn btn-primary">تم الإرسال، التالي</button>
       <button type="button" id="bulkStopBtn" class="btn btn-outline">إنهاء</button>
     </div>
   </div>
 
   <div id="list" class="notif-list"></div>
+
+
+  <div id="bulkPreviewModal" class="preview-modal" hidden aria-hidden="true" aria-modal="true" role="dialog">
+    <div class="preview-card">
+      <div class="preview-head"><div><b>بدء الإرسال الجماعي السريع</b><div id="bulkPreviewCount" class="small-note"></div></div><button type="button" id="bulkPreviewClose" class="btn btn-outline">إلغاء</button></div>
+      <div id="bulkPreviewMode" class="preview-type"></div>
+      <div id="bulkPreviewStudent" class="preview-recipient"></div>
+      <textarea id="bulkPreviewText" class="preview-text" readonly aria-label="معاينة نموذج الرسالة الجماعية"></textarea>
+      <div class="preview-note"><b>هذه معاينة واحدة قبل بدء الدفعة.</b> بعد الموافقة لن تظهر نافذة معاينة لكل طالب؛ سيفتح WhatsApp للطالب التالي مباشرة. عند إرسال الرسالة اضغط «تم الإرسال، التالي» للانتقال إلى الطالب التالي.</div>
+      <div class="preview-actions"><button type="button" id="bulkPreviewStart" class="btn btn-primary">بدء الإرسال السريع</button><button type="button" id="bulkPreviewClose2" class="btn btn-outline" style="display:none">إلغاء</button></div>
+    </div>
+  </div>
 
   <div id="previewModal" class="preview-modal" hidden aria-modal="true" role="dialog">
     <div class="preview-card">
@@ -132,12 +145,12 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.62.14"></script>
+  <script src="js/config.js?v=4.62.15"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/notifications.js?v=4.62.14"></script>
+  <script src="js/notifications.js?v=4.62.15"></script>
   <script src="js/pwa.js"></script>
 </body>
 </html>

@@ -1,3 +1,9 @@
+## 4.62.15 — Fast bulk WhatsApp sending
+- One batch preview before bulk sending.
+- Removed repeated per-recipient preview from the bulk workflow.
+- Directly open the next WhatsApp conversation after confirmation.
+- Preserved manual confirmation and same WhatsApp window.
+
 
 ## 4.62.14 — إصلاح نافذة معاينة WhatsApp
 - إصلاح جذري لعدم استجابة زر «إغلاق» على الكمبيوتر والموبايل.
