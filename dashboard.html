@@ -107,7 +107,7 @@
           العملية محمية بكلمة المرور وكود يُرسل إلى بريدك.
         </p>
         <div style="display:flex;flex-wrap:wrap;gap:10px">
-          <button type="button" class="btn btn-outline" id="openNewYearBtn" disabled title="قريباً">بداية عام دراسي جديد (قريباً)</button>
+          <button type="button" class="btn btn-outline" id="openNewYearBtn" style="border-color:#0f766e;color:#0f766e">بداية عام دراسي جديد</button>
           <button type="button" class="btn" id="openSystemResetBtn" style="background:#b91c1c;color:#fff;border-color:#b91c1c">تنظيف جميع بيانات النظام</button>
         </div>
       </div>
@@ -135,6 +135,62 @@
   </div>
 
   
+  
+  <div id="newYearModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px">
+    <div class="auth-card" style="max-width:500px;width:100%;margin:0;text-align:right;position:relative">
+      <button type="button" id="nyCloseBtn" aria-label="إغلاق" style="position:absolute;left:12px;top:12px;border:0;background:transparent;font-size:20px;cursor:pointer;color:#64748b">×</button>
+      <h2 style="margin:0 0 12px;color:#0f766e;font-size:18px">بداية عام دراسي جديد</h2>
+      <div id="nyMsg" hidden style="margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:13px"></div>
+
+      <div id="nyStep1">
+        <p style="font-size:13px;line-height:1.8;color:#334155;margin:0 0 10px">
+          هذه العملية <strong>لا تمسح</strong> المخالفات ولا التكريمات ولا حسابات المستخدمين.
+          تؤرشف الطلاب النشطين (اختياري) وتحدّث العام الدراسي في إعدادات التقارير.
+        </p>
+        <p style="font-size:13px;margin:0 0 6px;color:#64748b">العام الحالي المسجّل: <b id="nyCurrentYear">…</b></p>
+        <ul id="nyStats" style="font-size:13px;line-height:1.8;color:#334155;margin:0 0 14px;padding-right:18px"></ul>
+        <label style="display:block;margin-bottom:10px;font-size:13px;font-weight:700">العام الدراسي الجديد
+          <input id="nySuggested" type="text" dir="ltr" placeholder="2026/2027"
+            style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+        </label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="nyArchiveStudents" checked style="margin-top:3px">
+          <span>أرشفة كل الطلاب النشطين (يُعلَّمون غير نشطين — المخالفات تبقى). بعدها ارفع كشف العام الجديد من شاشة الطلاب.</span>
+        </label>
+        <label style="display:block;margin-bottom:14px;font-size:13px;font-weight:700">ملاحظات (اختياري)
+          <textarea id="nyNotes" rows="2" style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;resize:vertical"></textarea>
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="nyCancel1">إلغاء</button>
+          <button type="button" class="btn btn-primary" id="nyToStep2">متابعة</button>
+        </div>
+      </div>
+
+      <div id="nyStep2" hidden>
+        <p style="font-size:13px;color:#64748b;margin:0 0 12px">أدخل كلمة مرور حسابك للتأكيد.</p>
+        <label style="display:block;margin-bottom:12px;font-size:13px;font-weight:700">كلمة المرور
+          <input id="nyPassword" type="password" dir="ltr" autocomplete="current-password"
+            style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="nyBack2">رجوع</button>
+          <button type="button" class="btn btn-primary" id="nyVerifyPass">تحقق ومتابعة</button>
+        </div>
+      </div>
+
+      <div id="nyStep3" hidden>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6;margin-bottom:16px;cursor:pointer">
+          <input type="checkbox" id="nyConfirmCheck" style="margin-top:3px">
+          <span>أؤكد بدء عام دراسي جديد مع الإبقاء على السجلات التاريخية (مخالفات وتكريمات).</span>
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="nyBack3">رجوع</button>
+          <button type="button" class="btn btn-primary" id="nyFinalBtn" disabled>بدء العام الدراسي الجديد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="systemResetModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px">
     <div class="auth-card" style="max-width:480px;width:100%;margin:0;text-align:right;position:relative">
       <button type="button" id="srCloseBtn" aria-label="إغلاق" style="position:absolute;left:12px;top:12px;border:0;background:transparent;font-size:20px;cursor:pointer;color:#64748b">×</button>
@@ -197,12 +253,13 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.63.0"></script>
+  <script src="js/config.js?v=4.64.0"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/system-reset.js?v=4.63.0"></script>
+  <script src="js/system-reset.js?v=4.64.0"></script>
+  <script src="js/new-year.js?v=4.64.0"></script>
   <script>
     (async function () {
       const result = await SoloukiSession.requireSession();
@@ -211,6 +268,7 @@
       document.getElementById('welcomeName').textContent = 'مرحباً، ' + profile.full_name;
       document.getElementById('roleBadge').textContent = SoloukiUtils.roleLabel(profile.role_type);
       if (window.SoloukiSystemReset) SoloukiSystemReset.init(profile);
+      if (window.SoloukiNewYear) SoloukiNewYear.init(profile);
       const ver = (SOLOUKI_CONFIG && SOLOUKI_CONFIG.APP_VERSION) || '';
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
