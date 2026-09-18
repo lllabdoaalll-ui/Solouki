@@ -499,3 +499,149 @@ body.app-page {
     flex: 0 0 auto;
   }
 }
+
+/* ——— STEP 67: جداول → بطاقات على الموبايل ——— */
+@media (max-width: 699px) {
+  .table-wrap,
+  .report-table-wrap {
+    overflow: visible;
+  }
+  .table-wrap {
+    overflow: visible;
+  }
+  .table-wrap table,
+  .table-wrap thead,
+  .table-wrap tbody,
+  .table-wrap th,
+  .table-wrap td,
+  .table-wrap tr {
+    display: block;
+    width: 100%;
+  }
+  .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+  .table-wrap tr.card-row,
+  .table-wrap tbody tr {
+    background: #fff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+  .table-wrap td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 8px 4px !important;
+    white-space: normal !important;
+    text-align: left;
+  }
+  .table-wrap td:last-child {
+    border-bottom: none !important;
+  }
+  .table-wrap td::before {
+    content: attr(data-label);
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-align: right;
+    flex: 0 0 42%;
+  }
+  .table-wrap td.empty,
+  .table-wrap td[colspan] {
+    display: block;
+    text-align: center;
+  }
+  .table-wrap td.empty::before,
+  .table-wrap td[colspan]::before {
+    display: none;
+  }
+}
+
+/* صقل نماذج عامة */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  min-height: 44px;
+  border-radius: 10px;
+}
+textarea {
+  min-height: 90px;
+}
+@media (max-width: 699px) {
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .btn.btn-primary,
+  .btn.btn-success {
+    min-height: 46px;
+  }
+}
+
+/* diagnostics / backup spacing under sticky header */
+.diagnostics-page,
+.backup-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+}
+
+
+/* تطبيق نمط البطاقات أيضاً على جداول ملف السلوك */
+@media (max-width: 699px) {
+  .report-table-wrap table,
+  table.data-table {
+    width: 100%;
+  }
+  .report-table-wrap thead,
+  table.data-table thead {
+    position: absolute;
+    width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);
+  }
+  .report-table-wrap tr.card-row,
+  table.data-table tr.card-row {
+    display: block;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 12px rgba(15,23,42,.05);
+  }
+  .report-table-wrap tr.card-row td,
+  table.data-table tr.card-row td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 8px 4px;
+    white-space: normal;
+  }
+  .report-table-wrap tr.card-row td::before,
+  table.data-table tr.card-row td::before {
+    content: attr(data-label);
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: #64748b;
+    flex: 0 0 40%;
+    text-align: right;
+  }
+}
