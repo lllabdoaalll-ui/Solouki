@@ -116,10 +116,30 @@
     const auth = await SoloukiSession.requireSession();
     if (!auth) return;
     const role = auth.profile && auth.profile.role_type;
-    if (!['superadmin', 'stage_manager'].includes(role)) {
-      note('error', 'تعديل إعدادات التقارير للمسؤول العام أو مدير المرحلة فقط. يمكنك الاطلاع إن وُجدت صلاحية قراءة.');
+    const logoutBtn = $('logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => SoloukiSession.logout('index.html'));
     }
-    $('logout').addEventListener('click', () => SoloukiSession.logout('index.html'));
+
+    // الترويسة والشعارات: مسؤول عام النظام فقط
+    if (role !== 'superadmin') {
+      note('error', 'هذه الصفحة مخصّصة لمسؤول عام النظام فقط.');
+      const main = document.querySelector('.catalog-main');
+      if (main) {
+        const panels = main.querySelectorAll('section.panel, .record-form, #saveBtn');
+        panels.forEach((el) => { el.style.display = 'none'; });
+      }
+      const formBlocks = document.querySelectorAll('.catalog-main .panel, .catalog-main form, .catalog-main .logo-row');
+      formBlocks.forEach((el) => { el.style.display = 'none'; });
+      // إخفاء كل المحتوى التحريري مع الإبقاء على رسالة الخطأ
+      Array.from(document.querySelectorAll('.catalog-main > section, .catalog-main > .panel, .catalog-main .record-form')).forEach((el) => {
+        el.hidden = true;
+      });
+      const saveBtn = $('saveBtn');
+      if (saveBtn) saveBtn.hidden = true;
+      return;
+    }
+
     bindFile('logoRightFile', 'right', 'prevRight');
     bindFile('logoArFile', 'ar', 'prevAr');
     bindFile('logoLangFile', 'lang', 'prevLang');

@@ -181,11 +181,11 @@
             </thead>
             <tbody>
               ${merits.map((m) => `
-                <tr>
-                  <td>${esc(m.merit_date || '')}</td>
-                  <td><strong>${esc(m.title || '')}</strong>${m.description ? '<br><span class="meta">' + esc(m.description) + '</span>' : ''}</td>
-                  <td class="points-pos">+${esc(m.points)}</td>
-                  <td>${esc(m.awarded_by_name || '—')}</td>
+                <tr class="card-row">
+                  <td data-label="التاريخ">${esc(m.merit_date || '')}</td>
+                  <td data-label="العنوان"><strong>${esc(m.title || '')}</strong>${m.description ? '<br><span class="meta">' + esc(m.description) + '</span>' : ''}</td>
+                  <td data-label="النقاط" class="points-pos">+${esc(m.points)}</td>
+                  <td data-label="بواسطة">${esc(m.awarded_by_name || '—')}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -208,14 +208,14 @@
           </thead>
           <tbody>
             ${records.map((r) => `
-              <tr>
-                <td>${esc(r.violation_date || '—')}</td>
-                <td class="degree-${r.degree_id || ''}">${esc(r.degree_id || '—')}</td>
-                <td>${r.violation_code ? '<strong>' + esc(r.violation_code) + '</strong> — ' : ''}${esc(r.violation_label || '—')}</td>
-                <td>${esc(r.location_label || '—')}</td>
-                <td>${esc(r.penalty_label || '—')}</td>
-                <td>${esc(r.recorder_name || '—')}</td>
-                <td>${esc(r.notes || '—')}</td>
+              <tr class="card-row">
+                <td data-label="التاريخ">${esc(r.violation_date || '—')}</td>
+                <td data-label="الدرجة" class="degree-${r.degree_id || ''}">${esc(r.degree_id || '—')}</td>
+                <td data-label="المخالفة">${r.violation_code ? '<strong>' + esc(r.violation_code) + '</strong> — ' : ''}${esc(r.violation_label || '—')}</td>
+                <td data-label="المكان">${esc(r.location_label || '—')}</td>
+                <td data-label="العقوبة">${esc(r.penalty_label || '—')}</td>
+                <td data-label="سجّلها">${esc(r.recorder_name || '—')}</td>
+                <td data-label="ملاحظات">${esc(r.notes || '—')}</td>
               </tr>
             `).join('')}
           </tbody>
