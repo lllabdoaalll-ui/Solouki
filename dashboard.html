@@ -98,6 +98,21 @@
     </div>
   </div>
 
+    <div id="dangerZone" hidden style="margin-top:28px;max-width:900px;margin-left:auto;margin-right:auto;padding:0 20px 40px">
+      <div style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:20px 22px">
+        <h3 style="margin:0 0 8px;color:#991b1b;font-size:16px">منطقة الخطر — المسؤول العام فقط</h3>
+        <p style="margin:0 0 14px;color:#7f1d1d;font-size:13px;line-height:1.7">
+          بعد جلسات التدريب يمكنك مسح كل بيانات التشغيل والبدء من جديد.
+          تبقى فقط حسابك كمسؤول عام + كتالوج المخالفات والعقوبات.
+          العملية محمية بكلمة المرور وكود يُرسل إلى بريدك.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button type="button" class="btn btn-outline" id="openNewYearBtn" disabled title="قريباً">بداية عام دراسي جديد (قريباً)</button>
+          <button type="button" class="btn" id="openSystemResetBtn" style="background:#b91c1c;color:#fff;border-color:#b91c1c">تنظيف جميع بيانات النظام</button>
+        </div>
+      </div>
+    </div>
+
   <div id="changePassModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px">
     <form id="changePassForm" class="auth-card" style="max-width:420px;width:100%;margin:0;text-align:right">
       <h2 style="margin-bottom:12px">تغيير كلمة المرور</h2>
@@ -119,12 +134,75 @@
     </form>
   </div>
 
+  
+  <div id="systemResetModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px">
+    <div class="auth-card" style="max-width:480px;width:100%;margin:0;text-align:right;position:relative">
+      <button type="button" id="srCloseBtn" aria-label="إغلاق" style="position:absolute;left:12px;top:12px;border:0;background:transparent;font-size:20px;cursor:pointer;color:#64748b">×</button>
+      <h2 id="srTitle" style="margin:0 0 12px;color:#991b1b;font-size:18px">تنظيف جميع بيانات النظام</h2>
+      <div id="srMsg" hidden style="margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:13px"></div>
+
+      <div id="srStep1">
+        <p style="font-size:13px;line-height:1.8;color:#334155;margin:0 0 12px">
+          سيتم <strong>حذف</strong>: الطلاب، المخالفات، التكريمات، كل الحسابات ما عدا حسابك،
+          إسنادات الفصول، المدارس والمراحل، سجلات التدقيق، وملفات Excel في التخزين.
+        </p>
+        <p style="font-size:13px;line-height:1.8;color:#334155;margin:0 0 16px">
+          <strong>يبقى</strong>: حسابك كمسؤول عام + كتالوج المخالفات والعقوبات والصلاحيات الثابتة.
+          <br>العملية <span style="color:#b91c1c;font-weight:700">لا يمكن التراجع عنها</span>.
+        </p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="srCancel1">إلغاء</button>
+          <button type="button" class="btn" id="srToStep2" style="background:#b91c1c;color:#fff;border-color:#b91c1c">فهمت — متابعة</button>
+        </div>
+      </div>
+
+      <div id="srStep2" hidden>
+        <p style="font-size:13px;color:#64748b;margin:0 0 12px">أدخل كلمة مرور حسابك الحالية للتأكيد.</p>
+        <label style="display:block;margin-bottom:12px;font-size:13px;font-weight:700">كلمة المرور
+          <input id="srPassword" type="password" dir="ltr" autocomplete="current-password"
+            style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="srBackFrom2" onclick="document.getElementById('srStep2').hidden=true;document.getElementById('srStep1').hidden=false">رجوع</button>
+          <button type="button" class="btn btn-primary" id="srVerifyPass">تحقق ومتابعة</button>
+        </div>
+      </div>
+
+      <div id="srStep3" hidden>
+        <p id="srEmailHint" style="font-size:13px;color:#64748b;margin:0 0 10px">سيُرسل كود تحقق إلى بريد المسؤول العام.</p>
+        <label style="display:block;margin-bottom:12px;font-size:13px;font-weight:700">كود التحقق (6 أرقام)
+          <input id="srOtp" type="text" inputmode="numeric" maxlength="6" dir="ltr" placeholder="000000"
+            style="width:100%;margin-top:4px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;letter-spacing:4px;font-size:18px">
+        </label>
+        <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline" id="srSendOtpBtn">إعادة إرسال الكود</button>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn-outline" id="srBack3">رجوع</button>
+            <button type="button" class="btn btn-primary" id="srToFinal">متابعة</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="srStep4" hidden>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6;margin-bottom:16px;cursor:pointer">
+          <input type="checkbox" id="srConfirmCheck" style="margin-top:3px">
+          <span>أقر بأنني أفهم أن هذه العملية <strong>نهائية ولا رجعة فيها</strong>، وأن كل بيانات التدريب/التشغيل الحالية ستُحذف باستثناء حسابي وكتالوج المخالفات.</span>
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="srBack4">رجوع</button>
+          <button type="button" class="btn" id="srFinalBtn" disabled style="background:#b91c1c;color:#fff;border-color:#b91c1c">تنفيذ المسح النهائي</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.62.17"></script>
+  <script src="js/config.js?v=4.63.0"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
+  <script src="js/system-reset.js?v=4.63.0"></script>
   <script>
     (async function () {
       const result = await SoloukiSession.requireSession();
@@ -132,6 +210,7 @@
       const profile = result.profile;
       document.getElementById('welcomeName').textContent = 'مرحباً، ' + profile.full_name;
       document.getElementById('roleBadge').textContent = SoloukiUtils.roleLabel(profile.role_type);
+      if (window.SoloukiSystemReset) SoloukiSystemReset.init(profile);
       const ver = (SOLOUKI_CONFIG && SOLOUKI_CONFIG.APP_VERSION) || '';
       const note = document.getElementById('dashVersionNote');
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
