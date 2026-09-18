@@ -585,3 +585,11 @@
 - Added unique `get_behavior_analytics_v2(date,date,text)` RPC and switched `analytics.js` to it.
 - Added PostgREST schema-cache reload to the analytics SQL migration.
 - Unified cache-busting/version references to 4.62.17.
+
+
+## 4.62.18 — إصلاح نطاق التحليلات
+- جعل `get_behavior_analytics_v2` يطبق نطاق الحساب داخل قاعدة البيانات.
+- مدير المرحلة/مسؤول الحاسب: المراحل الموجودة في `stage_assignments`.
+- الأخصائي: الفصول الموجودة في `counselor_class_assignments` دون اشتراط تطابق `section` عند احتساب المخالفة، لأن `class_key` هو مرجع الإسناد الفعلي.
+- إضافة تشخيص يميز بين عدم وجود بيانات وبين وجود بيانات خارج نطاق الحساب.
+- عدم تجاوز الصلاحيات من الواجهة أو عرض بيانات خارج النطاق.
