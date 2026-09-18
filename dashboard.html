@@ -8,6 +8,7 @@
   <title>سلوكي | لوحة التحكم</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/icons.css?v=4.67.1">
   <link rel="stylesheet" href="css/app-shell.css?v=4.65.0">
   <style>
     .dashboard {
@@ -90,13 +91,13 @@
       <h3 class="dash-section-title">الإجراءات اليومية</h3>
       <div class="dash-actions">
         <a href="violations.html" class="dash-action primary is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden>
-          <span class="ico">📝</span> تسجيل مخالفة <span class="chev">‹</span>
+          <span class="ico"><span class="ico-svg i-note" aria-hidden="true"></span></span> تسجيل مخالفة <span class="chev">‹</span>
         </a>
         <a href="merits.html" class="dash-action is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden>
-          <span class="ico">🏆</span> تسجيل تكريم <span class="chev">‹</span>
+          <span class="ico"><span class="ico-svg i-trophy" aria-hidden="true"></span></span> تسجيل تكريم <span class="chev">‹</span>
         </a>
         <a href="students.html" class="dash-action is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden>
-          <span class="ico">👨‍🎓</span> الطلاب <span class="chev">‹</span>
+          <span class="ico"><span class="ico-svg i-student" aria-hidden="true"></span></span> الطلاب <span class="chev">‹</span>
         </a>
       </div>
     </section>
@@ -105,16 +106,16 @@
       <h3 class="dash-section-title">المتابعة والتقارير</h3>
       <div class="dash-grid">
         <a href="student-report.html" class="dash-tile is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>
-          <span class="ico">📁</span> ملف سلوك الطالب
+          <span class="ico"><span class="ico-svg i-folder" aria-hidden="true"></span></span> ملف سلوك الطالب
         </a>
         <a href="analytics.html" class="dash-tile is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>
-          <span class="ico">📊</span> التحليلات
+          <span class="ico"><span class="ico-svg i-chart" aria-hidden="true"></span></span> التحليلات
         </a>
         <a href="catalog.html" class="dash-tile is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>
-          <span class="ico">📋</span> كتالوج المخالفات
+          <span class="ico"><span class="ico-svg i-clipboard" aria-hidden="true"></span></span> كتالوج المخالفات
         </a>
         <a href="notifications.html" class="dash-tile is-nav-hidden" data-perm="send_whatsapp" data-perm-mode="view" hidden>
-          <span class="ico">📲</span> إشعارات واتساب
+          <span class="ico"><span class="ico-svg i-phone" aria-hidden="true"></span></span> إشعارات واتساب
         </a>
       </div>
     </section>
@@ -122,14 +123,14 @@
     <section class="dash-section" id="secAdmin">
       <h3 class="dash-section-title">الإدارة والإعدادات</h3>
       <div class="dash-list">
-        <a href="roles.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">👥</span> الأدوار</a>
-        <a href="audit.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">🧾</span> سجل التدقيق</a>
-        <a href="report-settings.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">🏛️</span> ترويسة التقارير</a>
-        <a href="diagnostics.html" class="is-nav-hidden" data-perm="system_diagnostics" hidden><span class="ico">🛠️</span> فحص النظام</a>
-        <a href="whatsapp-settings.html" class="is-nav-hidden" data-perm="whatsapp_settings" data-perm-mode="view" hidden><span class="ico">⚙️</span> WhatsApp Business</a>
-        <a href="backup.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden><span class="ico">💾</span> نسخ احتياطي</a>
-        <button type="button" id="changePassBtn"><span class="ico">🔑</span> كلمة المرور</button>
-        <button type="button" id="logoutDashBtn" class="danger-text"><span class="ico">🚪</span> خروج</button>
+        <a href="roles.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-roles" aria-hidden="true"></span> الأدوار</a>
+        <a href="audit.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-audit" aria-hidden="true"></span> سجل التدقيق</a>
+        <a href="report-settings.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-building" aria-hidden="true"></span> ترويسة التقارير</a>
+        <a href="diagnostics.html" class="is-nav-hidden" data-perm="system_diagnostics" hidden><span class="ico-svg i-tool" aria-hidden="true"></span> فحص النظام</a>
+        <a href="whatsapp-settings.html" class="is-nav-hidden" data-perm="whatsapp_settings" data-perm-mode="view" hidden><span class="ico-svg i-settings" aria-hidden="true"></span> WhatsApp Business</a>
+        <a href="backup.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden><span class="ico-svg i-backup" aria-hidden="true"></span> نسخ احتياطي</a>
+        <button type="button" id="changePassBtn"><span class="ico-svg i-key" aria-hidden="true"></span> كلمة المرور</button>
+        <button type="button" id="logoutDashBtn" class="danger-text"><span class="ico-svg i-logout" aria-hidden="true"></span> خروج</button>
       </div>
     </section>
 
@@ -289,7 +290,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.65.0"></script>
+  <script src="js/config.js?v=4.67.1"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
@@ -409,11 +410,11 @@
   </script>
   
   <nav class="bottom-nav" id="bottomNav" aria-label="التنقل الرئيسي">
-    <a href="dashboard.html" class="is-active" data-nav="home"><span class="nav-ico">🏠</span><span>الرئيسية</span></a>
-    <a href="violations.html" class="is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden data-nav="violations"><span class="nav-ico">📝</span><span>مخالفة</span></a>
-    <a href="merits.html" class="is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden data-nav="merits"><span class="nav-ico">🏆</span><span>تكريم</span></a>
-    <a href="students.html" class="is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden data-nav="students"><span class="nav-ico">👨‍🎓</span><span>طلاب</span></a>
-    <a href="student-report.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden data-nav="reports"><span class="nav-ico">📁</span><span>ملف</span></a>
+    <a href="dashboard.html" class="is-active" data-nav="home"><span class="nav-ico-svg i-home" aria-hidden="true"></span><span>الرئيسية</span></a>
+    <a href="violations.html" class="is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden data-nav="violations"><span class="nav-ico-svg i-note" aria-hidden="true"></span><span>مخالفة</span></a>
+    <a href="merits.html" class="is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden data-nav="merits"><span class="nav-ico-svg i-trophy" aria-hidden="true"></span><span>تكريم</span></a>
+    <a href="students.html" class="is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden data-nav="students"><span class="nav-ico-svg i-student" aria-hidden="true"></span><span>طلاب</span></a>
+    <a href="student-report.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden data-nav="reports"><span class="nav-ico-svg i-folder" aria-hidden="true"></span><span>ملف</span></a>
   </nav>
 
   <script src="js/pwa.js"></script>
