@@ -32,6 +32,29 @@
     $('stageSelect').innerHTML='<option value="">كل المراحل المسموح بها</option>'+rows.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
     if(current&&rows.some(s=>String(s.id)===current))$('stageSelect').value=current;
   }
+  function renderScopeAudit(a){
+    const el=$('scopeAudit'); if(!el)return;
+    const raw=Number(a?.raw_period_violations||0), stage=Number(a?.stage_in_scope||0), final=Number(a?.final_in_scope||0);
+    const byStage=Number(a?.excluded_by_stage||0), byClass=Number(a?.excluded_by_class||0);
+    el.hidden=false;
+    el.innerHTML=`<div class="scope-audit-head"><strong>فحص نطاق الصلاحيات</strong><span>${esc(a?.role_type||'—')}</span></div>
+      <div class="scope-audit-grid"><div><span>المخالفات في الفترة</span><strong>${fmtNum(raw)}</strong></div><div><span>داخل نطاق المرحلة</span><strong>${fmtNum(stage)}</strong></div><div><span>داخل النطاق النهائي</span><strong>${fmtNum(final)}</strong></div><div><span>مستبعدة بسبب المرحلة</span><strong>${fmtNum(byStage)}</strong></div><div><span>مستبعدة بسبب إسناد الفصل</span><strong>${fmtNum(byClass)}</strong></div></div>
+      <p>الفحص تجميعي وآمن: لا يعرض أسماء أو بيانات طلاب خارج نطاق الحساب. يجب أن يساوي «داخل النطاق النهائي» إجمالي التحليلات للفلاتر نفسها.</p>`;
+  }
+  async function auditScope(){
+    msg(''); const from=$('fromDate').value,to=$('toDate').value,stage=$('stageSelect').value||null;
+    if(!from||!to)return msg('اختر تاريخ البداية والنهاية أولاً.');
+    if(from>to)return msg('تاريخ البداية يجب أن يسبق تاريخ النهاية.');
+    $('auditScopeBtn').disabled=true;
+    try{
+      const {data,error}=await SoloukiDB.sb().rpc('get_behavior_scope_audit_v1',{p_from:from,p_to:to,p_stage_id:stage});
+      if(error)throw error;
+      renderScopeAudit(data||{});
+    }catch(e){
+      console.error('[Solouki scope audit]',e);
+      msg('تعذر فحص نطاق الصلاحيات. ثبّت ملف SQL الخاص بـ 4.62.19 ثم أعد المحاولة: '+(e?.message||'خطأ غير معروف'));
+    }finally{$('auditScopeBtn').disabled=false}
+  }
   async function load(){
     msg(''); const from=$('fromDate').value,to=$('toDate').value,stage=$('stageSelect').value||null;
     if(!from||!to)return msg('اختر تاريخ البداية والنهاية.');
@@ -75,6 +98,7 @@
       msg('تبويب التحليلات متصل بقاعدة البيانات، لكن دالة التحليلات تحتاج إلى تثبيت SQL الخاص بـ 4.62.17 (الإصدار الجديد v2): '+(e?.message||'خطأ غير معروف'));
     }
     $('loadBtn').onclick=load;
+    $('auditScopeBtn').onclick=auditScope;
     $('last30Btn').onclick=()=>{setLast30();load()};
   }
   init();
