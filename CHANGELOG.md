@@ -1,3 +1,10 @@
+## 4.66.0 — STEP 66: Unified page headers + bottom nav on inner pages
+
+- رأس صفحة موحّد (`app-header`) بدل صفوف أزرار أفقية مقطوعة على الموبايل.
+- `js/app-shell.js` لحقن الشريط السفلي وربط الخروج.
+- توسيع `css/app-shell.css` لأنماط الرأس والـ panel-head على الشاشات الضيقة.
+- صفحات محدّثة: violations, merits, student-report, students, catalog, analytics, notifications, roles, audit.
+
 ## 4.65.0 — STEP 65: UI Shell + Dashboard reorder
 
 - `css/app-shell.css`: تنقل سفلي، مجموعات لوحة التحكم، شبكة بلاطات، قائمة إدارة.

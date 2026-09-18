@@ -6,11 +6,25 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سلوكي | رفع الطلاب وWhatsApp</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/students.css"><link rel="stylesheet" href="css/print-official.css">
+<link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.66.0"><link rel="stylesheet" href="css/students.css"><link rel="stylesheet" href="css/print-official.css">
 </head>
 <body>
 <main class="students-page">
-<header class="page-head"><div><b>سلوكي</b><h1>رفع الطلاب وتهيئة إشعارات WhatsApp</h1></div><div class="head-actions"><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+  <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">الاستيراد والقائمة</span>
+        <h1>الطلاب ورفع Excel</h1>
+      </div>
+      <div class="app-header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
+      </div>
+    </div>
+  </header>
+
 <div id="syncBar" class="sync-bar" role="status">
   <span id="syncNet" class="sync-pill sync-unknown">الاتصال: …</span>
   <span id="syncDb" class="sync-pill sync-unknown">قاعدة البيانات: …</span>
@@ -201,4 +215,5 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="js/config.js?v=4.62.17"></script><script src="js/students.js?v=4.62.17"></script>
   <script src="js/pwa.js"></script>
+  <script src="js/app-shell.js?v=4.66.0"></script>
 </body></html>

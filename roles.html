@@ -2,9 +2,23 @@
 <meta charset="utf-8"><link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0f766e">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>سلوكي | إدارة الأدوار</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/roles.css">
-</head><body><main class="roles-page">
-<header class="page-head"><div><b>سلوكي</b><h1>إدارة المراحل والأدوار</h1></div><div><a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a><button id="logout" class="btn btn-outline">خروج</button></div></header>
+<title>سلوكي | إدارة الأدوار</title><link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.66.0"><link rel="stylesheet" href="css/roles.css">
+</head><body class="app-page"><main class="roles-page">
+  <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">المسؤول العام</span>
+        <h1>إدارة المراحل والأدوار</h1>
+      </div>
+      <div class="app-header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
+      </div>
+    </div>
+  </header>
+
 <div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
 <section class="stats"><div><small>مديرو المراحل</small><strong id="mCount">0</strong></div><div><small>مسؤولو الحاسب</small><strong id="iCount">0</strong></div><div><small>الأخصائيون</small><strong id="cCount">0</strong></div><div><small>المراحل النشطة</small><strong id="sCount">0</strong></div></section>
 <nav class="tabs"><button class="active" data-tab="manager">مديرو المراحل</button><button data-tab="it">مسؤولو الحاسب</button><button data-tab="counselor">الأخصائيون</button><button data-tab="cards">بطاقات الدخول</button><button data-tab="permissions">الصلاحيات</button></nav>
@@ -38,4 +52,5 @@
 <div class="actions"><button type="button" class="btn btn-outline" onclick="closeUser()">إلغاء</button><button class="btn btn-primary">حفظ</button></div>
 </form></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script><script src="js/config.js?v=4.62.17"></script><script src="js/core/audit.js"></script><script src="js/roles.js"></script>  <script src="js/pwa.js"></script>
+  <script src="js/app-shell.js?v=4.66.0"></script>
 </body></html>

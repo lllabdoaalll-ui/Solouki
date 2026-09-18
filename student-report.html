@@ -8,28 +8,27 @@
   <title>سلوكي | ملف سلوك الطالب</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.66.0">
   <link rel="stylesheet" href="css/catalog.css">
   <link rel="stylesheet" href="css/violations.css">
   <link rel="stylesheet" href="css/student-report.css">
   <link rel="stylesheet" href="css/print-official.css">
 </head>
-<body class="catalog-page">
-  <header class="catalog-header no-print">
-    <div class="catalog-header-inner">
-      <div>
-        <p class="section-kicker">نظام سلوكي لإدارة السلوك والانضباط المدرسي</p>
+<body class="catalog-page app-page">
+    <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">تقارير ومتابعة</span>
         <h1>ملف سلوك الطالب</h1>
-        <p class="subtitle">عرض المخالفات · طباعة رسمية بهوية Solouki · إشعار ولي الأمر</p>
       </div>
-      <div class="header-actions">
+      <div class="app-header-actions">
         <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
-        <a class="btn btn-outline" href="report-settings.html">إعدادات الترويسة</a>
-        <a class="btn btn-outline" href="violations.html">تسجيل مخالفة</a>
-        <a class="btn btn-outline" href="merits.html">🏆 تكريم</a>
-        <button type="button" class="btn btn-outline" id="logout">خروج</button>
+        <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
       </div>
     </div>
   </header>
+
 
   <main class="catalog-main">
     <div id="ok" class="note note-ok no-print" hidden></div>
@@ -133,5 +132,6 @@
   <script src="js/core/permissions.js"></script>
   <script src="js/student-report.js"></script>
   <script src="js/pwa.js"></script>
+  <script src="js/app-shell.js?v=4.66.0"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>سلوكي | إشعارات واتساب</title>
 <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.66.0">
 <link rel="stylesheet" href="css/students.css">
 <style>
 .message-modes{background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px;padding:1rem;margin:1rem 0}.message-modes h3{margin:0 0 .7rem;color:#1e3a5f}.message-modes label{display:block;padding:.55rem .65rem;margin:.35rem 0;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer}.message-modes label b{display:inline-block;margin:0 .35rem}.message-modes label span{display:block;color:#64748b;font-size:.84rem;margin:.25rem 1.65rem 0}.selection-bar{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:.7rem 1rem;margin:.75rem 0}.notif-select{float:right}.notif-select input{width:20px;height:20px}
@@ -43,13 +44,20 @@
 </head>
 <body>
 <main class="notif-page">
-  <header class="page-head">
-    <div><b>سلوكي</b><h1>إشعارات واتساب لأولياء الأمور</h1></div>
-    <div class="head-actions">
-      <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
-      <button id="logout" class="btn btn-outline">خروج</button>
+    <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">إرسال يدوي مجمّع</span>
+        <h1>إشعارات واتساب</h1>
+      </div>
+      <div class="app-header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <button type="button" class="btn btn-outline" id="logout" data-action="logout">خروج</button>
+      </div>
     </div>
   </header>
+
 
   <div class="notice">
     <strong>إرسال يدوي من رقم الأخصائي:</strong>
@@ -152,5 +160,6 @@
   <script src="js/core/permissions.js"></script>
   <script src="js/notifications.js?v=4.62.17"></script>
   <script src="js/pwa.js"></script>
+  <script src="js/app-shell.js?v=4.66.0"></script>
 </body>
 </html>
