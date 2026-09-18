@@ -8,6 +8,7 @@
   <title>سلوكي | لوحة التحكم</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.65.0">
   <style>
     .dashboard {
       max-width: 900px;
@@ -68,35 +69,69 @@
     }
   </style>
 </head>
-<body>
+<body class="dash-page">
   <div class="dashboard">
-    <div class="dash-header">
+    <div class="dash-topbar">
       <h1>سلوكي — لوحة التحكم</h1>
-      <div class="dash-nav" id="dashNav">
-        <a href="students.html" class="btn btn-primary is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden>👨‍🎓 الطلاب</a>
-        <a href="violations.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden>📝 تسجيل مخالفة</a>
-        <a href="merits.html" class="btn btn-outline is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden>🏆 تسجيل تكريم</a>
-        <a href="student-report.html" class="btn btn-outline is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>📁 ملف سلوك الطالب</a>
-        <a href="analytics.html" class="btn btn-outline is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>📊 التحليلات</a>
-        <a href="catalog.html" class="btn btn-outline is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>📋 كتالوج المخالفات</a>
-        <a href="notifications.html" class="btn btn-outline is-nav-hidden" data-perm="send_whatsapp" data-perm-mode="view" hidden>📲 إشعارات واتساب</a>
-        <a href="whatsapp-settings.html" class="btn btn-outline is-nav-hidden" data-perm="whatsapp_settings" data-perm-mode="view" hidden>⚙️ WhatsApp Business</a>
-        <a href="diagnostics.html" class="btn btn-outline is-nav-hidden" data-perm="system_diagnostics" hidden>🛠️ فحص النظام</a>
-        <a href="report-settings.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>🏛️ ترويسة التقارير</a>
-        <a href="roles.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>الأدوار</a>
-        <a href="audit.html" class="btn btn-outline is-nav-hidden" data-perm="superadmin" hidden>🧾 سجل التدقيق</a>
-        <button class="btn btn-outline" id="changePassBtn" type="button">🔑 كلمة المرور</button>
-        <button class="btn btn-outline" id="logoutDashBtn">خروج</button>
-      </div>
+      <div class="brand-mark" aria-hidden="true">س</div>
     </div>
 
     <div class="welcome-card">
       <h2 id="welcomeName">مرحباً</h2>
-      <p>تم تسجيل الدخول بنجاح. النظام جاهز لإدارة الطلاب والأدوار والإشعارات.</p>
-      <p id="dashVersionNote" class="small-note" style="margin-top:8px;color:#64748b"></p>
+      <p>تم تسجيل الدخول بنجاح. اختر إجراءً من المجموعات أدناه.</p>
+      <p id="dashVersionNote" class="small-note"></p>
       <div class="badge-role" id="roleBadge">—</div>
     </div>
-  </div>
+
+    <!-- مخفي: حاوية صلاحيات قديمة تُستخدم فقط لربط data-perm عبر السكربت -->
+    <div id="dashNav" class="dash-nav" hidden aria-hidden="true"></div>
+
+    <section class="dash-section" id="secDaily">
+      <h3 class="dash-section-title">الإجراءات اليومية</h3>
+      <div class="dash-actions">
+        <a href="violations.html" class="dash-action primary is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden>
+          <span class="ico">📝</span> تسجيل مخالفة <span class="chev">‹</span>
+        </a>
+        <a href="merits.html" class="dash-action is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden>
+          <span class="ico">🏆</span> تسجيل تكريم <span class="chev">‹</span>
+        </a>
+        <a href="students.html" class="dash-action is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden>
+          <span class="ico">👨‍🎓</span> الطلاب <span class="chev">‹</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="dash-section" id="secReports">
+      <h3 class="dash-section-title">المتابعة والتقارير</h3>
+      <div class="dash-grid">
+        <a href="student-report.html" class="dash-tile is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>
+          <span class="ico">📁</span> ملف سلوك الطالب
+        </a>
+        <a href="analytics.html" class="dash-tile is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>
+          <span class="ico">📊</span> التحليلات
+        </a>
+        <a href="catalog.html" class="dash-tile is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>
+          <span class="ico">📋</span> كتالوج المخالفات
+        </a>
+        <a href="notifications.html" class="dash-tile is-nav-hidden" data-perm="send_whatsapp" data-perm-mode="view" hidden>
+          <span class="ico">📲</span> إشعارات واتساب
+        </a>
+      </div>
+    </section>
+
+    <section class="dash-section" id="secAdmin">
+      <h3 class="dash-section-title">الإدارة والإعدادات</h3>
+      <div class="dash-list">
+        <a href="roles.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">👥</span> الأدوار</a>
+        <a href="audit.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">🧾</span> سجل التدقيق</a>
+        <a href="report-settings.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico">🏛️</span> ترويسة التقارير</a>
+        <a href="diagnostics.html" class="is-nav-hidden" data-perm="system_diagnostics" hidden><span class="ico">🛠️</span> فحص النظام</a>
+        <a href="whatsapp-settings.html" class="is-nav-hidden" data-perm="whatsapp_settings" data-perm-mode="view" hidden><span class="ico">⚙️</span> WhatsApp Business</a>
+        <a href="backup.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden><span class="ico">💾</span> نسخ احتياطي</a>
+        <button type="button" id="changePassBtn"><span class="ico">🔑</span> كلمة المرور</button>
+        <button type="button" id="logoutDashBtn" class="danger-text"><span class="ico">🚪</span> خروج</button>
+      </div>
+    </section>
 
     <div id="dangerZone" hidden style="margin-top:28px;max-width:900px;margin-left:auto;margin-right:auto;padding:0 20px 40px">
       <div style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:20px 22px">
@@ -112,6 +147,7 @@
         </div>
       </div>
     </div>
+  </div><!-- /.dashboard -->
 
   <div id="changePassModal" class="modal" hidden style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px">
     <form id="changePassForm" class="auth-card" style="max-width:420px;width:100%;margin:0;text-align:right">
@@ -253,13 +289,13 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=4.64.0"></script>
+  <script src="js/config.js?v=4.65.0"></script>
   <script src="js/core/utils.js"></script>
   <script src="js/core/supabase-client.js"></script>
   <script src="js/core/session.js"></script>
   <script src="js/core/permissions.js"></script>
-  <script src="js/system-reset.js?v=4.64.0"></script>
-  <script src="js/new-year.js?v=4.64.0"></script>
+  <script src="js/system-reset.js?v=4.65.0"></script>
+  <script src="js/new-year.js?v=4.65.0"></script>
   <script>
     (async function () {
       const result = await SoloukiSession.requireSession();
@@ -274,8 +310,7 @@
       if (note) note.textContent = ver ? ('الإصدار ' + ver) : '';
 
       // إظهار التبويبات: صلاحيات DB + افتراضيات الدور (إن كانت الصلاحية none)
-      const nav = document.getElementById('dashNav');
-      if (!nav) return;
+      const navRoot = document.querySelector('.dashboard') || document;
       const role = profile.role_type || '';
       const isSuper = role === 'superadmin';
 
@@ -288,7 +323,7 @@
       };
       const defaults = new Set(roleDefaults[role] || []);
 
-      const links = nav.querySelectorAll('[data-perm]');
+      const links = navRoot.querySelectorAll('[data-perm]');
       for (const el of links) {
         const key = el.getAttribute('data-perm');
         const mode = el.getAttribute('data-perm-mode') || 'view';
@@ -321,6 +356,17 @@
         el.classList.toggle('is-nav-hidden', !allowed);
         el.hidden = !allowed;
       }
+      // شريط سفلي
+      document.querySelectorAll('#bottomNav [data-perm]').forEach(el => {
+        const key = el.getAttribute('data-perm');
+        const mode = el.getAttribute('data-perm-mode') || 'view';
+        let allowed = false;
+        if (key === 'superadmin') allowed = isSuper;
+        else if (isSuper || defaults.has(key)) allowed = true;
+        el.classList.toggle('is-nav-hidden', !allowed);
+        el.hidden = !allowed;
+      });
+
     })();
 
     (function setupChangePassword(){
@@ -361,6 +407,15 @@
       SoloukiSession.logout('index.html');
     });
   </script>
+  
+  <nav class="bottom-nav" id="bottomNav" aria-label="التنقل الرئيسي">
+    <a href="dashboard.html" class="is-active" data-nav="home"><span class="nav-ico">🏠</span><span>الرئيسية</span></a>
+    <a href="violations.html" class="is-nav-hidden" data-perm="record_violations" data-perm-mode="act" hidden data-nav="violations"><span class="nav-ico">📝</span><span>مخالفة</span></a>
+    <a href="merits.html" class="is-nav-hidden" data-perm="record_merits" data-perm-mode="act" hidden data-nav="merits"><span class="nav-ico">🏆</span><span>تكريم</span></a>
+    <a href="students.html" class="is-nav-hidden" data-perm="view_students" data-perm-mode="view" hidden data-nav="students"><span class="nav-ico">👨‍🎓</span><span>طلاب</span></a>
+    <a href="student-report.html" class="is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden data-nav="reports"><span class="nav-ico">📁</span><span>ملف</span></a>
+  </nav>
+
   <script src="js/pwa.js"></script>
 </body>
 </html>
