@@ -1,3 +1,6 @@
+/* icons loaded with app-shell */
+@import url('icons.css');
+
 /* ============================================================
    Solouki STEP 65 — App Shell + Mobile-first navigation
    مستوحى من هوية شاشة الدخول (أخضر / بطاقات / ترتيب عمودي)
@@ -645,3 +648,10 @@ textarea {
     text-align: right;
   }
 }
+
+.dash-action.primary .ico-svg { background-color: #fff; }
+.dash-action .ico-svg { background-color: var(--sol-teal, #0f5c56); }
+.dash-tile .ico-svg { background-color: var(--sol-teal, #0f5c56); }
+.dash-list .ico-svg { background-color: #475569; }
+.dash-list .danger-text .ico-svg { background-color: #b91c1c; }
+.bottom-nav .nav-ico-svg { background-color: currentColor; }
