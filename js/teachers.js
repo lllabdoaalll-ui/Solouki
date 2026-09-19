@@ -10,7 +10,7 @@ async function boot(){
  const {data:p,error}=await db.from('profiles').select('*').eq('id',session.user.id).eq('is_active',true).single();
  if(error||!p||!['superadmin','it_officer'].includes(p.role_type)){alert('هذه الصفحة للمسؤول العام أو مسؤول الحاسب فقط.');return location.href='dashboard.html'}
  S.profile=p;
- const {data:st,error:se}=await db.from('stages').select('id,name_ar,name,section,stage_type,sort_order,is_active').eq('school_id',p.school_id).eq('is_active',true).order('sort_order');
+ const {data:st,error:se}=await db.from('stages').select('id,name_ar,section,stage_type,sort_order,is_active').eq('school_id',p.school_id).eq('is_active',true).order('sort_order');
  if(se)throw se; S.stages=st||[];
  await loadClasses(); await loadTeachers(); render();
 }
