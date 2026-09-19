@@ -94,11 +94,11 @@ if (togglePassword) {
     if (!input) return;
     if (input.type === 'password') {
       input.type = 'text';
-      togglePassword.textContent = '🔒';
+      togglePassword.innerHTML = '<span class="ico-svg i-eye-off" aria-hidden="true"></span>';
       togglePassword.setAttribute('aria-label', 'إخفاء كلمة المرور');
     } else {
       input.type = 'password';
-      togglePassword.textContent = '👁';
+      togglePassword.innerHTML = '<span class="ico-svg i-eye" aria-hidden="true"></span>';
       togglePassword.setAttribute('aria-label', 'إظهار كلمة المرور');
     }
   });

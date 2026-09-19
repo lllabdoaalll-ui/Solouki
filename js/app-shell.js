@@ -5,11 +5,11 @@
   'use strict';
 
   const PAGES = [
-    { href: 'dashboard.html', icon: '🏠', label: 'الرئيسية', match: /dashboard\.html|^\/?$/i },
-    { href: 'violations.html', icon: '📝', label: 'مخالفة', match: /violations\.html/i, perm: 'record_violations' },
-    { href: 'merits.html', icon: '🏆', label: 'تكريم', match: /merits\.html/i, perm: 'record_merits' },
-    { href: 'students.html', icon: '👨‍🎓', label: 'طلاب', match: /students\.html/i, perm: 'view_students' },
-    { href: 'student-report.html', icon: '📁', label: 'ملف', match: /student-report\.html/i, perm: 'view_reports' }
+    { href: 'dashboard.html', iconClass: 'i-home', label: 'الرئيسية', match: /dashboard\.html|^\/?$/i },
+    { href: 'violations.html', iconClass: 'i-note', label: 'مخالفة', match: /violations\.html/i, perm: 'record_violations' },
+    { href: 'merits.html', iconClass: 'i-trophy', label: 'تكريم', match: /merits\.html/i, perm: 'record_merits' },
+    { href: 'students.html', iconClass: 'i-student', label: 'طلاب', match: /students\.html/i, perm: 'view_students' },
+    { href: 'student-report.html', iconClass: 'i-folder', label: 'ملف', match: /student-report\.html/i, perm: 'view_reports' }
   ];
 
   function pathName() {
@@ -28,7 +28,7 @@
     const current = pathName();
     nav.innerHTML = PAGES.map((p) => {
       const active = p.match.test(current) ? ' is-active' : '';
-      return `<a href="${p.href}" class="${active.trim()}" data-nav="${p.href}"><span class="nav-ico">${p.icon}</span><span>${p.label}</span></a>`;
+      return `<a href="${p.href}" class="${active.trim()}" data-nav="${p.href}"><span class="nav-ico-svg ${p.iconClass||''}" aria-hidden="true"></span><span>${p.label}</span></a>`;
     }).join('');
     document.body.appendChild(nav);
     document.body.classList.add('app-page');
