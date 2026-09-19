@@ -124,6 +124,7 @@
       <h3 class="dash-section-title">الإدارة والإعدادات</h3>
       <div class="dash-list">
         <a href="roles.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-roles" aria-hidden="true"></span> الأدوار</a>
+        <a href="teachers.html" class="is-nav-hidden" data-teacher-directory hidden><span class="ico-svg i-roles" aria-hidden="true"></span> دليل المعلمين</a>
         <a href="audit.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-audit" aria-hidden="true"></span> سجل التدقيق</a>
         <a href="report-settings.html" class="is-nav-hidden" data-perm="superadmin" hidden><span class="ico-svg i-building" aria-hidden="true"></span> ترويسة التقارير</a>
         <a href="diagnostics.html" class="is-nav-hidden" data-perm="system_diagnostics" hidden><span class="ico-svg i-tool" aria-hidden="true"></span> فحص النظام</a>
@@ -314,6 +315,8 @@
       const navRoot = document.querySelector('.dashboard') || document;
       const role = profile.role_type || '';
       const isSuper = role === 'superadmin';
+      const teacherDirectoryLink = document.querySelector('[data-teacher-directory]');
+      if (teacherDirectoryLink) teacherDirectoryLink.hidden = !(role === 'superadmin' || role === 'it_officer');
 
       // افتراضيات الدور — تطابق مصفوفة STEP 42
       const roleDefaults = {

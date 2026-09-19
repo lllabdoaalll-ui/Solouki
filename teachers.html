@@ -1,0 +1,18 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سلوكي | دليل المعلمين</title>
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/app-shell.css?v=4.68.0"><link rel="stylesheet" href="css/teachers.css">
+</head><body class="app-page"><main class="teachers-page">
+<header class="app-header no-print"><div class="app-header-inner"><a class="app-header-back" href="dashboard.html">→</a><div class="app-header-titles"><span class="kicker">الربط مع Grade System Pro</span><h1>دليل المعلمين</h1></div><div class="app-header-actions"><button class="btn btn-outline" id="logout">خروج</button></div></div></header>
+<section class="notice"><b>مهم:</b> هذا الدليل لا ينشئ حسابات دخول للمعلمين في Solouki. يتم استخدام <b>معرّف المعلم من Grade System Pro</b> فقط، مع تحديد الفصول التي يسمح له بالرصد فيها.</section>
+<div id="msg" class="message" hidden></div>
+<section class="toolbar"><div><input id="search" placeholder="بحث بالاسم أو Teacher ID" autocomplete="off"></div><button class="btn btn-primary" id="add">+ إضافة معلم</button><button class="btn btn-outline" id="refresh">تحديث</button></section>
+<section class="panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>Teacher ID</th><th>المعلم</th><th>النطاق الدراسي</th><th>الحالة</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="5">جاري التحميل…</td></tr></tbody></table></div></section>
+</main>
+<div id="modal" class="modal" hidden><form id="form" class="modal-card"><div class="head"><h2 id="title">إضافة معلم</h2><button type="button" id="close">×</button></div>
+<input type="hidden" id="id"><label>Teacher ID من Grade System Pro<input id="externalId" required dir="ltr"></label><label>اسم المعلم<input id="name" required></label>
+<label class="inline-check"><input id="active" type="checkbox" checked> المعلم نشط</label>
+<h3>الفصول المسندة</h3><p class="small-note">يمكن للمعلم الرصد فقط للطلاب الواقعين في هذه النطاقات.</p><div id="assignments" class="assignment-list"></div>
+<div class="actions"><button type="button" class="btn btn-outline" id="cancel">إلغاء</button><button class="btn btn-primary">حفظ</button></div></form></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/config.js?v=4.68.0"></script><script src="js/core/audit.js"></script><script src="js/auth.js"></script><script src="js/teachers.js?v=4.69.0"></script>
+</body></html>

@@ -1,3 +1,18 @@
+# STEP 69 — Teacher directory + class assignments
+
+- External teacher IDs from Grade System Pro are stored in a dedicated directory.
+- Teacher scope is maintained per stage/grade/class/section.
+- Added admin UI at `teachers.html`.
+- Added server-side class-scope function for the future secure recording bridge.
+
+## 4.68.0 — STEP 68: Solouki catalog bridge
+
+- Solouki remains the single source of truth for teacher-reportable violations.
+- Added read-only Edge Function `teacher-behavior-catalog`.
+- External systems receive only active violations/locations from Solouki.
+- Bridge is protected by server-side `TEACHER_BEHAVIOR_BRIDGE_SECRET`; the secret must not be exposed to browser code.
+- No violation or merit recording is enabled by this step.
+
 ## 4.67.0 — STEP 67: Complete visual UX pass
 
 - رؤوس موحّدة لـ diagnostics و backup.
