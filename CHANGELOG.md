@@ -1,3 +1,10 @@
+## 4.69.1 — Teacher directory fixes + Excel import
+
+- Fixed stages select (removed non-existent `name` column → was 400).
+- Dashboard: show «دليل المعلمين» for superadmin/it_officer (remove `is-nav-hidden` class).
+- Teachers page: Excel template + bulk import (Teacher ID + name).
+- SQL reminder: `teacher_class_assignments.stage_id` is `text`.
+
 # STEP 69 — Teacher directory + class assignments
 
 - External teacher IDs from Grade System Pro are stored in a dedicated directory.

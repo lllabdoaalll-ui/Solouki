@@ -316,7 +316,12 @@
       const role = profile.role_type || '';
       const isSuper = role === 'superadmin';
       const teacherDirectoryLink = document.querySelector('[data-teacher-directory]');
-      if (teacherDirectoryLink) teacherDirectoryLink.hidden = !(role === 'superadmin' || role === 'it_officer');
+      if (teacherDirectoryLink) {
+        const showTeacherDir = (role === 'superadmin' || role === 'it_officer');
+        teacherDirectoryLink.hidden = !showTeacherDir;
+        if (showTeacherDir) teacherDirectoryLink.classList.remove('is-nav-hidden');
+        else teacherDirectoryLink.classList.add('is-nav-hidden');
+      }
 
       // افتراضيات الدور — تطابق مصفوفة STEP 42
       const roleDefaults = {
