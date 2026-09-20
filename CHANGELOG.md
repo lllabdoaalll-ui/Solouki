@@ -1,3 +1,11 @@
+## 4.70.0 — STEP 70: Scoped violation reads + teacher switches + auto class import
+
+- **Security:** replaced open `violations_read_auth` with role/scope-aware SELECT policy (superadmin/it_officer school-wide; stage_manager via `stage_assignments`; counselor via `counselor_class_assignments`). Same for `merit_records` when present.
+- **Switches:** new table `teacher_behavior_switches` (school × stage × section) with `recording_enabled` / `merits_enabled` (default OFF). Helper `teacher_recording_enabled()` for the future bridge.
+- **UI:** enable/disable matrix on `teachers.html` (human intervention limited to these toggles).
+- **Import:** Excel import accepts column «الفصول» as `stage|grade|class|section;...` and writes `teacher_class_assignments` automatically. Updated template + instructions sheet.
+- SQL: `sql/phase4-step70-security-and-switches.sql` (run in Supabase).
+
 ## 4.69.1 — Teacher directory fixes + Excel import
 
 - Fixed stages select (removed non-existent `name` column → was 400).
