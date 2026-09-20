@@ -15,7 +15,7 @@ create table if not exists public.teacher_directory (
 create table if not exists public.teacher_class_assignments (
   id uuid primary key default gen_random_uuid(),
   teacher_directory_id uuid not null references public.teacher_directory(id) on delete cascade,
-  stage_id uuid not null references public.stages(id) on delete restrict,
+  stage_id text not null references public.stages(id) on delete restrict,
   grade text not null,
   class_name text not null,
   section text not null default 'arabic' check (section in ('arabic','languages')),
@@ -131,7 +131,7 @@ with check (
 create or replace function public.teacher_is_assigned_to_class(
   p_school_id uuid,
   p_external_teacher_id text,
-  p_stage_id uuid,
+  p_stage_id text,
   p_grade text,
   p_class_name text,
   p_section text default null
@@ -157,4 +157,4 @@ as $$
   );
 $$;
 
-revoke all on function public.teacher_is_assigned_to_class(uuid,text,uuid,text,text,text) from public;
+revoke all on function public.teacher_is_assigned_to_class(uuid,text,text,text,text,text) from public;
