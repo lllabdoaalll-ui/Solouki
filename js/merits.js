@@ -148,11 +148,11 @@
           </thead>
           <tbody>
             ${list.map((m) => `
-              <tr>
-                <td>${esc(m.merit_date || '')}</td>
-                <td><strong>${esc(m.title)}</strong>${m.description ? '<br><span class="meta">' + esc(m.description) + '</span>' : ''}</td>
-                <td class="points-pos">+${esc(m.points)}</td>
-                <td>${esc(m.awarded_by_name || '—')}</td>
+              <tr class="card-row">
+                <td data-label="التاريخ">${esc(m.merit_date || '')}</td>
+                <td data-label="العنوان"><strong>${esc(m.title)}</strong>${m.description ? '<br><span class="meta">' + esc(m.description) + '</span>' : ''}</td>
+                <td data-label="النقاط" class="points-pos">+${esc(m.points)}</td>
+                <td data-label="بواسطة">${esc(m.awarded_by_name || '—')}</td>
               </tr>
             `).join('')}
           </tbody>

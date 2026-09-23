@@ -674,3 +674,46 @@ textarea {
 .dash-list .ico-svg { background-color: #475569; }
 .dash-list .danger-text .ico-svg { background-color: #b91c1c; }
 .bottom-nav .nav-ico-svg { background-color: currentColor; }
+
+
+/* === Solouki shared mobile cards === */
+.sol-cards { display: grid; gap: 12px; }
+.sol-card {
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  direction: rtl;
+  text-align: right;
+}
+.sol-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.sol-card-title { font-weight: 800; color: #0f172a; font-size: 1.02rem; line-height: 1.4; }
+.sol-card-sub { color: #64748b; font-size: 0.82rem; margin-top: 2px; }
+.sol-card-body { font-size: 0.92rem; color: #1e293b; line-height: 1.5; }
+.sol-card-facts { margin: 10px 0 0; display: grid; gap: 6px; }
+.sol-card-facts > div {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.86rem;
+}
+.sol-card-facts > div:last-child { border-bottom: none; }
+.sol-card-facts dt { margin: 0; color: #64748b; font-weight: 800; font-size: 0.75rem; }
+.sol-card-facts dd { margin: 0; color: #0f172a; text-align: right; }
+.sol-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+
+@media (max-width: 699px) {
+  /* فرض محاذاة عربية لأي جدول يتحول لبطاقات */
+  .table-wrap td,
+  table.data-table td {
+    text-align: right !important;
+  }
+  .app-page, .dash-page, main {
+    padding-bottom: 88px;
+  }
+}

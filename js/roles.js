@@ -56,8 +56,89 @@ async function loadAvailableClasses(stageIds){
   return[...map.values()].sort((a,b)=>String(a.stage_name).localeCompare(String(b.stage_name),'ar')||String(a.grade).localeCompare(String(b.grade),'ar')||String(a.class_name).localeCompare(String(b.class_name),'ar'));
 }
 function stage(id){return S.stages.find(x=>x.id===id)?.name_ar||id}
-function scope(u){if(u.role_type==='counselor')return S.classes.filter(x=>x.counselor_id===u.id).map(x=>`${stage(x.stage_id)} — ${x.grade} — ${x.class_name}`);return S.assign.filter(x=>x.profile_id===u.id).map(x=>stage(x.stage_id))}
-function table(role,id){const us=S.users.filter(x=>x.role_type===role);$(id).innerHTML=`<div class="table-wrap"><table class="data-table"><tr><th>الاسم</th><th>البريد</th><th>النطاق</th><th>الحالة</th><th></th></tr>${us.map(u=>`<tr><td><b>${esc(u.full_name)}</b></td><td dir="ltr">${esc(u.email||'—')}</td><td>${scope(u).map(x=>`<span class="badge">${esc(x)}</span>`).join('')||'—'}</td><td>${u.is_active?'نشط':'موقوف'}</td><td><button class="mini" onclick="editUser('${u.id}')">تعديل</button> <button class="mini" onclick="resetUserPassword('${u.id}')" title="إصدار كلمة مرور جديدة وإلغاء القديمة">كلمة مرور جديدة</button> <button class="mini" onclick="toggleUser('${u.id}')">${u.is_active?'إيقاف':'تفعيل'}</button></td></tr>`).join('')}</table></div>`}
+function scope(u){
+  if(u.role_type==='counselor'){
+    return S.classes.filter(x=>x.counselor_id===u.id).map(x=>{
+      const sec=x.section&&x.section!=='arabic'?` · ${x.section==='languages'?'لغات':x.section}`:'';
+      return `${stage(x.stage_id)} — ${x.grade} — ${x.class_name}${sec}`;
+    });
+  }
+  return S.assign.filter(x=>x.profile_id===u.id).map(x=>stage(x.stage_id));
+}
+function scopeCount(u){
+  if(u.role_type==='counselor') return S.classes.filter(x=>x.counselor_id===u.id).length;
+  return S.assign.filter(x=>x.profile_id===u.id).length;
+}
+function roleKindMeta(role){
+  return {
+    stage_manager: {label:'مدير مرحلة', tip:'يُسند إليه مرحلة أو أكثر', icon:'🏫'},
+    it_officer: {label:'مسؤول حاسب', tip:'صلاحيات تقنية على المراحل والأقسام', icon:'💻'},
+    counselor: {label:'أخصائي اجتماعي', tip:'يُسند إليه فصول للمتابعة والإشعارات', icon:'👤'}
+  }[role] || {label:role, tip:'', icon:'•'};
+}
+function table(role,id){
+  const us=S.users.filter(x=>x.role_type===role);
+  const meta=roleKindMeta(role);
+  const searchId=id+'Search';
+  if(!us.length){
+    $(id).innerHTML=`<p class="role-empty">لا يوجد ${meta.label} بعد.<br><span class="muted">استخدم زر الإضافة أعلاه.</span></p>`;
+    return;
+  }
+  $(id).innerHTML=`
+    <div class="role-list-toolbar">
+      <input type="search" id="${searchId}" class="role-search" placeholder="بحث بالاسم أو البريد..." autocomplete="off">
+      <span class="role-list-count">${us.length} حساب</span>
+    </div>
+    <div class="role-cards" id="${id}Cards">${us.map(u=>roleCardHtml(u, meta)).join('')}</div>`;
+  const inp=$(searchId);
+  if(inp){
+    inp.oninput=()=>{
+      const q=(inp.value||'').trim().toLowerCase();
+      const cards=$(id+'Cards');
+      if(!cards)return;
+      cards.querySelectorAll('.role-card').forEach(card=>{
+        const hay=(card.getAttribute('data-q')||'');
+        card.hidden = q && !hay.includes(q);
+      });
+    };
+  }
+}
+function roleCardHtml(u, meta){
+  const items=scope(u);
+  const n=items.length;
+  const badges=items.map(x=>`<span class="badge">${esc(x)}</span>`).join('')
+    || `<span class="badge badge-warn">لم يُسند نطاق بعد</span>`;
+  const st=u.is_active
+    ? '<span class="status-pill on">نشط</span>'
+    : '<span class="status-pill off">موقوف</span>';
+  const wa=u.personal_whatsapp||u.phone||'';
+  const scopeTitle = u.role_type==='counselor' ? 'الفصول المسندة' : (u.role_type==='it_officer' ? 'المراحل / الأقسام' : 'المراحل المسندة');
+  const q=String(u.full_name||'').toLowerCase()+' '+String(u.email||'').toLowerCase();
+  return `<article class="role-card role-card--${esc(u.role_type)}" data-q="${esc(q)}">
+    <header class="role-card-head">
+      <div class="role-card-title">
+        <span class="role-kind">${meta.icon} ${esc(meta.label)}</span>
+        <strong>${esc(u.full_name)}</strong>
+        <span class="role-card-email" dir="ltr">${esc(u.email||'—')}</span>
+      </div>
+      ${st}
+    </header>
+    <div class="role-card-scope">
+      <div class="scope-head">
+        <span class="scope-label">${scopeTitle}</span>
+        <span class="scope-count">${n}</span>
+      </div>
+      <div class="scope-badges">${badges}</div>
+    </div>
+    ${wa ? `<div class="role-card-wa"><span>واتساب</span><b dir="ltr">${esc(wa)}</b></div>` : ''}
+    <footer class="role-card-actions">
+      <button type="button" class="mini mini-primary" onclick="editUser('${u.id}')">تعديل النطاق</button>
+      <button type="button" class="mini" onclick="resetUserPassword('${u.id}')">كلمة مرور</button>
+      <button type="button" class="mini ${u.is_active?'mini-danger':''}" onclick="toggleUser('${u.id}')">${u.is_active?'إيقاف':'تفعيل'}</button>
+    </footer>
+  </article>`;
+}
+
 function render(){
   $('mCount').textContent=S.users.filter(x=>x.role_type==='stage_manager').length;
   $('iCount').textContent=S.users.filter(x=>x.role_type==='it_officer').length;

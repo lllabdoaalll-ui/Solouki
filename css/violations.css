@@ -290,3 +290,120 @@
     display: block !important;
   }
 }
+
+
+/* ——— سجل المخالفات: بطاقات موبايل واضحة (RTL) ——— */
+.records-cards { display: none; }
+.records-table-desktop { display: table; width: 100%; }
+
+.v-card {
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  direction: rtl;
+  text-align: right;
+}
+.v-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.v-card-date {
+  font-weight: 800;
+  color: #0f5c56;
+  font-size: 0.92rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.v-card-degree {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+}
+.v-card-degree.degree-1 { background: #dbeafe; color: #1d4ed8; }
+.v-card-degree.degree-2 { background: #ffedd5; color: #c2410c; }
+.v-card-degree.degree-3 { background: #fee2e2; color: #b91c1c; }
+.v-card-degree.degree-4 { background: #fecaca; color: #7f1d1d; }
+
+.v-card-student {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.v-card-student strong {
+  font-size: 1.02rem;
+  color: #0f172a;
+  line-height: 1.45;
+}
+.v-card-meta {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.v-card-violation {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-right: 3px solid #0f5c56;
+  color: #1e293b;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.v-card-facts {
+  margin: 0 0 12px;
+  display: grid;
+  gap: 8px;
+}
+.v-card-facts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.v-card-facts > div:last-child { border-bottom: none; }
+.v-card-facts dt {
+  margin: 0;
+  flex: 0 0 28%;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #64748b;
+}
+.v-card-facts dd {
+  margin: 0;
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 0.88rem;
+  color: #0f172a;
+  line-height: 1.45;
+}
+
+.v-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+@media (max-width: 700px) {
+  .records-cards { display: block; }
+  .records-table-desktop { display: none !important; }
+  #recordsList.table-wrap { overflow: visible; }
+}
+
+@media (min-width: 701px) {
+  .records-cards { display: none !important; }
+  .records-table-desktop { display: table !important; }
+}

@@ -912,7 +912,34 @@
     }
     const canDel = state.canDelete;
     box.innerHTML = `
-      <table class="data-table records-table">
+      <div class="records-cards" aria-label="سجل المخالفات">
+        ${data.map((r) => {
+          const ww = isWrittenWarningLabel(r.penalty_label);
+          const code = r.violation_code ? esc(r.violation_code) + ' — ' : '';
+          return `
+          <article class="v-card">
+            <header class="v-card-head">
+              <time class="v-card-date" dir="ltr">${esc(r.violation_date)}</time>
+              <span class="v-card-degree degree-${esc(r.degree_id || '')}">درجة ${esc(r.degree_id || '—')}</span>
+            </header>
+            <div class="v-card-student">
+              <strong>${esc(r.student_name)}</strong>
+              <span class="v-card-meta">${esc(r.grade || '')} · ${esc(r.class_name || '')}</span>
+            </div>
+            <p class="v-card-violation">${code}${esc(r.violation_label || '—')}</p>
+            <dl class="v-card-facts">
+              <div><dt>المكان</dt><dd>${esc(r.location_label || '—')}</dd></div>
+              <div><dt>العقوبة</dt><dd>${esc(r.penalty_label || '—')}</dd></div>
+              <div><dt>سجّلها</dt><dd>${esc(r.recorder_name || '—')}</dd></div>
+            </dl>
+            <footer class="v-card-actions">
+              ${ww ? `<button type="button" class="mini" data-print-ww="${esc(r.student_id || '')}" data-rec-id="${esc(r.id || '')}" title="طباعة تنبيه كتابي">🖨️ تنبيه</button>` : ''}
+              ${canDel ? `<button type="button" class="mini mini-danger" data-del="${esc(r.id)}">حذف</button>` : ''}
+            </footer>
+          </article>`;
+        }).join('')}
+      </div>
+      <table class="data-table records-table records-table-desktop">
         <thead>
           <tr>
             <th>التاريخ</th>

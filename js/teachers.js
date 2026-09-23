@@ -162,14 +162,37 @@ function render(){
   }
   const b = $('rows');
   if (!list.length) {
-    b.innerHTML = '<tr><td colspan="5">لا توجد سجلات.</td></tr>';
+    b.innerHTML = '<p class="role-empty">لا توجد سجلات.</p>';
     return;
   }
-  b.innerHTML = list.map(t => {
+  b.innerHTML = `<div class="sol-cards teachers-cards">${list.map(t => {
     const assigns = (t.teacher_class_assignments || [])
       .filter(a => a.is_active)
-      .map(a => `${esc(stageName(a.stage_id))} — ${esc(a.grade)} — ${esc(a.class_name)}${a.section && a.section !== 'arabic' ? ' · ' + esc(a.section) : ''}`)
-      .join('<br>') || '<span style="color:#94a3b8">لم يُحدَّد نطاق</span>';
+      .map(a => `${esc(stageName(a.stage_id))} — ${esc(a.grade)} — ${esc(a.class_name)}`)
+      .join(' · ') || '—';
+    const st = t.is_active !== false
+      ? '<span class="status-pill on">نشط</span>'
+      : '<span class="status-pill off">موقوف</span>';
+    return `<article class="sol-card">
+      <header class="sol-card-head">
+        <div>
+          <div class="sol-card-title">${esc(t.full_name)}</div>
+          <div class="sol-card-sub" dir="ltr">ID: ${esc(t.external_teacher_id)}</div>
+        </div>
+        ${st}
+      </header>
+      <div class="sol-card-body"><strong>النطاق:</strong> ${assigns}</div>
+      <div class="sol-card-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="editTeacher('${t.id}')">تعديل</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleTeacher('${t.id}')">${t.is_active !== false ? 'إيقاف' : 'تفعيل'}</button>
+      </div>
+    </article>`;
+  }).join('')}</div>
+  <div class="table-wrap teachers-table-desktop"><table class="data-table"><thead><tr><th>Teacher ID</th><th>المعلم</th><th>النطاق الدراسي</th><th>الحالة</th><th></th></tr></thead><tbody>${list.map(t => {
+    const assigns = (t.teacher_class_assignments || [])
+      .filter(a => a.is_active)
+      .map(a => `${esc(stageName(a.stage_id))} — ${esc(a.grade)} — ${esc(a.class_name)}`)
+      .join('<br>') || '—';
     const st = t.is_active !== false
       ? '<span class="badge ok">نشط</span>'
       : '<span class="badge off">موقوف</span>';
@@ -183,7 +206,7 @@ function render(){
         <button class="btn btn-outline btn-sm" onclick="toggleTeacher('${t.id}')">${t.is_active !== false ? 'إيقاف' : 'تفعيل'}</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join('')}</tbody></table></div>`;
 }
 
 function renderSwitches(){
