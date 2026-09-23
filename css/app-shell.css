@@ -542,14 +542,16 @@ body.app-page {
   }
   .table-wrap td {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     border: none !important;
     border-bottom: 1px solid #f1f5f9 !important;
     padding: 8px 4px !important;
     white-space: normal !important;
-    text-align: left;
+    text-align: right;
+    direction: rtl;
   }
   .table-wrap td:last-child {
     border-bottom: none !important;
@@ -560,7 +562,13 @@ body.app-page {
     font-size: 0.75rem;
     color: #64748b;
     text-align: right;
-    flex: 0 0 42%;
+    flex: 0 0 38%;
+    max-width: 42%;
+  }
+  .table-wrap td > * {
+    text-align: right;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .table-wrap td.empty,
   .table-wrap td[colspan] {
@@ -631,12 +639,16 @@ textarea {
   .report-table-wrap tr.card-row td,
   table.data-table tr.card-row td {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 12px;
     border: none;
     border-bottom: 1px solid #f1f5f9;
     padding: 8px 4px;
     white-space: normal;
+    text-align: right;
+    direction: rtl;
   }
   .report-table-wrap tr.card-row td::before,
   table.data-table tr.card-row td::before {
@@ -644,8 +656,15 @@ textarea {
     font-weight: 800;
     font-size: 0.75rem;
     color: #64748b;
-    flex: 0 0 40%;
+    flex: 0 0 38%;
+    max-width: 42%;
     text-align: right;
+  }
+  .report-table-wrap tr.card-row td > *,
+  table.data-table tr.card-row td > * {
+    text-align: right;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }
 
