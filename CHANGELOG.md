@@ -1,3 +1,17 @@
+## 4.70.3 — Roles lists redesign (managers / IT / counselors)
+
+- Richer role cards: kind badge, scope count, WhatsApp, status.
+- Search filter per list; color accents by role type.
+- Clear empty/unassigned states; primary «تعديل النطاق» action.
+
+## 4.70.2 — Mobile RTL cards across lists + roles redesign
+
+- Violations recent list: dedicated mobile cards.
+- Roles: card grid for staff, scrollable tabs, mobile modal.
+- Teachers: mobile cards / desktop table.
+- Merits: data-label card rows.
+- Shared `.sol-card` utilities in app-shell; stronger RTL table alignment.
+
 ## 4.70.1 — WhatsApp counselor fix + mobile RTL audit
 
 - SQL: pgcrypto/extensions.digest for notification keys; flexible counselor class match; scoped daily queue with last error.
