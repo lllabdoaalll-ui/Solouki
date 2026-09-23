@@ -1,3 +1,9 @@
+## 4.70.1 — WhatsApp counselor fix + mobile RTL audit
+
+- SQL: pgcrypto/extensions.digest for notification keys; flexible counselor class match; scoped daily queue with last error.
+- Mobile RTL: table cards align right; audit log data-label + card-row; audit filters stack on small screens.
+- Files: `sql/phase4-step70.1-whatsapp-counselor-digest-fix.sql`, `css/app-shell.css`, `css/audit.css`, `js/audit.js`.
+
 ## 4.70.0 — STEP 70: Scoped violation reads + teacher switches + auto class import
 
 - **Security:** replaced open `violations_read_auth` with role/scope-aware SELECT policy (superadmin/it_officer school-wide; stage_manager via `stage_assignments`; counselor via `counselor_class_assignments`). Same for `merit_records` when present.
