@@ -719,3 +719,113 @@ a.student-name-link:hover {
     display: none !important;
   }
 }
+
+
+/* ——— قائمة الطلاب: بطاقات موبايل عملية ——— */
+.student-cards { display: none; }
+.roster-table-desktop { display: block; overflow-x: auto; }
+
+.stu-card {
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  direction: rtl;
+  text-align: right;
+}
+.stu-card.is-inactive { opacity: 0.72; border-style: dashed; }
+.stu-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.stu-card-name-wrap { min-width: 0; flex: 1 1 auto; }
+.stu-card-name {
+  display: block;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #0f172a;
+  line-height: 1.45;
+  text-decoration: none;
+  word-break: break-word;
+}
+.stu-card-name:active { color: #0f5c56; }
+.stu-card-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+.stu-status {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.stu-status.on { background: #d1fae5; color: #065f46; }
+.stu-status.off { background: #fee2e2; color: #991b1b; }
+
+.stu-card-facts {
+  margin: 0 0 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+.stu-card-facts > div { min-width: 0; }
+.stu-card-facts dt {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+}
+.stu-card-facts dd {
+  margin: 2px 0 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+.stu-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stu-card-actions .btn {
+  text-align: center;
+  justify-content: center;
+  min-height: 40px;
+  font-weight: 800;
+}
+.stu-card-actions .btn-primary {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 700px) {
+  .student-cards { display: block; }
+  .roster-table-desktop { display: none !important; }
+  #roster .filters,
+  #roster .roster-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  #roster input[type="search"],
+  #rosterSearch {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 701px) {
+  .student-cards { display: none !important; }
+  .roster-table-desktop { display: block !important; }
+}

@@ -344,3 +344,86 @@
   .role-list-count { align-self: flex-start; }
   .role-card-actions .mini { flex: 1 1 auto; text-align: center; }
 }
+
+
+/* —— تبويب الصلاحيات: بطاقات موبايل + جدول ثابت سطح المكتب —— */
+.perm-cards { display: none; }
+.perm-table-wrap { display: block; }
+
+.perm-card {
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  direction: rtl;
+  text-align: right;
+}
+.perm-card-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #0f172a;
+  line-height: 1.4;
+}
+.perm-card-desc {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+.perm-role-list { display: grid; gap: 10px; }
+.perm-role-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+.perm-role-name {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: #0f5c56;
+  flex: 0 0 38%;
+}
+.perm-role-row select {
+  flex: 1 1 auto;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  min-height: 42px;
+}
+
+/* رأس ثابت لجدول الصلاحيات على الشاشات الأوسع */
+.perm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f0fdfa;
+  box-shadow: 0 1px 0 #99f6e4;
+}
+.perm-table .perm-sticky-col {
+  position: sticky;
+  right: 0;
+  background: #fff;
+  z-index: 1;
+}
+.perm-table thead .perm-sticky-col {
+  z-index: 3;
+  background: #f0fdfa;
+}
+
+@media (max-width: 700px) {
+  .perm-cards { display: block; }
+  .perm-table-wrap { display: none !important; }
+}
+@media (min-width: 701px) {
+  .perm-cards { display: none !important; }
+  .perm-table-wrap { display: block !important; max-height: 70vh; overflow: auto; }
+}

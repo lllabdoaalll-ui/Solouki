@@ -1292,18 +1292,58 @@
       return;
     }
 
-    const editBtn = canEditStudents()
-      ? '<button type="button" class="btn btn-primary btn-sm btn-edit-student">تعديل</button>'
-      : (canViewStudentDetails() ? '<button type="button" class="btn btn-outline btn-sm btn-edit-student">عرض</button>' : '');
+    const editLabel = canEditStudents() ? 'تعديل' : (canViewStudentDetails() ? 'عرض' : '');
+    const showEdit = canEditStudents() || canViewStudentDetails();
 
-    let html = `<table class="roster-table"><thead><tr>
+    // —— بطاقات موبايل ——
+    let cards = `<div class="student-cards" aria-label="قائمة الطلاب">`;
+    list.forEach(s => {
+      const key = studentKey(s);
+      const active = s.is_active !== false;
+      const gradeLine = [s.grade, s.class].filter(Boolean).join(' / ');
+      const sec = s.section ? (s.section === 'languages' ? 'لغات' : (s.section === 'arabic' ? 'عربي' : s.section)) : '';
+      const stageLine = [s.stage, sec].filter(Boolean).join(' · ');
+      const reportHref = s.id
+        ? ('student-report.html?id=' + encodeURIComponent(s.id))
+        : 'student-report.html';
+      cards += `
+      <article class="stu-card ${active ? '' : 'is-inactive'}" data-key="${escapeHtml(key)}">
+        <header class="stu-card-head">
+          <div class="stu-card-name-wrap">
+            <a href="#" class="stu-card-name student-name-link" data-key="${escapeHtml(key)}">${escapeHtml(s.full_name || '—')}</a>
+            <span class="stu-card-meta">${escapeHtml(gradeLine || '—')}${stageLine ? ' · ' + escapeHtml(stageLine) : ''}</span>
+          </div>
+          <span class="stu-status ${active ? 'on' : 'off'}">${active ? 'نشط' : 'منسحب'}</span>
+        </header>
+        <dl class="stu-card-facts">
+          <div><dt>الكود</dt><dd dir="ltr">${escapeHtml(s.student_code || '—')}</dd></div>
+          <div><dt>الرقم القومي</dt><dd dir="ltr">${escapeHtml(s.national_id || '—')}</dd></div>
+          <div><dt>هاتف الأب</dt><dd dir="ltr">${escapeHtml(s.father_phone || '—')}</dd></div>
+          <div><dt>هاتف الأم</dt><dd dir="ltr">${escapeHtml(s.mother_phone || '—')}</dd></div>
+        </dl>
+        <footer class="stu-card-actions">
+          <a class="btn btn-primary btn-sm" href="${reportHref}">ملف السلوك</a>
+          <button type="button" class="btn btn-outline btn-sm btn-open-detail" data-key="${escapeHtml(key)}">تفاصيل</button>
+          ${showEdit ? `<button type="button" class="btn btn-outline btn-sm btn-edit-student" data-key="${escapeHtml(key)}">${editLabel}</button>` : ''}
+          ${canDeleteStudents() && active ? `<button type="button" class="btn btn-danger btn-sm btn-withdraw-student" data-key="${escapeHtml(key)}">حذف</button>` : ''}
+          ${canDeleteStudents() && !active ? `<button type="button" class="btn btn-outline btn-sm btn-restore-student" data-key="${escapeHtml(key)}">استعادة</button>` : ''}
+        </footer>
+      </article>`;
+    });
+    cards += `</div>`;
+
+    // —— جدول سطح المكتب ——
+    let table = `<div class="roster-table-desktop"><table class="roster-table"><thead><tr>
       <th>الاسم</th><th>الرقم القومي</th><th>الكود</th><th>المرحلة</th><th>الصف / الفصل</th><th>هاتف الأب</th><th>هاتف الأم</th><th>الحالة</th><th></th>
     </tr></thead><tbody>`;
     list.forEach(s => {
       const key = studentKey(s);
       const active = s.is_active !== false;
       const nameCell = `<a href="#" class="student-name-link" data-key="${escapeHtml(key)}" title="فتح ملف الطالب">${escapeHtml(s.full_name || '—')}</a>`;
-      html += `<tr class="${active ? '' : 'inactive'}" data-key="${escapeHtml(key)}">
+      const reportHref = s.id
+        ? ('student-report.html?id=' + encodeURIComponent(s.id))
+        : 'student-report.html';
+      table += `<tr class="${active ? '' : 'inactive'}" data-key="${escapeHtml(key)}">
         <td>${nameCell}</td>
         <td dir="ltr">${escapeHtml(s.national_id || '')}</td>
         <td dir="ltr">${escapeHtml(s.student_code || '—')}</td>
@@ -1313,22 +1353,23 @@
         <td dir="ltr">${escapeHtml(s.mother_phone || '—')}</td>
         <td>${active ? 'نشط' : 'منسحب'}</td>
         <td class="roster-actions">
-          <button type="button" class="btn btn-outline btn-sm btn-open-detail">ملف</button>
-          ${editBtn}
-          ${canDeleteStudents() && active ? '<button type="button" class="btn btn-danger btn-sm btn-withdraw-student">حذف</button>' : ''}
-          ${canDeleteStudents() && !active ? '<button type="button" class="btn btn-outline btn-sm btn-restore-student">استعادة</button>' : ''}
+          <a class="btn btn-outline btn-sm" href="${reportHref}">ملف</a>
+          ${showEdit ? `<button type="button" class="btn btn-primary btn-sm btn-edit-student" data-key="${escapeHtml(key)}">${editLabel}</button>` : ''}
+          ${canDeleteStudents() && active ? `<button type="button" class="btn btn-danger btn-sm btn-withdraw-student" data-key="${escapeHtml(key)}">حذف</button>` : ''}
+          ${canDeleteStudents() && !active ? `<button type="button" class="btn btn-outline btn-sm btn-restore-student" data-key="${escapeHtml(key)}">استعادة</button>` : ''}
         </td>
       </tr>`;
     });
-    html += '</tbody></table>';
-    $('rosterTable').innerHTML = html;
+    table += '</tbody></table></div>';
+
+    $('rosterTable').innerHTML = cards + table;
 
     const bind = (sel, fn) => {
       $('rosterTable').querySelectorAll(sel).forEach(btn => {
         btn.onclick = (e) => {
           e.preventDefault();
-          const tr = btn.closest('tr');
-          const key = tr?.getAttribute('data-key') || btn.getAttribute('data-key');
+          const key = btn.getAttribute('data-key')
+            || btn.closest('[data-key]')?.getAttribute('data-key');
           if (key) fn(key);
         };
       });
@@ -1339,6 +1380,7 @@
     bind('.btn-withdraw-student', withdrawStudentByKey);
     bind('.btn-restore-student', restoreStudentByKey);
   }
+
 
   let detailStudentKey = null;
 

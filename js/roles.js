@@ -223,7 +223,54 @@ window.printCards=()=>{
 const PERM_ROLES=[['stage_manager','مدير مرحلة'],['it_officer','مسؤول حاسب'],['counselor','أخصائي اجتماعي']];
 const PERM_MODES=[['none','غير مفعّل'],['observer','مراقب'],['active','فعّال']];
 function permMode(role,key){return S.rolePerms.find(p=>p.role_type===role&&p.permission_key===key)?.mode||'none'}
-function renderPermissions(){$('permissionsTable').innerHTML=`<div class="table-wrap"><table class="data-table"><tr><th>الصلاحية</th>${PERM_ROLES.map(r=>`<th>${esc(r[1])}</th>`).join('')}</tr>${S.permCatalog.map(p=>`<tr><td><b>${esc(p.label_ar)}</b></td>${PERM_ROLES.map(r=>`<td><select data-role="${r[0]}" data-key="${esc(p.key)}" onchange="setRolePermission(this)">${PERM_MODES.map(m=>`<option value="${m[0]}" ${permMode(r[0],p.key)===m[0]?'selected':''}>${m[1]}</option>`).join('')}</select></td>`).join('')}</tr>`).join('')}</table></div>`}
+function renderPermissions(){
+  if(!S.permCatalog.length){
+    $('permissionsTable').innerHTML='<p class="role-empty">لا توجد صلاحيات في الكتالوج بعد.</p>';
+    return;
+  }
+  // موبايل: بطاقة لكل صلاحية مع صف لكل دور (لا يضيع ترتيب الأعمدة عند التمرير)
+  const cards = S.permCatalog.map(p => {
+    const rows = PERM_ROLES.map(r => {
+      const mode = permMode(r[0], p.key);
+      const opts = PERM_MODES.map(m =>
+        `<option value="${m[0]}" ${mode===m[0]?'selected':''}>${m[1]}</option>`
+      ).join('');
+      return `<div class="perm-role-row">
+        <span class="perm-role-name">${esc(r[1])}</span>
+        <select data-role="${r[0]}" data-key="${esc(p.key)}" onchange="setRolePermission(this)">${opts}</select>
+      </div>`;
+    }).join('');
+    return `<article class="perm-card">
+      <h3 class="perm-card-title">${esc(p.label_ar)}</h3>
+      ${p.description_ar ? `<p class="perm-card-desc">${esc(p.description_ar)}</p>` : ''}
+      <div class="perm-role-list">${rows}</div>
+    </article>`;
+  }).join('');
+
+  // سطح المكتب: جدول مع رأس ثابت
+  const thead = `<tr><th class="perm-sticky-col">الصلاحية</th>${PERM_ROLES.map(r=>`<th>${esc(r[1])}</th>`).join('')}</tr>`;
+  const tbody = S.permCatalog.map(p =>
+    `<tr>
+      <td class="perm-sticky-col"><b>${esc(p.label_ar)}</b></td>
+      ${PERM_ROLES.map(r => {
+        const mode = permMode(r[0], p.key);
+        const opts = PERM_MODES.map(m =>
+          `<option value="${m[0]}" ${mode===m[0]?'selected':''}>${m[1]}</option>`
+        ).join('');
+        return `<td><select data-role="${r[0]}" data-key="${esc(p.key)}" onchange="setRolePermission(this)">${opts}</select></td>`;
+      }).join('')}
+    </tr>`
+  ).join('');
+
+  $('permissionsTable').innerHTML = `
+    <div class="perm-cards">${cards}</div>
+    <div class="perm-table-wrap table-wrap">
+      <table class="data-table perm-table">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+}
 window.setRolePermission=async sel=>{const role=sel.dataset.role,key=sel.dataset.key,mode=sel.value;sel.disabled=true;const {error}=await sb.rpc('set_role_permission',{p_role_type:role,p_permission_key:key,p_mode:mode});sel.disabled=false;if(error)return note('error',error.message);const row=S.rolePerms.find(p=>p.role_type===role&&p.permission_key===key);if(row)row.mode=mode;else S.rolePerms.push({role_type:role,permission_key:key,mode});note('ok','تم حفظ الصلاحية.')}
 function openUser(role,u=null){$('modal').hidden=false;$('role').value=role;$('editId').value=u?.id||'';$('modalTitle').textContent=(u?'تعديل ':'إضافة ')+rn(role);$('name').value=u?.full_name||'';$('email').value=u?.email||'';
 const isNew=!u;
