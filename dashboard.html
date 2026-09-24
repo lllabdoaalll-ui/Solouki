@@ -111,6 +111,9 @@
         <a href="analytics.html" class="dash-tile is-nav-hidden" data-perm="view_reports" data-perm-mode="view" hidden>
           <span class="ico"><span class="ico-svg i-chart" aria-hidden="true"></span></span> التحليلات
         </a>
+        <a href="behavior-logs.html" class="dash-tile is-nav-hidden" data-perm="view_behavior_logs" data-perm-mode="view" hidden>
+          <span class="ico"><span class="ico-svg i-clipboard" aria-hidden="true"></span></span> سجلات الرصد
+        </a>
         <a href="catalog.html" class="dash-tile is-nav-hidden" data-perm="record_violations" data-perm-mode="view" hidden>
           <span class="ico"><span class="ico-svg i-clipboard" aria-hidden="true"></span></span> كتالوج المخالفات
         </a>
@@ -325,10 +328,10 @@
 
       // افتراضيات الدور — تطابق مصفوفة STEP 42
       const roleDefaults = {
-        superadmin: ['system_diagnostics','view_students','record_violations','record_merits','view_reports','send_whatsapp','whatsapp_settings','superadmin'],
-        stage_manager: ['view_students','record_violations','record_merits','view_reports','send_whatsapp'],
-        it_officer: ['system_diagnostics','view_students','view_reports','whatsapp_settings'],
-        counselor: ['view_students','record_violations','record_merits','view_reports','send_whatsapp']
+        superadmin: ['system_diagnostics','view_students','record_violations','record_merits','view_reports','view_behavior_logs','send_whatsapp','whatsapp_settings','superadmin'],
+        stage_manager: ['view_students','record_violations','record_merits','view_reports','view_behavior_logs','send_whatsapp'],
+        it_officer: ['system_diagnostics','view_students','view_reports','view_behavior_logs','whatsapp_settings'],
+        counselor: ['view_students','record_violations','record_merits','view_reports','view_behavior_logs','send_whatsapp']
       };
       const defaults = new Set(roleDefaults[role] || []);
 

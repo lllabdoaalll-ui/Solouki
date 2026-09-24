@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سلوكي | سجلات الرصد</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.71.0">
+  <link rel="stylesheet" href="css/print-official.css">
+  <link rel="stylesheet" href="css/behavior-logs.css?v=4.71.0">
+</head>
+<body class="app-page">
+<main class="behavior-logs-page">
+  <header class="app-header no-print">
+    <div class="app-header-inner">
+      <a class="app-header-back" href="dashboard.html" title="لوحة التحكم" aria-label="رجوع">→</a>
+      <div class="app-header-titles">
+        <span class="kicker">قسم مستقل · ضمن صلاحيات الطاقم</span>
+        <h1>سجلات الرصد</h1>
+      </div>
+      <div class="app-header-actions">
+        <a class="btn btn-outline" href="dashboard.html">لوحة التحكم</a>
+        <button type="button" class="btn btn-outline" id="logout">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="msg" class="message no-print" hidden></div>
+  <div id="permDenied" class="panel no-print" hidden>
+    <p class="small-note" style="color:#b91c1c;font-weight:700">
+      ليست لديك صلاحية «عرض سجلات الرصد». اطلب تفعيلها من المسؤول العام من شاشة الأدوار.
+    </p>
+  </div>
+
+  <section class="panel no-print" id="filtersPanel">
+    <h2 class="panel-title">الفترة والنطاق</h2>
+    <div class="period-tabs" role="tablist">
+      <button type="button" class="period-tab is-active" data-period="daily">يومي</button>
+      <button type="button" class="period-tab" data-period="weekly">أسبوعي</button>
+      <button type="button" class="period-tab" data-period="monthly">شهري</button>
+      <button type="button" class="period-tab" data-period="range">من — إلى</button>
+    </div>
+
+    <div class="filter-grid">
+      <label id="wrapSingleDate">التاريخ
+        <input type="date" id="singleDate">
+      </label>
+      <label id="wrapMonth" hidden>الشهر
+        <input type="month" id="monthInput">
+      </label>
+      <label id="wrapFrom" hidden>من
+        <input type="date" id="fromDate">
+      </label>
+      <label id="wrapTo" hidden>إلى
+        <input type="date" id="toDate">
+      </label>
+      <label>المرحلة
+        <select id="stageSelect"><option value="">كل المراحل المسموح بها</option></select>
+      </label>
+      <label>النوع
+        <select id="typeSelect">
+          <option value="all">الكل (مخالفات + تكريمات)</option>
+          <option value="violation">مخالفات فقط</option>
+          <option value="merit">تكريمات فقط</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-primary" id="loadBtn">عرض السجل</button>
+      <button type="button" class="btn btn-outline" id="printBtn" disabled>🖨️ طباعة أفقية (Landscape)</button>
+    </div>
+    <p class="small-note" id="rangeHint">اختر الفترة ثم اضغط عرض.</p>
+  </section>
+
+  <section class="panel no-print" id="previewPanel">
+    <div class="preview-head">
+      <h2 class="panel-title" style="margin:0">معاينة الشاشة</h2>
+      <span class="badge" id="countBadge">0 سجل</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="previewTable">
+        <thead>
+          <tr>
+            <th>التاريخ</th>
+            <th>النوع</th>
+            <th>الطالب</th>
+            <th>المرحلة / الصف / الفصل</th>
+            <th>البند</th>
+            <th>الدرجة / النقاط</th>
+            <th>الملاحظات</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody">
+          <tr><td colspan="7" class="empty">لا بيانات بعد — اضغط «عرض السجل».</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- قالب الطباعة الأفقية -->
+  <div id="printSheet" class="print-only blog-print-sheet" aria-hidden="true"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=4.71.0"></script>
+<script src="js/core/supabase-client.js?v=4.71.0"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/session.js"></script>
+<script src="js/core/permissions.js"></script>
+<script src="js/behavior-logs.js?v=4.71.0"></script>
+</body>
+</html>
