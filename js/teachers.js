@@ -218,20 +218,19 @@ function renderSwitches(){
   }
   if (!S.switches.length && box.querySelector('code')) return;
 
-  const sections = [
-    { key: 'arabic', label: 'عربي' },
-    { key: 'languages', label: 'لغات' }
-  ];
+  // كل مرحلة في جدول stages مرتبطة بقسم واحد (arabic أو languages).
+  // لا نضرب المراحل × القسمين — ذلك يسبب تكراراً ظاهرياً عندما يكون اسم المرحلة يحتوي القسم.
+  const sectionLabel = (key) => (key === 'languages' ? 'لغات' : 'عربي');
 
-  const rows = [];
-  S.stages.forEach(st => {
-    sections.forEach(sec => {
-      let sw = S.switches.find(x => String(x.stage_id) === String(st.id) && x.section === sec.key);
-      if (!sw) {
-        sw = { stage_id: st.id, section: sec.key, recording_enabled: false, merits_enabled: false, _missing: true };
-      }
-      rows.push({ stage: st, sec, sw });
-    });
+  const rows = S.stages.map(st => {
+    const secKey = (st.section === 'languages' || st.section === 'arabic')
+      ? st.section
+      : 'arabic';
+    let sw = S.switches.find(x => String(x.stage_id) === String(st.id) && x.section === secKey);
+    if (!sw) {
+      sw = { stage_id: st.id, section: secKey, recording_enabled: false, merits_enabled: false, _missing: true };
+    }
+    return { stage: st, sec: { key: secKey, label: sectionLabel(secKey) }, sw };
   });
 
   box.innerHTML = `
