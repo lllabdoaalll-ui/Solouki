@@ -1,0 +1,96 @@
+/* سجلات الرصد — شاشة + طباعة أفقية */
+.behavior-logs-page { max-width: 1100px; margin: 0 auto; padding: 12px 14px 40px; }
+.panel-title { font-size: 16px; margin: 0 0 12px; }
+.period-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+}
+.period-tab {
+  border: 1px solid #cbd5e1; background: #fff; border-radius: 999px;
+  padding: 7px 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+  color: #334155; font-size: 13px;
+}
+.period-tab.is-active {
+  background: #0f766e; color: #fff; border-color: #0f766e;
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.filter-grid label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 13px; font-weight: 700; color: #334155;
+}
+.filter-grid input, .filter-grid select {
+  padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+  font-family: inherit; font-size: 14px; font-weight: 500;
+}
+.filter-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.preview-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px;
+}
+.badge {
+  background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;
+  border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th, .data-table td {
+  border: 1px solid #e2e8f0; padding: 8px 10px; text-align: right; vertical-align: top;
+}
+.data-table th { background: #f8fafc; font-weight: 800; color: #0f172a; }
+.data-table .empty { text-align: center; color: #64748b; padding: 24px; }
+.tag-v { color: #b91c1c; font-weight: 800; }
+.tag-m { color: #047857; font-weight: 800; }
+.message {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+}
+.message.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.message.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.small-note { font-size: 12px; color: #64748b; margin: 8px 0 0; }
+
+/* —— طباعة أفقية —— */
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body * { visibility: hidden; }
+  #printSheet, #printSheet * { visibility: visible; }
+  #printSheet {
+    position: absolute; inset: 0; width: 100%;
+    background: #fff; color: #000; font-family: 'Cairo', sans-serif;
+  }
+  .no-print { display: none !important; }
+}
+
+.blog-print-sheet {
+  display: none;
+  font-size: 11px;
+  direction: rtl;
+}
+@media print {
+  .blog-print-sheet { display: block; }
+}
+.blog-print-sheet .ph {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 8px;
+}
+.blog-print-sheet .ph h1 { font-size: 16px; margin: 0 0 2px; }
+.blog-print-sheet .ph .meta { font-size: 11px; color: #334155; }
+.blog-print-sheet table {
+  width: 100%; border-collapse: collapse; table-layout: fixed;
+}
+.blog-print-sheet th, .blog-print-sheet td {
+  border: 1px solid #334155; padding: 4px 6px; text-align: right;
+  vertical-align: top; word-wrap: break-word;
+}
+.blog-print-sheet th {
+  background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  font-weight: 800; font-size: 10px;
+}
+.blog-print-sheet .sum {
+  margin-top: 8px; font-size: 11px; font-weight: 700;
+}
+.blog-print-sheet .signs {
+  display: flex; justify-content: space-between; margin-top: 18px; font-size: 11px;
+}
+.blog-print-sheet .signs div { text-align: center; min-width: 120px; }
