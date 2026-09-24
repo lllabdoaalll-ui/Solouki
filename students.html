@@ -7,7 +7,7 @@
 <title>سلوكي | رفع الطلاب وWhatsApp</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/app-shell.css?v=4.70.6"><link rel="stylesheet" href="css/students.css"><link rel="stylesheet" href="css/print-official.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.71.1"><link rel="stylesheet" href="css/students.css?v=4.71.1"><link rel="stylesheet" href="css/print-official.css">
 </head>
 <body>
 <main class="students-page">
@@ -32,7 +32,7 @@
 </div>
 <div id="error" class="error-box" hidden></div><div id="ok" class="success-box" hidden></div>
 <section class="stats"><div><small>الطلاب الحاليون</small><strong id="studentCount">0</strong></div><div><small>جدد</small><strong id="newCount">0</strong></div><div><small>منقولون/متغيرون</small><strong id="changedCount">0</strong></div><div><small>منسحبون</small><strong id="withdrawnCount">0</strong></div></section>
-<nav class="tabs"><button class="active" data-tab="import">رفع Excel</button><button data-tab="roster">قائمة الطلاب</button><button data-tab="whatsapp">واتساب (شخصي)</button><button data-tab="logs">سجل الاستيراد</button></nav>
+<nav class="tabs"><button class="active" data-tab="import">رفع Excel</button><button data-tab="baseCodes">ملف القاعدة (أكواد)</button><button data-tab="roster">قائمة الطلاب</button><button data-tab="whatsapp">واتساب (شخصي)</button><button data-tab="logs">سجل الاستيراد</button></nav>
 <section id="import" class="panel active">
 
 <div class="up-steps" id="importSteps">
@@ -160,6 +160,76 @@
   <p class="small-note">التفاصيل الحساسة تبقى داخل سلوكي. رسالة واتساب توجّه ولي الأمر للاطلاع من البرنامج أو تعرض ملخصًا قصيرًا.</p>
 </div>
 </section>
+
+<section id="baseCodes" class="panel">
+  <div class="head">
+    <div>
+      <h2>رفع ملف القاعدة — تحديث أكواد الطلاب</h2>
+      <p>هذا القسم مخصّص فقط لاستخراج <b>كود الطالب</b> من ملف القاعدة وربطه بالطلاب عبر <b>الرقم القومي</b>. لا يستبدل الاسم أو الصف أو الفصل القادم من رصد.</p>
+    </div>
+  </div>
+
+  <div class="base-format-note">
+    <h3>📌 شكل الملف كما يصل إلينا</h3>
+    <ul>
+      <li>ملف Excel واحد بعدة <b>أوراق (Sheets)</b> — كل ورقة تمثّل مرحلة/قسماً (مثال: رياض عربى، ابتدائى لغات، ثانوى لغات…).</li>
+      <li>الأعمدة الأساسية في كل ورقة:
+        <code>م</code> · <code>كود الطالب</code> · <code>الرقم القومى</code> · <code>اسم الطالب</code> · <code>الصف</code> · <code>كود النوع</code>
+        (1 = ولد، 2 = بنت). قد تظهر أعمدة إضافية في الثانوي (لغة ثانية، شعبة، تخصص) وتُتجاهل هنا.</li>
+      <li>قد يتكرر صف عناوين الأعمدة داخل نفس الورقة عند بداية صف دراسي جديد (أول / ثانٍ / ثالث) — النظام يتخطّاها تلقائياً.</li>
+      <li>المطابقة تتم بـ <b>الرقم القومي</b> فقط؛ يُحدَّث حقل <b>كود الطالب</b> في سلوكي دون المساس بباقي البيانات.</li>
+    </ul>
+  </div>
+
+  <div class="import-card base-codes-card">
+    <div class="head">
+      <div>
+        <h2>① اختر ملف القاعدة</h2>
+        <p>XLS / XLSX — جميع الأوراق تُقرأ دفعة واحدة</p>
+      </div>
+    </div>
+    <div id="baseDropzone" class="dropzone">
+      <div class="drop-icon">⇧</div>
+      <h3>اسحب ملف القاعدة هنا</h3>
+      <p>الملف متعدد الأوراق كما يصدر من الجهة المختصة</p>
+      <label class="btn btn-primary">اختيار الملف
+        <input id="baseExcelFile" type="file" accept=".xlsx,.xls" hidden>
+      </label>
+    </div>
+    <div id="baseFileMeta" class="file-meta" hidden></div>
+    <div class="actions import-actions" style="margin-top:12px">
+      <button type="button" id="baseProcessBtn" class="btn btn-outline" disabled>معالجة الملف</button>
+      <button type="button" id="baseApplyBtn" class="btn btn-primary" disabled>تطبيق الأكواد على الطلاب</button>
+      <button type="button" id="baseCancelBtn" class="btn btn-outline" disabled>إلغاء</button>
+    </div>
+  </div>
+
+  <div id="baseReport" class="diff-card" hidden style="margin-top:16px">
+    <div class="head"><div><h2>② تقرير المطابقة</h2><p id="baseReportSub">—</p></div></div>
+    <div class="stats" style="margin:10px 0">
+      <div><small>صفوف في الملف</small><strong id="baseTotal">0</strong></div>
+      <div><small>سيُحدَّث كودهم</small><strong id="baseWillUpdate">0</strong></div>
+      <div><small>كودهم كما هو</small><strong id="baseUnchanged">0</strong></div>
+      <div><small>غير موجودين في سلوكي</small><strong id="baseMissing">0</strong></div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الورقة</th>
+            <th>الرقم القومي</th>
+            <th>الاسم (من الملف)</th>
+            <th>الكود الجديد</th>
+            <th>الكود الحالي</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="baseReportBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <section id="logs" class="panel"><div class="head"><div><h2>سجل عمليات الاستيراد</h2><p>كل عملية تعتمد التغييرات تُسجل بتاريخها وملخصها.</p></div></div><div id="logsList"></div></section>
 </main>
 
@@ -213,7 +283,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="js/config.js?v=4.62.17"></script><script src="js/students.js?v=4.62.17"></script>
+<script src="js/config.js?v=4.62.17"></script><script src="js/students.js?v=4.71.1"></script>
   <script src="js/pwa.js"></script>
   <script src="js/app-shell.js?v=4.70.6"></script>
 </body></html>
