@@ -427,3 +427,199 @@
   .perm-cards { display: none !important; }
   .perm-table-wrap { display: block !important; max-height: 70vh; overflow: auto; }
 }
+
+
+/* —— بطاقات الدخول —— */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.access-card {
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  direction: rtl;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.access-card.ready {
+  border-color: #99f6e4;
+  box-shadow: 0 4px 16px rgba(15, 92, 86, 0.12);
+}
+.access-card > small:first-child {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #0f5c56;
+  letter-spacing: 0.02em;
+}
+.access-card h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  color: #0f172a;
+  line-height: 1.35;
+}
+.access-card > small {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+.access-card .login-label {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+}
+.access-card .login-email,
+.access-card .pin {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #0f172a;
+  word-break: break-all;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.access-card .pin {
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.04em;
+}
+.access-card .ready-note {
+  color: #065f46;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.access-card .missing-note {
+  color: #c2410c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.access-card .card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+.access-card .card-actions .mini {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+}
+.access-card .card-actions .mini:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* —— نافذة الإضافة/التعديل: حقول عمودية واضحة —— */
+#modal.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+#modal[hidden] { display: none !important; }
+#modal .modal-card,
+#form.modal-card {
+  background: #fff;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 18px 18px 0 0;
+  padding: 18px 16px 24px;
+  direction: rtl;
+  text-align: right;
+  box-sizing: border-box;
+}
+#form.modal-card .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+#form.modal-card .head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+#form.modal-card > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #334155;
+}
+#form.modal-card > label input {
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+}
+#form.modal-card .gen-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+#form.modal-card .gen-row input { flex: 1 1 auto; min-width: 0; }
+#form.modal-card .gen-row button { flex: 0 0 auto; white-space: nowrap; }
+#form.modal-card .actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+#form.modal-card .actions .btn { flex: 1 1 auto; min-height: 44px; }
+#form.modal-card h3 {
+  margin: 14px 0 8px;
+  font-size: 0.95rem;
+  color: #0f5c56;
+}
+
+@media (min-width: 701px) {
+  #modal.modal {
+    align-items: center;
+    padding: 24px;
+  }
+  #form.modal-card {
+    border-radius: 16px;
+    max-height: 85vh;
+  }
+}
+
+@media (max-width: 700px) {
+  .cards { grid-template-columns: 1fr; }
+  #cards .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #cards .head .btn { width: 100%; }
+  .access-card .card-actions .mini {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
