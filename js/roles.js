@@ -215,9 +215,16 @@ window.printCards=()=>{
   const eligible=S.users.filter(u=>u.is_active).length;
   const missing=eligible-ready.length;
   if(missing>0&&!confirm(`سيتم طباعة ${ready.length} بطاقة دخول جاهزة فقط.\n\nهناك ${missing} حساب نشط بدون كلمة مرور جاهزة، ولن تُطبع بطاقاته.\n\nهل تريد المتابعة؟`))return;
+  // انتقل لتبويب البطاقات ثم اطبع الجاهزة فقط
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab==='cards');
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='cards'));
   document.body.classList.add('printing-cards');
-  window.print();
-  setTimeout(()=>document.body.classList.remove('printing-cards'),500);
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>document.body.classList.remove('printing-cards'), 400);
+  }, 50);
 };
 
 const PERM_ROLES=[['stage_manager','مدير مرحلة'],['it_officer','مسؤول حاسب'],['counselor','أخصائي اجتماعي']];

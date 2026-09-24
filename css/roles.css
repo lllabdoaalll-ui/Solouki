@@ -623,3 +623,100 @@
     text-align: center;
   }
 }
+
+
+/* ========== طباعة بطاقات الدخول ========== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* إخفاء واجهة التطبيق */
+  .app-header,
+  .bottom-nav,
+  .tabs,
+  .stats,
+  .error-box,
+  .success-box,
+  .no-print,
+  #modal,
+  #importModal,
+  .modal {
+    display: none !important;
+  }
+
+  /* طباعة كل البطاقات الجاهزة */
+  body.printing-cards .access-card.ready,
+  body.printing-cards .access-card.ready * {
+    visibility: visible !important;
+  }
+  body.printing-cards #cardsList,
+  body.printing-cards #cardsList * {
+    visibility: visible !important;
+  }
+  body.printing-cards #cardsList {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10mm;
+    padding: 0;
+  }
+  body.printing-cards .access-card:not(.ready) {
+    display: none !important;
+  }
+  body.printing-cards .access-card.ready {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1.5pt solid #0f5c56 !important;
+    border-radius: 8px;
+    padding: 8mm;
+    box-shadow: none !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.printing-cards .panel:not(#cards),
+  body.printing-cards #cards > .head {
+    display: none !important;
+  }
+  body.printing-cards #cards {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* طباعة بطاقة واحدة */
+  body.printing-one-card .single-print-card,
+  body.printing-one-card .single-print-card * {
+    visibility: visible !important;
+  }
+  body.printing-one-card .single-print-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 90mm;
+    margin: 0 auto;
+  }
+  body.printing-one-card .single-print-card .access-card {
+    border: 1.5pt solid #0f5c56 !important;
+    border-radius: 8px;
+    padding: 10mm;
+    box-shadow: none !important;
+  }
+
+  .access-card .login-email,
+  .access-card .pin {
+    border: 1px solid #94a3b8 !important;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
