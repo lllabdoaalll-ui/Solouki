@@ -1,3 +1,8 @@
+## 4.70.5 — Roles access cards + edit modal mobile layout
+
+- Access-card grid styling for login cards tab.
+- Edit-user modal: stacked labels/inputs, full-width fields, bottom sheet on mobile.
+
 ## 4.70.4 — Students mobile roster + permissions mobile cards
 
 - Students list: mobile cards with behavior-file link; desktop table unchanged.
