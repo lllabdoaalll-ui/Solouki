@@ -1,3 +1,8 @@
+## 4.70.4 — Students mobile roster + permissions mobile cards
+
+- Students list: mobile cards with behavior-file link; desktop table unchanged.
+- Permissions tab: per-permission cards on mobile (role labels always visible); sticky header table on desktop.
+
 ## 4.70.3 — Roles lists redesign (managers / IT / counselors)
 
 - Richer role cards: kind badge, scope count, WhatsApp, status.
