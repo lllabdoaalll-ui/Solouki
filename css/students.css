@@ -829,3 +829,41 @@ a.student-name-link:hover {
   .student-cards { display: none !important; }
   .roster-table-desktop { display: block !important; }
 }
+
+/* —— ملف القاعدة (أكواد الطلاب) —— */
+.base-format-note {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #78350f;
+}
+.base-format-note h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #92400e;
+}
+.base-format-note ul {
+  margin: 0;
+  padding-right: 18px;
+}
+.base-format-note code {
+  background: #fef3c7;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  direction: rtl;
+}
+.base-codes-card .file-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+#baseReport .data-table td.status-ok { color: #047857; font-weight: 700; }
+#baseReport .data-table td.status-same { color: #64748b; }
+#baseReport .data-table td.status-miss { color: #b91c1c; font-weight: 700; }
+#baseReport .data-table td.status-skip { color: #a16207; }

@@ -1659,6 +1659,305 @@
   // testWa اختياري — قد لا يوجد في الواجهة الجديدة
   on('testWa', 'click', () => { location.href = 'notifications.html'; });
 
+
+  // ============================================================
+  // ملف القاعدة — تحديث أكواد الطلاب فقط (مطابقة بالرقم القومي)
+  // شكل الملف: أوراق متعددة + أعمدة: كود الطالب | الرقم القومى | اسم الطالب | ...
+  // ============================================================
+  const baseState = { rows: [], fileName: '' };
+  const esc = (x) => String(x ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
+  function baseNormHeader(h) {
+    return String(h || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي');
+  }
+
+  function baseFindCol(headers, candidates) {
+    const normed = headers.map(baseNormHeader);
+    for (const c of candidates) {
+      const nc = baseNormHeader(c);
+      const i = normed.findIndex(h => h === nc || h.includes(nc) || nc.includes(h));
+      if (i >= 0) return i;
+    }
+    return -1;
+  }
+
+  function baseDigits(v) {
+    return String(v ?? '').replace(/\D/g, '');
+  }
+
+  function parseBaseWorkbook(buf) {
+    const wb = XLSX.read(buf, { type: 'array', cellDates: false, raw: false });
+    const out = [];
+    const seenNid = new Map(); // national_id -> first row
+
+    wb.SheetNames.forEach(sheetName => {
+      const sheet = wb.Sheets[sheetName];
+      if (!sheet) return;
+      const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+      if (!matrix.length) return;
+
+      // ابحث عن صف عناوين في أول 5 صفوف أو عند تكرار العناوين وسط الورقة
+      let headerIdx = -1;
+      let colCode = -1, colNid = -1, colName = -1;
+      const tryHeader = (row) => {
+        const cells = (row || []).map(c => String(c ?? ''));
+        const cCode = baseFindCol(cells, ['كود الطالب', 'كودالطالب', 'student code', 'student_code']);
+        const cNid = baseFindCol(cells, ['الرقم القومى', 'الرقم القومي', 'الرقم القومى', 'قومى', 'national', 'national_id']);
+        const cName = baseFindCol(cells, ['اسم الطالب', 'الاسم', 'full_name', 'name']);
+        if (cCode >= 0 && cNid >= 0) {
+          return { cCode, cNid, cName };
+        }
+        return null;
+      };
+
+      for (let r = 0; r < matrix.length; r++) {
+        const hdr = tryHeader(matrix[r]);
+        if (hdr) {
+          headerIdx = r;
+          colCode = hdr.cCode;
+          colNid = hdr.cNid;
+          colName = hdr.cName;
+          // بيانات بعد صف العنوان حتى صف عنوان تالٍ أو نهاية الورقة
+          for (let i = r + 1; i < matrix.length; i++) {
+            const row = matrix[i] || [];
+            // صف عنوان متكرر داخل الورقة
+            if (tryHeader(row)) {
+              // حدّث مؤشرات الأعمدة واستمر
+              const h2 = tryHeader(row);
+              colCode = h2.cCode;
+              colNid = h2.cNid;
+              colName = h2.cName;
+              continue;
+            }
+            const code = String(row[colCode] ?? '').trim();
+            const nid = baseDigits(row[colNid]);
+            const name = colName >= 0 ? String(row[colName] ?? '').trim() : '';
+            if (!nid && !code) continue;
+            if (!nid || nid.length < 10) continue;
+            if (!code) continue;
+
+            if (seenNid.has(nid)) {
+              // تكرار في الملف — نحتفظ بأول ظهور ونؤشر التكرار
+              const prev = seenNid.get(nid);
+              prev.dup = true;
+              continue;
+            }
+            const rec = {
+              sheet: sheetName,
+              national_id: nid,
+              student_code: code,
+              full_name: name,
+              status: 'pending'
+            };
+            seenNid.set(nid, rec);
+            out.push(rec);
+          }
+          // بعد معالجة الورقة من أول هيدر لا نعيد من الصفر
+          break;
+        }
+      }
+    });
+    return out;
+  }
+
+  async function matchBaseRows(parsed) {
+    if (!sb) throw new Error('قاعدة البيانات غير متصلة.');
+    // جلب الطلاب الحاليين بالرقم القومي
+    const nids = parsed.map(p => p.national_id);
+    const byNid = new Map();
+    // دفعات لتجنب URL طويل
+    const chunk = 200;
+    for (let i = 0; i < nids.length; i += chunk) {
+      const slice = nids.slice(i, i + chunk);
+      const { data, error } = await sb
+        .from('students')
+        .select('id,national_id,student_code,full_name,is_active')
+        .in('national_id', slice);
+      if (error) throw error;
+      (data || []).forEach(s => {
+        const k = baseDigits(s.national_id);
+        if (!byNid.has(k)) byNid.set(k, []);
+        byNid.get(k).push(s);
+      });
+    }
+
+    let will = 0, same = 0, miss = 0;
+    parsed.forEach(p => {
+      const matches = byNid.get(p.national_id) || [];
+      if (!matches.length) {
+        p.status = 'missing';
+        p.current_code = '';
+        p.student_id = null;
+        miss++;
+        return;
+      }
+      // إن وُجد أكثر من سجل لنفس القومي نحدّث جميع النسخ النشطة
+      p.matches = matches;
+      const codes = [...new Set(matches.map(m => String(m.student_code || '').trim()).filter(Boolean))];
+      const allSame = matches.every(m => String(m.student_code || '').trim() === String(p.student_code).trim());
+      p.current_code = codes.join(' | ') || '—';
+      if (allSame) {
+        p.status = 'unchanged';
+        same++;
+      } else {
+        p.status = 'update';
+        will++;
+      }
+    });
+    return { will, same, miss, total: parsed.length };
+  }
+
+  function renderBaseReport(stats) {
+    $('baseTotal').textContent = stats.total;
+    $('baseWillUpdate').textContent = stats.will;
+    $('baseUnchanged').textContent = stats.same;
+    $('baseMissing').textContent = stats.miss;
+    $('baseReportSub').textContent = baseState.fileName
+      ? ('الملف: ' + baseState.fileName + ' — اضغط «تطبيق الأكواد» لتحديث الطلاب المطابقين فقط.')
+      : '—';
+    const body = $('baseReportBody');
+    const statusLabel = {
+      update: 'سيُحدَّث',
+      unchanged: 'كود مطابق',
+      missing: 'غير موجود في سلوكي'
+    };
+    const statusClass = {
+      update: 'status-ok',
+      unchanged: 'status-same',
+      missing: 'status-miss'
+    };
+    // اعرض أولاً من سيُحدَّث ثم المفقودين ثم المطابق
+    const order = { update: 0, missing: 1, unchanged: 2 };
+    const sorted = [...baseState.rows].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    body.innerHTML = sorted.slice(0, 500).map(r => `
+      <tr>
+        <td>${esc(r.sheet)}</td>
+        <td dir="ltr">${esc(r.national_id)}</td>
+        <td>${esc(r.full_name || '—')}</td>
+        <td dir="ltr">${esc(r.student_code)}</td>
+        <td dir="ltr">${esc(r.current_code || '—')}</td>
+        <td class="${statusClass[r.status] || ''}">${statusLabel[r.status] || r.status}</td>
+      </tr>
+    `).join('') + (sorted.length > 500
+      ? `<tr><td colspan="6" style="text-align:center;color:#64748b">… و ${sorted.length - 500} صفاً إضافياً في الملخص أعلاه</td></tr>`
+      : '');
+    $('baseReport').hidden = false;
+    $('baseApplyBtn').disabled = stats.will === 0;
+    $('baseCancelBtn').disabled = false;
+  }
+
+  async function onBaseFileSelected(file) {
+    if (!file) return;
+    baseState.fileName = file.name;
+    baseState.rows = [];
+    $('baseFileMeta').hidden = false;
+    $('baseFileMeta').textContent = 'الملف: ' + file.name + ' (' + Math.round(file.size / 1024) + ' ك.ب) — اضغط معالجة الملف.';
+    $('baseProcessBtn').disabled = false;
+    $('baseApplyBtn').disabled = true;
+    $('baseReport').hidden = true;
+    baseState._file = file;
+  }
+
+  async function processBaseFile() {
+    const file = baseState._file;
+    if (!file) return msg('error', 'اختر ملف القاعدة أولاً.');
+    try {
+      $('baseProcessBtn').disabled = true;
+      const buf = await file.arrayBuffer();
+      const parsed = parseBaseWorkbook(buf);
+      if (!parsed.length) {
+        msg('error', 'لم يُعثر على صفوف صالحة. تأكد أن الأعمدة تشمل «كود الطالب» و«الرقم القومى».');
+        $('baseProcessBtn').disabled = false;
+        return;
+      }
+      baseState.rows = parsed;
+      const stats = await matchBaseRows(parsed);
+      renderBaseReport(stats);
+      msg('ok', 'تمت معالجة ' + stats.total + ' صفاً من ملف القاعدة.');
+    } catch (e) {
+      console.error(e);
+      msg('error', e.message || 'تعذر قراءة ملف القاعدة.');
+    } finally {
+      $('baseProcessBtn').disabled = false;
+    }
+  }
+
+  async function applyBaseCodes() {
+    const toUpdate = baseState.rows.filter(r => r.status === 'update');
+    if (!toUpdate.length) return msg('error', 'لا توجد أكواد تحتاج تحديثاً.');
+    if (!confirm('سيتم تحديث كود الطالب لـ ' + toUpdate.length + ' سجل عبر الرقم القومي فقط. المتابعة؟')) return;
+    try {
+      $('baseApplyBtn').disabled = true;
+      let ok = 0, fail = 0;
+      for (const r of toUpdate) {
+        const matches = r.matches || [];
+        for (const m of matches) {
+          const { error } = await sb
+            .from('students')
+            .update({ student_code: r.student_code })
+            .eq('id', m.id);
+          if (error) {
+            console.warn(r.national_id, error);
+            fail++;
+          } else ok++;
+        }
+      }
+      msg('ok', 'تم تحديث ' + ok + ' سجل كود طالب.' + (fail ? (' · فشل ' + fail) : ''));
+      // أعد المطابقة لعرض الحالة الجديدة
+      const stats = await matchBaseRows(baseState.rows);
+      renderBaseReport(stats);
+      if (typeof loadCurrent === 'function') loadCurrent();
+    } catch (e) {
+      console.error(e);
+      msg('error', e.message || 'تعذر تطبيق الأكواد.');
+      $('baseApplyBtn').disabled = false;
+    }
+  }
+
+  function cancelBaseCodes() {
+    baseState.rows = [];
+    baseState.fileName = '';
+    baseState._file = null;
+    const input = $('baseExcelFile');
+    if (input) input.value = '';
+    $('baseFileMeta').hidden = true;
+    $('baseReport').hidden = true;
+    $('baseProcessBtn').disabled = true;
+    $('baseApplyBtn').disabled = true;
+    $('baseCancelBtn').disabled = true;
+  }
+
+  function wireBaseCodesUI() {
+    const dz = $('baseDropzone');
+    const input = $('baseExcelFile');
+    if (!dz || !input) return;
+    input.addEventListener('change', () => {
+      const f = input.files && input.files[0];
+      if (f) onBaseFileSelected(f);
+    });
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) onBaseFileSelected(f);
+    });
+    dz.addEventListener('click', e => {
+      if (e.target.closest('label') || e.target.closest('input')) return;
+      input.click();
+    });
+    on('baseProcessBtn', 'click', processBaseFile);
+    on('baseApplyBtn', 'click', applyBaseCodes);
+    on('baseCancelBtn', 'click', cancelBaseCodes);
+  }
+
+
   document.querySelectorAll('.tabs button').forEach(b => {
     b.onclick = () => {
       document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
@@ -1711,6 +2010,7 @@
   setTimeout(() => refreshConnectionStatus(), 600);
   window.addEventListener('online', () => refreshConnectionStatus());
   window.addEventListener('offline', () => refreshConnectionStatus());
+  wireBaseCodesUI();
   loadCurrent();
   renderLogs();
 })();
