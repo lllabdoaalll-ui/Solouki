@@ -297,8 +297,11 @@ REVOKE ALL ON FUNCTION public.teacher_recording_enabled(uuid, text, text, text) 
 GRANT EXECUTE ON FUNCTION public.teacher_recording_enabled(uuid, text, text, text) TO service_role;
 
 -- ============================================================
--- 5) Seed switch rows for every active stage × section
+-- 5) Seed switch rows for every active stage (using its own section)
 -- ============================================================
+-- كل مرحلة في stages مرتبطة بقسم واحد (arabic أو languages).
+-- لا نستخدم CROSS JOIN على القسمين — ذلك يُنشئ صفوفاً غير منطقية
+-- (مثل stage_kg_ar + languages) ويسبب تكراراً في واجهة التفعيل.
 DO $$
 BEGIN
   IF EXISTS (
@@ -313,13 +316,20 @@ BEGIN
   ) THEN
     INSERT INTO public.teacher_behavior_switches
       (school_id, stage_id, section, recording_enabled, merits_enabled)
-    SELECT st.school_id, st.id::text, sec.section, false, false
+    SELECT
+      st.school_id,
+      st.id::text,
+      CASE
+        WHEN lower(coalesce(st.section, '')) IN ('languages', 'lang', 'لغة', 'لغات') THEN 'languages'
+        ELSE 'arabic'
+      END,
+      false,
+      false
     FROM public.stages st
-    CROSS JOIN (VALUES ('arabic'), ('languages')) AS sec(section)
     WHERE st.is_active = true
     ON CONFLICT (school_id, stage_id, section) DO NOTHING;
 
-    RAISE NOTICE 'Seeded teacher_behavior_switches for active stages';
+    RAISE NOTICE 'Seeded teacher_behavior_switches for active stages (one row per stage)';
   ELSE
     RAISE NOTICE 'Skipped seeding — stages table/columns not available';
   END IF;
