@@ -1,6 +1,8 @@
 (function(){
 'use strict';
-const db = window.supabase.createClient(SOLOUKI_CONFIG.SUPABASE_URL, SOLOUKI_CONFIG.SUPABASE_ANON_KEY);
+const db = (window.SoloukiDB && typeof window.SoloukiDB.getClient === 'function')
+  ? window.SoloukiDB.getClient()
+  : window.supabase.createClient(SOLOUKI_CONFIG.SUPABASE_URL, SOLOUKI_CONFIG.SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
 const esc = x => String(x ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const S = { profile:null, stages:[], classes:[], teachers:[], switches:[], editing:null };
