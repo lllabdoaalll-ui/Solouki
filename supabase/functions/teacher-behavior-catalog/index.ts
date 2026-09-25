@@ -7,8 +7,8 @@
 // Secret:
 //   TEACHER_BEHAVIOR_BRIDGE_SECRET
 //
-// This function is intentionally read-only. Recording will be added in a later
-// step after teacher identity/scope and server-side permissions are completed.
+// Fix 4.72.0+: removed non-existent column `code` from violation_locations
+// (table has: id, name_ar, is_custom, is_active, sort_order only).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const cors = {
@@ -46,9 +46,10 @@ Deno.serve(async (req) => {
         .eq("is_active", true)
         .order("degree_id")
         .order("code"),
+      // violation_locations has NO `code` column — only id, name_ar, is_custom, is_active, sort_order
       admin
         .from("violation_locations")
-        .select("id, code, name_ar, is_active, is_custom, sort_order")
+        .select("id, name_ar, is_active, is_custom, sort_order")
         .eq("is_active", true)
         .order("sort_order")
         .order("id"),
@@ -63,11 +64,20 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: "locations_load_failed" }, 500);
     }
 
+    // Normalize violation labels so external systems (رصد) can show Arabic titles
+    // without knowing Solouki column names (description_ar / code).
+    const violations = (violationsRes.data || []).map((v: Record<string, unknown>) => ({
+      ...v,
+      title: v.description_ar || v.code || null,
+      name: v.description_ar || v.code || null,
+      label: v.description_ar || v.code || null,
+    }));
+
     return json({
       ok: true,
       source: "solouki",
       read_only: true,
-      violations: violationsRes.data || [],
+      violations,
       locations: locationsRes.data || [],
     });
   } catch (e) {
