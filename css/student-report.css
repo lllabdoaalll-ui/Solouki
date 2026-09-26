@@ -73,11 +73,71 @@
 }
 
 @media print {
-  .catalog-header, .no-print, .mode-tabs, #error, #ok { display: none !important; }
-  .catalog-main { padding: 0; max-width: 100%; }
-  .panel { box-shadow: none; border: none; }
-  .student-card { break-inside: avoid; }
-  .stat-card { break-inside: avoid; }
+  @page {
+    size: A4;
+    margin: 10mm 10mm 10mm 10mm;
+  }
+
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .catalog-header,
+  .app-header,
+  .no-print,
+  .mode-tabs,
+  #error,
+  #ok,
+  .bottom-nav,
+  nav,
+  button,
+  .btn {
+    display: none !important;
+  }
+
+  .catalog-main,
+  .panel,
+  main,
+  .app-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .student-card,
+  .stat-card {
+    break-inside: avoid;
+  }
+
+  /* منع صفحة ثانية فارغة */
+  .solouki-sheet {
+    page-break-after: avoid !important;
+    break-after: avoid-page !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .solouki-signs {
+    page-break-inside: avoid;
+    margin-top: 12px !important;
+  }
+
+  .solouki-signs .sign .title {
+    margin-bottom: 16px !important;
+  }
+
+  .solouki-footer {
+    margin-top: 8px !important;
+    page-break-before: avoid;
+  }
 }
 
 
