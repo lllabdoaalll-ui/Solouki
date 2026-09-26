@@ -44,23 +44,43 @@
   }
 
   async function ensureAuth() {
-    if (!window.SoloukiSession || !SoloukiSession.requireAuth) {
-      note('error', 'جلسة غير متاحة');
+    if (!window.SoloukiSession || typeof SoloukiSession.requireSession !== 'function') {
+      note('error', 'جلسة غير متاحة — تأكد من تحميل ملفات الجلسة');
       return null;
     }
-    const profile = await SoloukiSession.requireAuth();
-    if (!profile) return null;
-    state.profile = profile;
-    return profile;
+    const result = await SoloukiSession.requireSession({
+      roles: ['superadmin', 'stage_manager', 'stage_manage', 'counselor', 'it_officer']
+    });
+    if (!result || !result.profile) return null;
+    state.profile = result.profile;
+    return result.profile;
   }
 
   async function loadCategories() {
     try {
       const { data, error } = await sb().rpc('list_merit_categories');
       if (error) throw error;
-      state.categories = Array.isArray(data) ? data : [];
-    } catch (_) {
-      state.categories = [];
+      let list = data;
+      if (typeof list === 'string') {
+        try { list = JSON.parse(list); } catch (_) { list = []; }
+      }
+      if (!Array.isArray(list)) list = [];
+      state.categories = list;
+    } catch (e) {
+      console.error('list_merit_categories', e);
+      try {
+        const { data, error } = await sb()
+          .from('merit_categories')
+          .select('code, label_ar, default_points, sort_order')
+          .eq('is_active', true)
+          .order('sort_order');
+        if (error) throw error;
+        state.categories = data || [];
+      } catch (e2) {
+        console.error('merit_categories fallback', e2);
+        state.categories = [];
+        note('error', 'تعذر تحميل أنواع التكريم: ' + (e2.message || e.message || e));
+      }
     }
     const sel = $('categorySelect');
     if (!sel) return;
