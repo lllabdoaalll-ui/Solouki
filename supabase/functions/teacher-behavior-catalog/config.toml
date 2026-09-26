@@ -1,0 +1,2 @@
+# تعطيل التحقق من JWT — الاعتماد على x-solouki-bridge-secret فقط
+verify_jwt = false

@@ -98,45 +98,77 @@ Deno.serve(async (req) => {
     const schoolId = teacher.school_id;
 
     // —— Resolve student (national_id preferred) ——
+    // Fix: لا نفرض school_id في SQL (طلاب الاستيراد قد بلا school_id؛ وأعمدة select الصارمة
+    // كانت تسبب student_lookup_failed إن اختلف المخطط). البحث بالرقم القومي ثم فلترة المدرسة في الكود.
     const nationalId = digits(body.student_national_id || body.national_id || "");
     let student: Record<string, unknown> | null = null;
 
     if (nationalId) {
-      const { data, error } = await admin
+      let q = admin
         .from("students")
-        .select(
-          "id, school_id, stage_id, grade, class_name, section, full_name, national_id, student_code, is_active",
-        )
+        .select("id, school_id, stage_id, grade, class_name, section, full_name, national_id, student_code, is_active, status")
         .eq("national_id", nationalId)
-        .eq("school_id", schoolId)
-        .eq("is_active", true)
-        .limit(2);
+        .limit(10);
+      let { data, error } = await q;
+      // إن فشل select بسبب عمود ناقص — جرّب مجموعة أعمدة أضيق
+      if (error) {
+        console.error("students by national_id (full)", error);
+        const retry = await admin
+          .from("students")
+          .select("id, school_id, stage_id, grade, section, full_name, national_id, is_active")
+          .eq("national_id", nationalId)
+          .limit(10);
+        data = retry.data;
+        error = retry.error;
+      }
       if (error) {
         console.error("students by national_id", error);
-        return json({ ok: false, error: "student_lookup_failed" }, 500);
+        return json({
+          ok: false,
+          error: "student_lookup_failed",
+          detail: error.message || String(error),
+        }, 500);
       }
-      if (!data?.length) {
-        return json({ ok: false, error: "student_not_found" }, 404);
+      let rows = (data || []).filter((s: Record<string, unknown>) => s.is_active !== false);
+      // إن وُجد school_id على المعلم والطالب، فضّل المطابقة؛ وإلا اقبل أي صف نشط
+      if (schoolId && rows.some((s: Record<string, unknown>) => s.school_id != null && String(s.school_id) === String(schoolId))) {
+        rows = rows.filter((s: Record<string, unknown>) => String(s.school_id) === String(schoolId));
       }
-      if (data.length > 1) {
+      if (!rows.length) {
+        return json({
+          ok: false,
+          error: "student_not_found",
+          detail: "لا طالب بهذا الرقم القومي في سلوكي (أو غير نشط). استورد الطلاب إلى solouki.vercel.app أولاً.",
+          national_id: nationalId,
+        }, 404);
+      }
+      if (rows.length > 1 && schoolId) {
+        const sameSchool = rows.filter((s: Record<string, unknown>) => String(s.school_id) === String(schoolId));
+        if (sameSchool.length === 1) rows = sameSchool;
+        else if (sameSchool.length > 1) {
+          return json({ ok: false, error: "student_ambiguous_national_id" }, 409);
+        }
+      }
+      if (rows.length > 1) {
         return json({ ok: false, error: "student_ambiguous_national_id" }, 409);
       }
-      student = data[0];
+      student = rows[0];
+      // توحيد class_name إن كان العمود اسمه class في مخطط قديم
+      if (student && student.class_name == null && (student as Record<string, unknown>).class != null) {
+        (student as Record<string, unknown>).class_name = (student as Record<string, unknown>).class;
+      }
     } else if (body.student_id) {
       const { data, error } = await admin
         .from("students")
-        .select(
-          "id, school_id, stage_id, grade, class_name, section, full_name, national_id, student_code, is_active",
-        )
+        .select("id, school_id, stage_id, grade, class_name, section, full_name, national_id, student_code, is_active")
         .eq("id", body.student_id)
-        .eq("is_active", true)
         .maybeSingle();
       if (error) {
         console.error("students by id", error);
-        return json({ ok: false, error: "student_lookup_failed" }, 500);
+        return json({ ok: false, error: "student_lookup_failed", detail: error.message }, 500);
       }
-      if (!data) return json({ ok: false, error: "student_not_found" }, 404);
-      if (String(data.school_id) !== String(schoolId)) {
+      if (!data || data.is_active === false) return json({ ok: false, error: "student_not_found" }, 404);
+      if (schoolId && data.school_id != null && String(data.school_id) !== String(schoolId)) {
         return json({ ok: false, error: "student_school_mismatch" }, 403);
       }
       student = data;
