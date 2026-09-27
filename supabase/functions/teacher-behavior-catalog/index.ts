@@ -1,19 +1,18 @@
-// Solouki STEP 68 — Read-only catalog bridge for external teacher systems.
-// The violations catalog remains owned by Solouki; external systems must not
-// maintain their own copy of violation definitions.
+// Solouki STEP 68 / 72+ — Read-only catalog bridge for external teacher systems.
+// Returns violations, locations, AND merit categories so رصد can show the same
+// dropdowns as the Solouki UI (merits.html).
 //
 // Deploy:
 //   supabase functions deploy teacher-behavior-catalog
 // Secret:
 //   TEACHER_BEHAVIOR_BRIDGE_SECRET
 //
-// Fix 4.72.0+: removed non-existent column `code` from violation_locations
-// (table has: id, name_ar, is_custom, is_active, sort_order only).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-solouki-bridge-secret",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-solouki-bridge-secret",
 };
 
 Deno.serve(async (req) => {
@@ -39,7 +38,7 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
-    const [violationsRes, locationsRes] = await Promise.all([
+    const [violationsRes, locationsRes, meritsRes] = await Promise.all([
       admin
         .from("violations_catalog")
         .select("id, code, description_ar, degree_id, is_active, is_custom")
@@ -53,6 +52,12 @@ Deno.serve(async (req) => {
         .eq("is_active", true)
         .order("sort_order")
         .order("id"),
+      admin
+        .from("merit_categories")
+        .select("id, code, label_ar, default_points, is_active, sort_order")
+        .eq("is_active", true)
+        .order("sort_order")
+        .order("id"),
     ]);
 
     if (violationsRes.error) {
@@ -62,6 +67,10 @@ Deno.serve(async (req) => {
     if (locationsRes.error) {
       console.error("violation_locations", locationsRes.error);
       return json({ ok: false, error: "locations_load_failed" }, 500);
+    }
+    // merit_categories is optional for older deployments — don't fail the whole catalog
+    if (meritsRes.error) {
+      console.warn("merit_categories", meritsRes.error);
     }
 
     // Normalize violation labels so external systems (رصد) can show Arabic titles
@@ -73,12 +82,21 @@ Deno.serve(async (req) => {
       label: v.description_ar || v.code || null,
     }));
 
+    const meritCategories = (meritsRes.data || []).map((c: Record<string, unknown>) => ({
+      ...c,
+      label: c.label_ar || c.code || null,
+      title: c.label_ar || c.code || null,
+      points: c.default_points != null ? Number(c.default_points) : 10,
+    }));
+
     return json({
       ok: true,
       source: "solouki",
       read_only: true,
       violations,
       locations: locationsRes.data || [],
+      merit_categories: meritCategories,
+      merits: meritCategories, // alias for convenience
     });
   } catch (e) {
     console.error(e);
