@@ -187,6 +187,7 @@ function render(){
       <div class="sol-card-actions">
         <button type="button" class="btn btn-outline btn-sm" onclick="editTeacher('${t.id}')">تعديل</button>
         <button type="button" class="btn btn-outline btn-sm" onclick="toggleTeacher('${t.id}')">${t.is_active !== false ? 'إيقاف' : 'تفعيل'}</button>
+        <button type="button" class="btn btn-outline btn-sm" style="color:#b91c1c;border-color:#fca5a5" onclick="deleteTeacher('${t.id}')">حذف</button>
       </div>
     </article>`;
   }).join('')}</div>
@@ -206,6 +207,7 @@ function render(){
       <td style="white-space:nowrap">
         <button class="btn btn-outline btn-sm" onclick="editTeacher('${t.id}')">تعديل</button>
         <button class="btn btn-outline btn-sm" onclick="toggleTeacher('${t.id}')">${t.is_active !== false ? 'إيقاف' : 'تفعيل'}</button>
+        <button class="btn btn-outline btn-sm" style="color:#b91c1c;border-color:#fca5a5" onclick="deleteTeacher('${t.id}')">حذف</button>
       </td>
     </tr>`;
   }).join('')}</tbody></table></div>`;
@@ -362,6 +364,32 @@ window.toggleTeacher = async id => {
     msg(t.is_active ? 'تم إيقاف المعلم.' : 'تم تفعيل المعلم.');
   } catch (e) {
     msg(e.message || 'تعذر تحديث الحالة.', 'error');
+  }
+};
+
+window.deleteTeacher = async id => {
+  const t = S.teachers.find(x => x.id === id);
+  if (!t) return;
+  const ok = confirm(
+    `حذف المعلم «${t.full_name}» من الدليل؟\n\n` +
+    `• سيُحذف من دليل المعلمين ولن يتمكن من الرصد.\n` +
+    `• المخالفات والتكريمات التي سجّلها سابقًا ستبقى محفوظة.\n\n` +
+    `هل تريد المتابعة؟`
+  );
+  if (!ok) return;
+  try {
+    // حذف إسنادات الفصول أولاً ثم سجل الدليل
+    // سجلات violation_records / merit_records تحتفظ بـ external_teacher_id و external_teacher_name كنص
+    // لذا لا تُمس عند حذف المعلم من الدليل
+    const { error: e1 } = await db.from('teacher_class_assignments').delete().eq('teacher_directory_id', id);
+    if (e1) throw e1;
+    const { error: e2 } = await db.from('teacher_directory').delete().eq('id', id);
+    if (e2) throw e2;
+    await loadTeachers();
+    render();
+    msg(`تم حذف المعلم «${t.full_name}» من الدليل. السجلات السابقة محفوظة.`);
+  } catch (e) {
+    msg(e.message || 'تعذر حذف المعلم.', 'error');
   }
 };
 
