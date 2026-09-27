@@ -1,6 +1,6 @@
 /**
  * Solouki — هوية التقارير المطبوعة الرسمية
- * خطوط Cairo، تدرج أوزان، ترويسة مدرسية مصرية
+ * مضغوط ليناسب صفحة A4 واحدة قدر الإمكان
  */
 
 :root {
@@ -20,21 +20,28 @@
 @media print {
   @page {
     size: A4;
-    margin: 10mm 10mm 10mm 10mm;
+    margin: 8mm 8mm 8mm 8mm;
   }
 
   html, body {
     background: #fff !important;
     color: var(--solouki-ink) !important;
     font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif !important;
-    font-size: 11pt !important;
-    line-height: 1.55 !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  /* إخفاء كل عناصر الشاشة */
   .no-print,
+  .screen-only,
   .catalog-header,
+  .app-header,
   .mode-tabs,
   .note,
   #error,
@@ -44,23 +51,30 @@
   button,
   .btn,
   nav,
-  .wa-box {
+  .wa-box,
+  .bottom-nav,
+  .attention-panel,
+  .escalation-box {
     display: none !important;
   }
 
   .catalog-main,
   .panel,
-  .record-form {
+  .record-form,
+  main,
+  .app-page,
+  .catalog-page {
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
   }
 
-  /* إخفاء واجهة الشاشة وإظهار قالب الطباعة فقط */
-  .screen-only { display: none !important; }
+  /* إظهار قالب الطباعة فقط */
   .print-only {
     display: block !important;
   }
@@ -68,45 +82,56 @@
   .solouki-sheet {
     width: 100%;
     color: var(--solouki-ink);
+    page-break-inside: auto;
+    page-break-after: auto;
+    break-after: auto;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
-  /* ——— الترويسة ——— */
+  /* فاصل بين تقارير طلاب مختلفين في طباعة دفعة */
+  .solouki-sheet + .solouki-sheet {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* ——— الترويسة (مضغوطة) ——— */
   .solouki-letterhead {
     display: grid;
-    grid-template-columns: 22mm 1fr 22mm;
-    gap: 8px;
+    grid-template-columns: 16mm 1fr 16mm;
+    gap: 4px;
     align-items: center;
-    border-bottom: 2.5pt solid var(--solouki-primary);
-    padding-bottom: 8px;
-    margin-bottom: 4px;
+    border-bottom: 2pt solid var(--solouki-primary);
+    padding-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .solouki-letterhead .logo-box {
-    width: 20mm;
-    height: 20mm;
+    width: 15mm;
+    height: 15mm;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .solouki-letterhead .logo-box img {
-    max-width: 20mm;
-    max-height: 20mm;
+    max-width: 15mm;
+    max-height: 15mm;
     object-fit: contain;
   }
 
   .solouki-letterhead .logo-placeholder {
-    width: 18mm;
-    height: 18mm;
+    width: 14mm;
+    height: 14mm;
     border: 1px dashed #9bb5af;
-    border-radius: 4px;
-    font-size: 7pt;
+    border-radius: 3px;
+    font-size: 6pt;
     color: #8aa39c;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 
   .solouki-letterhead .org-block {
@@ -114,41 +139,45 @@
   }
 
   .solouki-letterhead .org-republic {
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 800;
     color: var(--solouki-primary-deep);
     letter-spacing: 0.02em;
+    line-height: 1.2;
   }
 
   .solouki-letterhead .org-ministry {
-    font-size: 9.5pt;
+    font-size: 8.5pt;
     font-weight: 700;
     color: var(--solouki-ink);
-    margin-top: 1px;
+    margin-top: 0;
+    line-height: 1.2;
   }
 
   .solouki-letterhead .org-dir {
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 600;
     color: var(--solouki-muted);
-    margin-top: 1px;
+    margin-top: 0;
+    line-height: 1.2;
   }
 
   .solouki-letterhead .org-school {
-    font-size: 12pt;
+    font-size: 11pt;
     font-weight: 800;
     color: var(--solouki-primary);
-    margin-top: 3px;
+    margin-top: 1px;
+    line-height: 1.25;
   }
 
   .solouki-brand-bar {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    border-bottom: 1pt solid var(--solouki-gold);
-    padding: 3px 0 5px;
-    margin-bottom: 12px;
-    font-size: 8pt;
+    border-bottom: 0.75pt solid var(--solouki-gold);
+    padding: 2px 0 3px;
+    margin-bottom: 6px;
+    font-size: 7.5pt;
     color: var(--solouki-muted);
   }
 
@@ -160,20 +189,21 @@
   /* ——— عنوان التقرير ——— */
   .solouki-doc-title {
     text-align: center;
-    margin: 10px 0 14px;
+    margin: 4px 0 8px;
   }
 
   .solouki-doc-title h1 {
-    font-size: 14pt;
+    font-size: 13pt;
     font-weight: 800;
     color: var(--solouki-primary-deep);
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     text-decoration: underline;
-    text-underline-offset: 3px;
+    text-underline-offset: 2px;
+    line-height: 1.25;
   }
 
   .solouki-doc-title .meta {
-    font-size: 9.5pt;
+    font-size: 9pt;
     font-weight: 600;
     color: var(--solouki-muted);
   }
@@ -185,24 +215,26 @@
 
   /* ——— بيانات الطالب ——— */
   .solouki-student-box {
-    border: 1.5pt solid var(--solouki-line);
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin-bottom: 12px;
+    border: 1.25pt solid var(--solouki-line);
+    border-radius: 3px;
+    padding: 5px 10px;
+    margin-bottom: 6px;
     background: var(--solouki-soft);
   }
 
   .solouki-student-box .name {
-    font-size: 13pt;
+    font-size: 12pt;
     font-weight: 800;
     color: var(--solouki-primary-deep);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    line-height: 1.3;
   }
 
   .solouki-student-box .row {
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 500;
     color: var(--solouki-ink);
+    line-height: 1.4;
   }
 
   .solouki-student-box .row b {
@@ -213,36 +245,38 @@
   .solouki-stats {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 12px;
+    gap: 4px;
+    margin-bottom: 6px;
   }
 
   .solouki-stats .cell {
-    border: 1pt solid #c5d4d0;
-    border-radius: 3px;
+    border: 0.75pt solid #c5d4d0;
+    border-radius: 2px;
     text-align: center;
-    padding: 5px 2px;
+    padding: 3px 2px;
   }
 
   .solouki-stats .cell .n {
-    font-size: 13pt;
+    font-size: 12pt;
     font-weight: 800;
     color: var(--solouki-primary-deep);
+    line-height: 1.2;
   }
 
   .solouki-stats .cell .l {
-    font-size: 7.5pt;
+    font-size: 7pt;
     font-weight: 600;
     color: var(--solouki-muted);
+    line-height: 1.2;
   }
 
   /* ——— نصوص رسمية ——— */
   .solouki-prose {
-    font-size: 10.5pt;
+    font-size: 9.5pt;
     font-weight: 500;
     text-align: justify;
-    margin: 10px 0;
-    line-height: 1.7;
+    margin: 4px 0 6px;
+    line-height: 1.45;
   }
 
   .solouki-prose strong {
@@ -251,36 +285,39 @@
   }
 
   .solouki-notice {
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 600;
-    border-right: 3pt solid var(--solouki-gold);
-    padding-right: 10px;
-    margin: 10px 0 14px;
+    border-right: 2.5pt solid var(--solouki-gold);
+    padding-right: 8px;
+    margin: 4px 0 6px;
     color: var(--solouki-ink);
+    line-height: 1.4;
   }
 
-  /* ——— الجدول ——— */
+  /* ——— الجدول (مضغوط) ——— */
   .solouki-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 9pt;
-    margin-bottom: 14px;
+    font-size: 8pt;
+    margin-bottom: 6px;
   }
 
   .solouki-table th {
     background: var(--solouki-primary) !important;
     color: #fff !important;
     font-weight: 800;
-    padding: 5px 6px;
-    border: 1pt solid var(--solouki-primary-deep);
+    padding: 3px 4px;
+    border: 0.75pt solid var(--solouki-primary-deep);
     text-align: right;
+    line-height: 1.25;
   }
 
   .solouki-table td {
-    padding: 4px 6px;
-    border: 1pt solid #b0c4bf;
+    padding: 2.5px 4px;
+    border: 0.75pt solid #b0c4bf;
     font-weight: 500;
     vertical-align: top;
+    line-height: 1.3;
   }
 
   .solouki-table tr:nth-child(even) td {
@@ -292,17 +329,27 @@
     text-align: center;
   }
 
+  .solouki-table thead {
+    display: table-header-group;
+  }
+
+  .solouki-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   /* ——— الختام والتوقيعات ——— */
   .solouki-closing {
-    font-size: 10.5pt;
+    font-size: 9.5pt;
     font-weight: 600;
-    margin: 12px 0 6px;
+    margin: 4px 0 2px;
+    line-height: 1.35;
   }
 
   .solouki-date-line {
-    font-size: 9.5pt;
+    font-size: 8.5pt;
     font-weight: 500;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
     color: var(--solouki-muted);
   }
 
@@ -314,41 +361,43 @@
   .solouki-signs {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin-top: 12px;
+    gap: 6px;
+    margin-top: 6px;
     page-break-inside: avoid;
-    page-break-before: avoid;
+    break-inside: avoid;
   }
 
   .solouki-signs .sign {
     text-align: center;
-    font-size: 9pt;
+    font-size: 8pt;
   }
 
   .solouki-signs .sign .title {
     font-weight: 800;
     color: var(--solouki-primary-deep);
-    margin-bottom: 16px;
-    font-size: 9.5pt;
+    margin-bottom: 22px;
+    font-size: 8.5pt;
+    line-height: 1.25;
   }
 
   .solouki-signs .sign .line {
-    border-top: 1pt solid #333;
-    margin: 0 10px;
-    padding-top: 4px;
+    border-top: 0.75pt solid #333;
+    margin: 0 6px;
+    padding-top: 2px;
     font-weight: 500;
     color: var(--solouki-muted);
-    font-size: 8pt;
+    font-size: 7.5pt;
   }
 
   .solouki-footer {
-    margin-top: 16px;
-    padding-top: 6px;
-    border-top: 1pt solid #c5d4d0;
-    font-size: 7.5pt;
+    margin-top: 8px;
+    padding-top: 3px;
+    border-top: 0.75pt solid #c5d4d0;
+    font-size: 7pt;
     color: #7a928c;
     text-align: center;
     font-weight: 500;
+    line-height: 1.3;
   }
 
   .solouki-footer strong {
@@ -356,16 +405,7 @@
     font-weight: 800;
   }
 
-  /* ——— تعدد الصفحات ——— */
-  .solouki-table thead {
-    display: table-header-group; /* تكرار رأس الجدول في كل صفحة */
-  }
-
-  .solouki-table tr {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
+  /* كتل لا تُقطع */
   .solouki-student-box,
   .solouki-stats,
   .solouki-notice,
@@ -375,83 +415,34 @@
     break-inside: avoid;
   }
 
-  /* كتلة التوقيعات لا تُقطع وتفضّل البقاء في آخر التقرير */
-  .solouki-signs {
-    page-break-before: auto;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* فاصل بين تقارير طلاب مختلفين في طباعة دفعة */
-  .solouki-sheet + .solouki-sheet {
-    page-break-before: always;
-    break-before: page;
-  }
-
-  .solouki-sheet {
-    page-break-after: auto;
-  }
-
-  /* ترويسة متابعة مختصرة تظهر من الصفحة 2 عبر عنصر ثابت اختياري */
   .solouki-cont-header {
     display: none;
   }
 
-  /* رقم صفحة تقريبي عبر عداد CSS (دعم متصفحات حديثة) */
   .solouki-footer::after {
     content: none;
   }
-}
 
-/* شاشة: قائمة المتابعة */
-.attention-panel {
-  margin-bottom: 20px;
-}
-.attention-list {
-  border: 1px solid #d7e3de;
-  border-radius: 12px;
-  background: #fff;
-  max-height: 320px;
-  overflow: auto;
-}
-.attention-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #e8f0ed;
-  font-size: 14px;
-  cursor: pointer;
-}
-.attention-row:hover { background: #edf5f2; }
-.attention-row input { width: 18px; height: 18px; accent-color: #23725e; flex-shrink: 0; }
-.attention-row .name { font-weight: 700; color: #173b35; }
-.attention-row .meta { font-size: 12px; color: #5a736c; margin-right: auto; }
-.attention-row .badge-hot {
-  background: #b91c1c;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-.attention-row .badge-warn {
-  background: #b45309;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-.attention-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  align-items: center;
-}
-.attention-hint {
-  font-size: 12.5px;
-  color: #5a736c;
-  margin-top: 6px;
+  /* إقرار التنبيه الكتابي — مضغوط */
+  .solouki-ack {
+    border: 0.75pt solid #334155 !important;
+    padding: 6px 10px !important;
+    margin: 6px 0 !important;
+    border-radius: 4px !important;
+    background: #f8fafc !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .solouki-ack > div:first-child {
+    font-weight: 800 !important;
+    margin-bottom: 4px !important;
+    font-size: 9pt !important;
+  }
+
+  .solouki-ack p {
+    margin: 0 0 6px !important;
+    line-height: 1.4 !important;
+    font-size: 8.5pt !important;
+  }
 }

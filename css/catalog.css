@@ -988,15 +988,27 @@ body {
   }
 
   .panel {
-    display: block !important;
-    box-shadow: none;
-    border: 1px solid #ccc;
-    page-break-inside: avoid;
-    margin-bottom: 16px;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .panel.screen-only {
+    display: none !important;
   }
 
   .catalog-page {
     width: 100%;
     padding: 0;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  body.catalog-page,
+  body.app-page {
+    min-height: 0 !important;
+    height: auto !important;
   }
 }
