@@ -1137,6 +1137,166 @@
       || myAccess.deleteStudents === 'active';
   }
 
+  // —— تحديد جماعي للحذف/الاستعادة ——
+  const selectedKeys = new Set();
+
+  function updateBulkBar() {
+    const bar = $('bulkBar');
+    if (!bar) return;
+    const canDel = canDeleteStudents();
+    bar.hidden = !canDel;
+    const n = selectedKeys.size;
+    const countEl = $('bulkSelectedCount');
+    if (countEl) countEl.textContent = n ? `${n} محدد` : '0 محدد';
+
+    // كم نشط / منسحب ضمن المحددين؟
+    let activeN = 0, withdrawnN = 0;
+    selectedKeys.forEach(k => {
+      const s = current.find(x => studentKey(x) === k);
+      if (!s) return;
+      if (s.is_active !== false) activeN++;
+      else withdrawnN++;
+    });
+    const wBtn = $('bulkWithdrawBtn');
+    const rBtn = $('bulkRestoreBtn');
+    if (wBtn) wBtn.hidden = !(canDel && activeN > 0);
+    if (rBtn) rBtn.hidden = !(canDel && withdrawnN > 0);
+    if (wBtn && activeN > 0) wBtn.textContent = `حذف المحددين (${activeN})`;
+    if (rBtn && withdrawnN > 0) rBtn.textContent = `استعادة المحددين (${withdrawnN})`;
+
+    // مزامنة checkbox «تحديد الكل»
+    const allCb = $('selectAllStudents');
+    if (allCb) {
+      const visible = getVisibleRosterKeys();
+      const allSelected = visible.length > 0 && visible.every(k => selectedKeys.has(k));
+      allCb.checked = allSelected;
+      allCb.indeterminate = !allSelected && visible.some(k => selectedKeys.has(k));
+    }
+  }
+
+  function getVisibleRosterKeys() {
+    let list = baseRosterList();
+    list = applyRosterFilters(list);
+    return list.map(s => studentKey(s));
+  }
+
+  function toggleStudentSelect(key, checked) {
+    if (checked) selectedKeys.add(key);
+    else selectedKeys.delete(key);
+    updateBulkBar();
+  }
+
+  function selectAllVisible(checked) {
+    const keys = getVisibleRosterKeys();
+    keys.forEach(k => {
+      if (checked) selectedKeys.add(k);
+      else selectedKeys.delete(k);
+    });
+    // تحديث checkboxes في DOM دون إعادة رسم كاملة
+    document.querySelectorAll('#rosterTable .stu-select').forEach(cb => {
+      const k = cb.getAttribute('data-key');
+      if (keys.includes(k)) cb.checked = checked;
+    });
+    updateBulkBar();
+  }
+
+  function clearSelection() {
+    selectedKeys.clear();
+    document.querySelectorAll('#rosterTable .stu-select').forEach(cb => { cb.checked = false; });
+    const allCb = $('selectAllStudents');
+    if (allCb) { allCb.checked = false; allCb.indeterminate = false; }
+    updateBulkBar();
+  }
+
+  async function bulkWithdrawSelected() {
+    if (!canDeleteStudents()) return msg('error', 'لا صلاحية لحذف الطلاب.');
+    const keys = [...selectedKeys].filter(k => {
+      const s = current.find(x => studentKey(x) === k);
+      return s && s.is_active !== false;
+    });
+    if (!keys.length) return msg('error', 'لا يوجد طلاب نشطون ضمن المحددين.');
+
+    const reason = window.prompt(
+      `تأكيد حذف ${keys.length} طالب من القائمة النشطة.\n` +
+      'لن تُحذف المخالفات أو التكريمات.\nيمكنك كتابة سبب الانسحاب (اختياري للكل):',
+      ''
+    );
+    if (reason === null) return;
+
+    let ok = 0, fail = 0;
+    const errors = [];
+    for (const key of keys) {
+      const s = current.find(x => studentKey(x) === key);
+      if (!s) { fail++; continue; }
+      try {
+        if (!s.id || String(s.id).length < 30) {
+          s.is_active = false;
+          s.status = 'withdrawn';
+          ok++;
+        } else {
+          const { error } = await sb.rpc('admin_withdraw_student', {
+            p_student_id: s.id,
+            p_reason: reason || null
+          });
+          if (error) throw error;
+          s.is_active = false;
+          s.status = 'withdrawn';
+          ok++;
+        }
+      } catch (e) {
+        fail++;
+        errors.push((s.full_name || key) + ': ' + (e.message || e));
+      }
+    }
+    if (!sb) saveDemo();
+    else await loadCurrent();
+    clearSelection();
+    renderStats();
+    renderRoster();
+    if (fail === 0) msg('ok', `تم حذف ${ok} طالب من القائمة النشطة.`);
+    else msg('error', `حُذف ${ok} وفشل ${fail}.\n` + errors.slice(0, 5).join('\n'));
+  }
+
+  async function bulkRestoreSelected() {
+    if (!canDeleteStudents()) return msg('error', 'لا صلاحية لاستعادة الطلاب.');
+    const keys = [...selectedKeys].filter(k => {
+      const s = current.find(x => studentKey(x) === k);
+      return s && s.is_active === false;
+    });
+    if (!keys.length) return msg('error', 'لا يوجد طلاب منسحبون ضمن المحددين.');
+    if (!window.confirm(`استعادة ${keys.length} طالب إلى القائمة النشطة؟`)) return;
+
+    let ok = 0, fail = 0;
+    const errors = [];
+    for (const key of keys) {
+      const s = current.find(x => studentKey(x) === key);
+      if (!s) { fail++; continue; }
+      try {
+        if (!s.id || String(s.id).length < 30) {
+          s.is_active = true;
+          s.status = 'active';
+          ok++;
+        } else {
+          const { error } = await sb.rpc('admin_restore_student', { p_student_id: s.id });
+          if (error) throw error;
+          s.is_active = true;
+          s.status = 'active';
+          ok++;
+        }
+      } catch (e) {
+        fail++;
+        errors.push((s.full_name || key) + ': ' + (e.message || e));
+      }
+    }
+    if (!sb) saveDemo();
+    else await loadCurrent();
+    clearSelection();
+    renderStats();
+    renderRoster();
+    if (fail === 0) msg('ok', `تمت استعادة ${ok} طالب.`);
+    else msg('error', `استُعيد ${ok} وفشل ${fail}.\n` + errors.slice(0, 5).join('\n'));
+  }
+
   // —— قائمة الطلاب وتعديل البيانات ——
 
   async function withdrawStudentByKey(key) {
@@ -1154,6 +1314,7 @@
       // محلي بدون UUID
       s.is_active = false;
       s.status = 'withdrawn';
+      selectedKeys.delete(key);
       saveDemo();
       closeEditStudent();
       renderStats();
@@ -1169,6 +1330,7 @@
       if (error) throw error;
       s.is_active = false;
       s.status = 'withdrawn';
+      selectedKeys.delete(key);
       closeEditStudent();
       await loadCurrent();
       renderRoster();
@@ -1186,6 +1348,7 @@
     if (!s.id || String(s.id).length < 30) {
       s.is_active = true;
       s.status = 'active';
+      selectedKeys.delete(key);
       saveDemo();
       closeEditStudent();
       renderStats();
@@ -1198,6 +1361,7 @@
       if (error) throw error;
       s.is_active = true;
       s.status = 'active';
+      selectedKeys.delete(key);
       closeEditStudent();
       await loadCurrent();
       renderRoster();
@@ -1280,7 +1444,6 @@
 
   function renderRoster() {
     fillRosterFilterOptions();
-    const filter = $('rosterFilter')?.value || 'active';
     let list = baseRosterList();
     list = applyRosterFilters(list);
 
@@ -1289,17 +1452,20 @@
 
     if (!list.length) {
       $('rosterTable').innerHTML = '<p class="small-note">لا يوجد طلاب مطابقون للفلاتر الحالية.</p>';
+      updateBulkBar();
       return;
     }
 
     const editLabel = canEditStudents() ? 'تعديل' : (canViewStudentDetails() ? 'عرض' : '');
     const showEdit = canEditStudents() || canViewStudentDetails();
+    const showSelect = canDeleteStudents();
 
     // —— بطاقات موبايل ——
     let cards = `<div class="student-cards" aria-label="قائمة الطلاب">`;
     list.forEach(s => {
       const key = studentKey(s);
       const active = s.is_active !== false;
+      const isSel = selectedKeys.has(key);
       const gradeLine = [s.grade, s.class].filter(Boolean).join(' / ');
       const sec = s.section ? (s.section === 'languages' ? 'لغات' : (s.section === 'arabic' ? 'عربي' : s.section)) : '';
       const stageLine = [s.stage, sec].filter(Boolean).join(' · ');
@@ -1307,8 +1473,9 @@
         ? ('student-report.html?id=' + encodeURIComponent(s.id))
         : 'student-report.html';
       cards += `
-      <article class="stu-card ${active ? '' : 'is-inactive'}" data-key="${escapeHtml(key)}">
+      <article class="stu-card ${active ? '' : 'is-inactive'}${isSel ? ' is-selected' : ''}" data-key="${escapeHtml(key)}">
         <header class="stu-card-head">
+          ${showSelect ? `<label class="stu-check"><input type="checkbox" class="stu-select" data-key="${escapeHtml(key)}" ${isSel ? 'checked' : ''}></label>` : ''}
           <div class="stu-card-name-wrap">
             <a href="#" class="stu-card-name student-name-link" data-key="${escapeHtml(key)}">${escapeHtml(s.full_name || '—')}</a>
             <span class="stu-card-meta">${escapeHtml(gradeLine || '—')}${stageLine ? ' · ' + escapeHtml(stageLine) : ''}</span>
@@ -1334,16 +1501,19 @@
 
     // —— جدول سطح المكتب ——
     let table = `<div class="roster-table-desktop"><table class="roster-table"><thead><tr>
+      ${showSelect ? '<th class="col-check"></th>' : ''}
       <th>الاسم</th><th>الرقم القومي</th><th>الكود</th><th>المرحلة</th><th>الصف / الفصل</th><th>هاتف الأب</th><th>هاتف الأم</th><th>الحالة</th><th></th>
     </tr></thead><tbody>`;
     list.forEach(s => {
       const key = studentKey(s);
       const active = s.is_active !== false;
+      const isSel = selectedKeys.has(key);
       const nameCell = `<a href="#" class="student-name-link" data-key="${escapeHtml(key)}" title="فتح ملف الطالب">${escapeHtml(s.full_name || '—')}</a>`;
       const reportHref = s.id
         ? ('student-report.html?id=' + encodeURIComponent(s.id))
         : 'student-report.html';
-      table += `<tr class="${active ? '' : 'inactive'}" data-key="${escapeHtml(key)}">
+      table += `<tr class="${active ? '' : 'inactive'}${isSel ? ' is-selected' : ''}" data-key="${escapeHtml(key)}">
+        ${showSelect ? `<td class="col-check"><input type="checkbox" class="stu-select" data-key="${escapeHtml(key)}" ${isSel ? 'checked' : ''}></td>` : ''}
         <td>${nameCell}</td>
         <td dir="ltr">${escapeHtml(s.national_id || '')}</td>
         <td dir="ltr">${escapeHtml(s.student_code || '—')}</td>
@@ -1379,6 +1549,25 @@
     bind('.btn-edit-student', openEditStudent);
     bind('.btn-withdraw-student', withdrawStudentByKey);
     bind('.btn-restore-student', restoreStudentByKey);
+
+    // ربط checkboxes
+    $('rosterTable').querySelectorAll('.stu-select').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const key = cb.getAttribute('data-key');
+        if (key) toggleStudentSelect(key, cb.checked);
+        // مزامنة checkbox الآخر لنفس الطالب (بطاقة + جدول)
+        $('rosterTable').querySelectorAll(`.stu-select[data-key="${CSS.escape(key)}"]`).forEach(other => {
+          if (other !== cb) other.checked = cb.checked;
+        });
+        const card = $('rosterTable').querySelector(`.stu-card[data-key="${CSS.escape(key)}"]`);
+        const row = $('rosterTable').querySelector(`tr[data-key="${CSS.escape(key)}"]`);
+        if (card) card.classList.toggle('is-selected', cb.checked);
+        if (row) row.classList.toggle('is-selected', cb.checked);
+      });
+    });
+
+    updateBulkBar();
   }
 
 
@@ -1977,8 +2166,15 @@
   on('clearRosterFilters', 'click', () => {
     ['filterStage','filterSection','filterGrade','filterClass','rosterSearch'].forEach(id => { if ($(id)) $(id).value = ''; });
     if ($('rosterFilter')) $('rosterFilter').value = 'active';
+    clearSelection();
     renderRoster();
   });
+  on('selectAllStudents', 'change', (e) => {
+    selectAllVisible(!!e.target.checked);
+  });
+  on('bulkWithdrawBtn', 'click', bulkWithdrawSelected);
+  on('bulkRestoreBtn', 'click', bulkRestoreSelected);
+  on('bulkClearBtn', 'click', clearSelection);
   on('closeDetail', 'click', closeStudentDetail);
   on('closeEdit', 'click', closeEditStudent);
   on('cancelEdit', 'click', closeEditStudent);
@@ -2005,7 +2201,10 @@
     });
 
   loadStages().then(loadWa).catch(() => {});
-  loadMyAccess().then(() => { if ($('roster')?.classList.contains('active')) renderRoster(); });
+  loadMyAccess().then(() => {
+    updateBulkBar();
+    if ($('roster')?.classList.contains('active')) renderRoster();
+  });
   refreshConnectionStatus();
   setTimeout(() => refreshConnectionStatus(), 600);
   window.addEventListener('online', () => refreshConnectionStatus());
