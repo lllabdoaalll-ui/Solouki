@@ -42,6 +42,7 @@
     return [...grouped.values()].map(r=>{const phone=normalizeRowPhone(r);return {...r,id:`local-${date}-${r.student_id}`,recipient_phone:phone,parent_type:toWa(r.father_phone)?'father':toWa(r.mother_phone)?'mother':'guardian',status:phone?'queued':'failed',error_text:phone?'':'لا يوجد رقم هاتف صالح لولي الأمر',message:`تم تسجيل ${r.violation_count} مخالفة/متابعة سلوكية للطالب/ة ${r.student_name}.`,_local:true}});
   }
   async function load(){if(!await session())return;note('error','',false);clearOldManualMarks();await loadDbManualConfirmations();sourceMode='db';try{const {data,error}=await sb.rpc('list_my_whatsapp_notifications',{p_date:today(),p_status:null,p_limit:200});if(error)throw error;rows=(data||[]).map(r=>({...r,_manual_sent:isManuallySent(r)}));
+      await enrichRowsWithStudentIds(rows);
       // One-time best effort migration: confirmations previously stored only on this browser are copied to Supabase.
       for(const r of rows){if(manualSentMap()[manualKey(r)]&&!dbManualSent(r)) await syncManualConfirmation(r,manualSentMap()[manualKey(r)].mode||sendMode); }
       await loadDbManualConfirmations(); rows=rows.map(r=>({...r,_manual_sent:isManuallySent(r)}));if(!rows.length){const f=await fallbackPrepareFromViolations();if(f.length){rows=f.map(r=>({...r,_manual_sent:isManuallySent(r)}));sourceMode='fallback';note('ok',`تم العثور على ${f.length} طالبًا لديهم مخالفات اليوم وتجهيزها مباشرة.`)}}render();updateBulkBar()}catch(e){try{const f=await fallbackPrepareFromViolations();rows=f.map(r=>({...r,_manual_sent:isManuallySent(r)}));sourceMode='fallback';if(rows.length)note('ok',`تم استخدام التجهيز المباشر من مخالفات اليوم (${rows.length} طالبًا).`);else note('error',e.message||String(e))}catch(e2){note('error',`${e.message||e} — وتعذر التجهيز البديل: ${e2.message||e2}`)}render();updateBulkBar()}}
@@ -50,10 +51,40 @@
   const selectedRows=()=>pendingRows().filter(r=>document.querySelector(`[data-select="${CSS.escape(String(r.id))}"]`)?.checked);
   const getCode=r=>r.student_code||r.code||r.studentCode||'—', getNid=r=>r.national_id||r.nationalId||r.nationalid||'—';
   const portalUrl=()=>cfg.guardianUrl||cfg.guardian_url||`${location.origin}${location.pathname.replace(/[^/]*$/,'')}guardian.html`;
+
+  /** يملأ الرقم القومي وكود الطالب إن غابا عن صف الإشعار (RPC قديم أو join ناقص) */
+  async function enrichRowsWithStudentIds(list){
+    if(!sb||!list||!list.length)return list;
+    const need=list.filter(r=>r.student_id&&(!r.national_id||!r.student_code));
+    if(!need.length)return list;
+    const ids=[...new Set(need.map(r=>String(r.student_id)))];
+    const byId=new Map();
+    const chunk=80;
+    for(let i=0;i<ids.length;i+=chunk){
+      const slice=ids.slice(i,i+chunk);
+      const {data,error}=await sb.from('students').select('id,national_id,student_code,full_name').in('id',slice);
+      if(error){console.warn('enrichRowsWithStudentIds',error.message);continue;}
+      (data||[]).forEach(s=>byId.set(String(s.id),s));
+    }
+    list.forEach(r=>{
+      const s=byId.get(String(r.student_id));
+      if(!s)return;
+      if(!r.national_id&&s.national_id)r.national_id=s.national_id;
+      if(!r.student_code&&s.student_code)r.student_code=s.student_code;
+      if(!r.student_name&&s.full_name)r.student_name=s.full_name;
+    });
+    return list;
+  }
   function violationLines(row){const recs=Array.isArray(row._violations)?row._violations:[];return recs.slice(0,12).map((r,i)=>{const label=r.violation_label||r.custom_violation_ar||r.violation_desc||'مخالفة سلوكية';const deg=r.degree_ar||r.degree_id||'';const loc=r.location_ar||r.custom_location_ar||'';const pen=r.penalty_label||r.penalty_ar||'';return `${i+1}) ${label}${deg?` — الدرجة: ${deg}`:''}${loc?` — المكان: ${loc}`:''}${pen?` — الإجراء المسجل: ${pen}`:''}${r.notes?` — ملاحظات: ${r.notes}`:''}`}).join('\n');}
   function accessMessage(row){return `السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${row.student_name||'الطالب/ة'}\n\nنحيطكم علمًا بأنه تم تسجيل متابعة سلوكية للطالب/ة لدى المدرسة.\n\nللاطلاع على التفاصيل من خلال نظام سلوكي، يرجى استخدام:\n• الرقم القومي: ${getNid(row)}\n• كود الطالب: ${getCode(row)}\n\nرابط الاطلاع: ${portalUrl()}\n\nهذه الرسالة للإخطار فقط، ولا تتضمن تفاصيل المخالفة. التفاصيل الكاملة متاحة داخل نظام سلوكي.\n\nمع خالص التحية،\nإدارة المدرسة`}
   function fullWarning(row,withEsc){const lines=violationLines(row)||row.message||'تم تسجيل متابعة سلوكية للطالب/ة.';let m=`السلام عليكم ورحمة الله وبركاته،\n\nولي أمر الطالب/ة: ${row.student_name||'الطالب/ة'}\nالصف: ${row.grade||'—'} — الفصل: ${row.class_name||'—'}\n\nنحيطكم علمًا بأنه تم تسجيل المتابعة السلوكية التالية في نظام سلوكي:\n${lines}\n\nنرجو الاطلاع على الأمر والتعاون مع المدرسة في المتابعة التربوية للطالب/ة.`;if(withEsc)m+=`\n\nخطوات المتابعة والتصعيد:\n• مراجعة تفاصيل الحالة في نظام سلوكي.\n• التواصل مع الأخصائي عند الحاجة لمناقشة الحالة.\n• تُتخذ أي إجراءات تصعيدية رسمية وفق اللائحة وقرارات المدرسة والحالة المسجلة؛ ولا يُفترض مستوى تصعيد غير مسجل في النظام.`;m+=`\n\nيمكن الاطلاع على السجل الكامل باستخدام الرقم القومي وكود الطالب داخل نظام سلوكي.\n\nمع خالص التحية،\nإدارة المدرسة`;return m}
-  async function composeMessage(row){if(sendMode==='access')return accessMessage(row);return fullWarning(row,sendMode==='warning_escalation')}
+  async function composeMessage(row){
+    if(row&&row.student_id&&(!row.national_id||!row.student_code)){
+      try{await enrichRowsWithStudentIds([row])}catch(_){}
+    }
+    if(sendMode==='access')return accessMessage(row);
+    return fullWarning(row,sendMode==='warning_escalation');
+  }
   const modeLabel=m=>m==='access'?'إشعار اطلاع على سلوكي':m==='warning'?'تنبيه كتابي كامل':'تنبيه كتابي + خطوات التصعيد';
   function openWa(row,text){const p=toWa(row.recipient_phone);if(!p||p.length<12){note('error','رقم غير صالح لولي الأمر: '+(row.recipient_phone||'—'));return false}const url=waLink(p,text);try{if(!waWindow||waWindow.closed)waWindow=window.open(url,WA_WIN);else{waWindow.location.href=url;waWindow.focus()}}catch(_){waWindow=null}if(!waWindow){note('error','المتصفح منع نافذة WhatsApp. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.');return false}try{waWindow.focus()}catch(_){}return true}
   async function showPreview(row,after){previewRow=row;const text=await composeMessage(row);$('previewStudent').textContent=`الطالب: ${row.student_name||'—'} — ولي الأمر: ${row.parent_type==='father'?'الأب':row.parent_type==='mother'?'الأم':'ولي الأمر'}`;$('previewType').textContent=modeLabel(sendMode);$('previewRecipient').innerHTML=`رقم المستلم: <span dir="ltr">${esc(row.recipient_phone||'—')}</span>`;$('previewText').value=text;$('previewModal').hidden=false;$('previewModal').classList.add('is-open');$('previewModal').setAttribute('aria-hidden','false');document.body.classList.add('preview-open');$('previewText').focus();$('sendPreview').onclick=()=>{const finalText=$('previewText').value.trim();if(!finalText){note('error','لا يمكن إرسال رسالة فارغة.');return}if(openWa(row,finalText)){ closePreview(); if(after)after(row)}};$('copyPreview').onclick=async()=>{try{await navigator.clipboard.writeText($('previewText').value);note('ok','تم نسخ النص بعد مراجعته.')}catch(_){note('error','تعذر النسخ.')}}}
