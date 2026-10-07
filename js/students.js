@@ -503,19 +503,49 @@
   function headerMap(header) {
     const aliases = {
       'الرقمالقومي': 'national_id',
+      'الرقمقومي': 'national_id',
+      'nationalid': 'national_id',
+      'nid': 'national_id',
       'كودالطالب': 'student_code',
+      'كود': 'student_code',
+      'studentcode': 'student_code',
+      'code': 'student_code',
       'اسمالطالب': 'full_name',
+      'الاسم': 'full_name',
+      'اسم': 'full_name',
+      'fullname': 'full_name',
+      'fullnameالطالب': 'full_name',
       'النوع': 'gender',
+      'الجنس': 'gender',
+      'gender': 'gender',
       'الصف': 'grade',
+      'grade': 'grade',
       'القسم': 'section',
+      'section': 'section',
       'الفصل': 'class',
+      'الفصلالدراسي': 'class',
+      'class': 'class',
       'رقمالتليفونالاب': 'father_phone',
-      'رقمتليفونالام': 'mother_phone',
       'رقمالتليفونالأب': 'father_phone',
-      'رقمتليفونالأم': 'mother_phone'
+      'رقمتليفونالاب': 'father_phone',
+      'رقمتليفونالأب': 'father_phone',
+      'هاتفالاب': 'father_phone',
+      'هاتفالأب': 'father_phone',
+      'رقمالاب': 'father_phone',
+      'رقمالأب': 'father_phone',
+      'fatherphone': 'father_phone',
+      'رقمتليفونالام': 'mother_phone',
+      'رقمتليفونالأم': 'mother_phone',
+      'رقمالتليفونالام': 'mother_phone',
+      'رقمالتليفونالأم': 'mother_phone',
+      'هاتفالام': 'mother_phone',
+      'هاتفالأم': 'mother_phone',
+      'رقمالام': 'mother_phone',
+      'رقمالأم': 'mother_phone',
+      'motherphone': 'mother_phone'
     };
     const map = {};
-    header.forEach((h, i) => {
+    (header || []).forEach((h, i) => {
       const k = normalizeHeader(h);
       if (aliases[k]) map[aliases[k]] = i;
     });
@@ -525,14 +555,26 @@
   /** قراءة خام من Excel — لا دمج بعد */
   function parseWorkbook(file) {
     return file.arrayBuffer().then(buf => {
+      if (typeof XLSX === 'undefined') {
+        throw Error('مكتبة Excel غير متاحة. حدّث الصفحة ثم حاول مجدداً.');
+      }
       const wb = XLSX.read(buf, { type: 'array', cellDates: false, raw: false });
+      if (!wb.SheetNames || !wb.SheetNames.length) {
+        throw Error('الملف لا يحتوي على أوراق عمل.');
+      }
       const name = wb.SheetNames[0];
       const sheet = wb.Sheets[name];
       const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
-      if (matrix.length < 2) throw Error('الملف لا يحتوي على صفوف بيانات.');
+      if (!matrix.length) throw Error('الورقة فارغة.');
+      if (matrix.length < 2) throw Error('الملف لا يحتوي على صفوف بيانات بعد صف العنوان.');
       const map = headerMap(matrix[0]);
-      if (Object.keys(map).length < 9) {
-        throw Error('لم نتعرف على الأعمدة التسعة المطلوبة. استخدم النموذج الرسمي.');
+      const found = Object.keys(map).length;
+      if (found < 9) {
+        const headersSeen = (matrix[0] || []).map(h => normalize(h)).filter(Boolean).join(' | ') || '(فارغ)';
+        throw Error(
+          `لم نتعرف إلا على ${found} من 9 أعمدة مطلوبة. استخدم «تحميل النموذج».\n` +
+          `العناوين الموجودة في الملف: ${headersSeen}`
+        );
       }
       const out = [];
       for (let r = 1; r < matrix.length; r++) {
@@ -784,21 +826,54 @@
 
   /** زر المعالجة */
   async function processSelectedFile() {
+    // احتياطي: إن ضاع selectedFile لكن input ما زال يحمل الملف
+    if (!selectedFile && $('excelFile')?.files?.[0]) {
+      selectedFile = $('excelFile').files[0];
+    }
     if (!selectedFile) {
       msg('error', 'اختر ملف Excel أولاً.');
+      if ($('fileInfo')) {
+        $('fileInfo').hidden = false;
+        $('fileInfo').textContent = '⚠️ لم يُختر ملف بعد. اضغط «اختيار ملف» أو اسحب الملف إلى المنطقة أعلاه.';
+      }
       return;
     }
     if (!scopeOk()) {
-      msg('error', 'اختر المرحلة والقسم والصف قبل المعالجة.');
+      const sc = getImportScope();
+      const missing = [];
+      if (!sc.stageId) missing.push('المرحلة');
+      if (!sc.section) missing.push('القسم');
+      if (!sc.grade) missing.push('الصف');
+      msg('error', 'اختر ' + missing.join(' و') + ' قبل المعالجة.');
+      if ($('fileInfo')) {
+        $('fileInfo').hidden = false;
+        $('fileInfo').textContent = '⚠️ أكمل نطاق الاستيراد أولاً: ' + missing.join(' + ');
+      }
       return;
     }
+    if (typeof XLSX === 'undefined') {
+      msg('error', 'مكتبة قراءة Excel غير محمّلة. حدّث الصفحة (Ctrl+Shift+R) ثم حاول مجدداً.');
+      return;
+    }
+
     msg('error', '', false);
     msg('ok', '', false);
-    $('processFile').disabled = true;
-    $('processFile').textContent = 'جارٍ المعالجة...';
+    if ($('validation')) {
+      $('validation').hidden = false;
+      $('validation').innerHTML = '<div class="ok">⏳ جارٍ قراءة الملف ومقارنته…</div>';
+    }
+    const btn = $('processFile');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'جارٍ المعالجة...';
+    }
     try {
       const parsed = await parseWorkbook(selectedFile);
       parsedRaw = parsed;
+
+      if (!parsed.rows.length) {
+        throw new Error('الملف لا يحتوي على صفوف بيانات صالحة بعد صف العنوان. أضف طلاباً في Excel ثم أعد المحاولة.');
+      }
 
       // ربط الصفوف بالنطاق المختار + دمج ذكي مع طلاب نفس المرحلة/الصف فقط
       const sc = getImportScope();
@@ -827,26 +902,55 @@
       };
 
       const scInfo = getImportScope();
-      $('fileInfo').textContent = `${selectedFile.name} — الورقة: ${parsed.sheet} — صفوف: ${parsed.rows.length} — النطاق: ${scInfo.stageName} / ${scInfo.sectionLabel} / ${scInfo.grade}`;
-      $('validation').hidden = false;
-      if (errors.length) {
-        $('validation').innerHTML = `<div class="bad"><strong>يوجد ${errors.length} خطأ:</strong><ul>${errors.slice(0, 40).map(e => `<li>${e}</li>`).join('')}</ul>${errors.length > 40 ? '<p>تم إظهار أول 40 خطأ فقط.</p>' : ''}</div>`;
-        $('confirmImport').disabled = true;
-      } else {
-        $('validation').innerHTML = `<div class="ok">✓ الملف اجتاز الفحوص. راجع تقرير الإضافات والتغييرات أدناه ثم اضغط «اعتماد التغييرات».</div>`;
-        $('confirmImport').disabled = false;
+      if ($('fileInfo')) {
+        $('fileInfo').hidden = false;
+        $('fileInfo').textContent = `${selectedFile.name} — الورقة: ${parsed.sheet} — صفوف: ${parsed.rows.length} — النطاق: ${scInfo.stageName} / ${scInfo.sectionLabel} / ${scInfo.grade}`;
+      }
+      if ($('validation')) {
+        $('validation').hidden = false;
+        if (errors.length) {
+          $('validation').innerHTML = `<div class="bad"><strong>يوجد ${errors.length} خطأ يمنع الاعتماد:</strong><ul>${errors.slice(0, 40).map(e => `<li>${e}</li>`).join('')}</ul>${errors.length > 40 ? '<p>تم إظهار أول 40 خطأ فقط.</p>' : ''}<p class="small-note">صحّح الملف في Excel ثم اضغط «معالجة الملف» مجدداً.</p></div>`;
+          if ($('confirmImport')) $('confirmImport').disabled = true;
+        } else {
+          const nNew = diff.new.length, nCh = diff.changed.length, nWd = diff.withdrawn.length;
+          $('validation').innerHTML = `<div class="ok">✓ الملف اجتاز الفحوص — ${parsed.rows.length} صف. جديد: ${nNew} | متغير: ${nCh} | منسحب: ${nWd}. راجع التقرير أدناه ثم اضغط «اعتماد التغييرات».</div>`;
+          if ($('confirmImport')) $('confirmImport').disabled = false;
+        }
       }
 
       renderDiffReport(diff);
       setImportStep(3);
-      $('cancelImport').disabled = false;
+      if ($('cancelImport')) $('cancelImport').disabled = false;
+
+      // إبراز النتيجة للمستخدم
+      const anchor = $('validation') || $('preview') || $('fileInfo');
+      if (anchor && anchor.scrollIntoView) {
+        anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      if (!errors.length) {
+        msg('ok', `تمت المعالجة: ${parsed.rows.length} صف — جديد ${diff.new.length} / متغير ${diff.changed.length} / منسحب ${diff.withdrawn.length}`);
+      } else {
+        msg('error', `المعالجة اكتملت مع ${errors.length} خطأ — راجع التفاصيل أسفل منطقة الملف.`);
+      }
     } catch (e) {
+      console.error('processSelectedFile', e);
       pending = null;
-      msg('error', e.message || 'تعذر قراءة الملف.');
-      $('confirmImport').disabled = true;
+      const errText = (e && e.message) ? e.message : 'تعذر قراءة الملف.';
+      msg('error', errText);
+      if ($('confirmImport')) $('confirmImport').disabled = true;
+      if ($('validation')) {
+        $('validation').hidden = false;
+        $('validation').innerHTML = `<div class="bad"><strong>فشلت المعالجة:</strong> ${escapeHtml(errText)}</div>`;
+      }
+      if ($('preview')) {
+        $('preview').hidden = true;
+        $('preview').innerHTML = '';
+      }
     } finally {
-      $('processFile').disabled = !selectedFile;
-      $('processFile').textContent = '⚙️ معالجة الملف';
+      if (btn) {
+        btn.disabled = !selectedFile;
+        btn.textContent = '⚙️ معالجة الملف';
+      }
     }
   }
 
