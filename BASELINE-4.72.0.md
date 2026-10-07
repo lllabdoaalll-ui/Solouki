@@ -1,11 +1,23 @@
-# Solouki Baseline 4.72.0
+# BASELINE 4.72.0 — حذف جماعي للطلاب
 
-## STEP 72 — جسر تسجيل المعلم (رصد → سلوكي)
-- Edge Function: `supabase/functions/teacher-behavior-record`
-- SQL: `sql/phase4-step72-teacher-bridge-record.sql`
-- توثيق للحسابات المنفصلة: `docs/STEP72-TEACHER-BRIDGE.md`
-- يعتمد على: دليل المعلمين + النطاق + مفاتيح التفعيل + كتالوج (STEP 68–70)
-- رصد يستدعي HTTPS + `x-solouki-bridge-secret` فقط — بدون مشاركة service_role
+تاريخ: 2026-10-07
 
-## السابق
-4.71.1 ملف القاعدة (أكواد)، 4.71.0 سجلات الرصد، 4.70.x دليل معلمين ومفاتيح
+## ما الجديد
+
+### حذف / استعادة جماعي في قائمة الطلاب
+- شريط أدوات `bulk-bar` فوق جدول/بطاقات الطلاب
+- checkbox بجانب كل طالب + «تحديد الكل المعروض»
+- زر **حذف المحددين** (انسحاب ناعم للنشطين)
+- زر **استعادة المحددين** (للمنسحبين)
+- يعمل مع صلاحية `delete_students` فقط (superadmin / it_officer)
+- يستخدم RPC الموجود: `admin_withdraw_student` / `admin_restore_student`
+- يدعم الوضع المحلي (Demo) والسحابة (Supabase)
+
+## الملفات المتأثرة
+- `students.html` — شريط bulk-bar + cache-bust `?v=4.72.0`
+- `js/students.js` — selectedKeys, bulkWithdrawSelected, bulkRestoreSelected, checkboxes في renderRoster
+- `css/students.css` — تنسيق الشريط والصفوف المحددة
+
+## نقطة انطلاق للتعديلات اللاحقة
+هذا الأرشيف يحتوي المشروع كاملاً بعد كل التعديلات حتى 4.72.0.
+ابدأ منه لأي ميزة جديدة واذكر رقم النسخة التالية في BASELINE وquery string للكاش.

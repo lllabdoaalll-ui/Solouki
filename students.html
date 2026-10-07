@@ -7,7 +7,7 @@
 <title>سلوكي | رفع الطلاب وWhatsApp</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/app-shell.css?v=4.71.1"><link rel="stylesheet" href="css/students.css?v=4.71.1"><link rel="stylesheet" href="css/print-official.css">
+  <link rel="stylesheet" href="css/app-shell.css?v=4.71.1"><link rel="stylesheet" href="css/students.css?v=4.72.0"><link rel="stylesheet" href="css/print-official.css">
 </head>
 <body>
 <main class="students-page">
@@ -112,6 +112,17 @@
     </label>
     <button type="button" class="btn btn-outline btn-sm" id="clearRosterFilters">مسح الفلاتر</button>
     <span class="roster-count" id="rosterCount"></span>
+  </div>
+  <div class="bulk-bar" id="bulkBar" hidden>
+    <label class="bulk-select-all">
+      <input type="checkbox" id="selectAllStudents"> تحديد الكل المعروض
+    </label>
+    <span class="bulk-count" id="bulkSelectedCount">0 محدد</span>
+    <div class="bulk-actions">
+      <button type="button" class="btn btn-danger btn-sm" id="bulkWithdrawBtn" hidden>حذف المحددين</button>
+      <button type="button" class="btn btn-outline btn-sm" id="bulkRestoreBtn" hidden>استعادة المحددين</button>
+      <button type="button" class="btn btn-outline btn-sm" id="bulkClearBtn">إلغاء التحديد</button>
+    </div>
   </div>
   <div id="rosterTable" class="table-wrap"></div>
 </section>
@@ -283,7 +294,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="js/config.js?v=4.62.17"></script><script src="js/students.js?v=4.71.1"></script>
+<script src="js/config.js?v=4.62.17"></script><script src="js/students.js?v=4.72.0"></script>
   <script src="js/pwa.js"></script>
   <script src="js/app-shell.js?v=4.70.6"></script>
 </body></html>
