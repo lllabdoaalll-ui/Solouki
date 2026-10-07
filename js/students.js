@@ -1020,41 +1020,85 @@
         source_storage: storagePath || null,
         updated_at: new Date().toISOString()
       });
-      // حفظ صفًا صفًا: يعمل سواء كان UNIQUE على national_id أو على (stage_id, national_id)
-      // ولا يعتمد على ON CONFLICT الذي فشل في قاعدتك الحالية.
+      // حفظ دفعات: جلب الموجودين مرة واحدة ثم insert/update على دفعات (أسرع وأوثق من صفٍ صفٍ)
       const saveErrors = [];
-      for (const s of pending.rows) {
-        const row = baseRow(s);
-        let q = sb.from('students').select('id').eq('national_id', row.national_id);
+      let savedOk = 0;
+      const allRows = pending.rows.map(s => ({ src: s, row: baseRow(s) }));
+      const nids = [...new Set(allRows.map(x => x.row.national_id).filter(Boolean))];
+      const existingByNid = new Map();
+      const chunkSize = 100;
+      for (let i = 0; i < nids.length; i += chunkSize) {
+        const slice = nids.slice(i, i + chunkSize);
+        let q = sb.from('students').select('id,national_id,stage_id').in('national_id', slice);
         if (sc.stageId) q = q.eq('stage_id', sc.stageId);
-        const { data: found, error: findErr } = await q.limit(1).maybeSingle();
-        if (findErr && !/multiple/i.test(findErr.message || '')) {
-          // maybeSingle قد يفشل إن تعددت الصفوف — نتجاهل ونكمل بـ limit
-        }
-        let existingId = found?.id;
-        if (!existingId) {
-          const { data: list } = await sb.from('students').select('id').eq('national_id', row.national_id).limit(1);
-          existingId = list?.[0]?.id;
-        }
-        let err = null;
-        if (existingId) {
-          const { error } = await sb.from('students').update(row).eq('id', existingId);
-          err = error;
+        const { data: foundList, error: findErr } = await q;
+        if (findErr) {
+          // احتياطي بدون فلتر المرحلة
+          const { data: fallback } = await sb.from('students').select('id,national_id,stage_id').in('national_id', slice);
+          (fallback || []).forEach(r => {
+            if (!existingByNid.has(r.national_id)) existingByNid.set(r.national_id, r.id);
+          });
         } else {
-          const { error } = await sb.from('students').insert(row);
-          err = error;
+          (foundList || []).forEach(r => {
+            if (!existingByNid.has(r.national_id)) existingByNid.set(r.national_id, r.id);
+          });
         }
-        if (err) saveErrors.push((s.full_name || s.national_id) + ': ' + err.message);
       }
+      const toInsert = [];
+      const toUpdate = [];
+      allRows.forEach(({ src, row }) => {
+        const id = existingByNid.get(row.national_id);
+        if (id) toUpdate.push({ id, row, src });
+        else toInsert.push({ row, src });
+      });
+
+      // إدراج دفعات
+      const insertChunk = 40;
+      for (let i = 0; i < toInsert.length; i += insertChunk) {
+        const batch = toInsert.slice(i, i + insertChunk);
+        const { error } = await sb.from('students').insert(batch.map(x => x.row));
+        if (error) {
+          // إن فشلت الدفعة بالكامل نحاول صفاً صفاً داخلها حتى لا نخسر الجميع
+          for (const item of batch) {
+            const { error: e2 } = await sb.from('students').insert(item.row);
+            if (e2) saveErrors.push((item.src.full_name || item.src.national_id) + ': ' + e2.message);
+            else savedOk++;
+          }
+        } else {
+          savedOk += batch.length;
+        }
+        if ($('fileInfo')) {
+          $('fileInfo').hidden = false;
+          $('fileInfo').textContent = `جارٍ الحفظ… إدراج ${Math.min(i + insertChunk, toInsert.length)}/${toInsert.length} — تحديث ${toUpdate.length}`;
+        }
+      }
+
+      // تحديث: دفعات متوازية محدودة
+      const updateParallel = 8;
+      for (let i = 0; i < toUpdate.length; i += updateParallel) {
+        const batch = toUpdate.slice(i, i + updateParallel);
+        const results = await Promise.all(batch.map(item =>
+          sb.from('students').update(item.row).eq('id', item.id).then(({ error }) => ({ item, error }))
+        ));
+        results.forEach(({ item, error }) => {
+          if (error) saveErrors.push((item.src.full_name || item.src.national_id) + ': ' + error.message);
+          else savedOk++;
+        });
+      }
+
       if (saveErrors.length) {
-        let m = saveErrors.slice(0, 5).join(' | ');
-        if (/father_phone|student_code|column/i.test(m)) {
-          m += ' — نفّذ sql/phase4-step42-students-columns.sql ثم أعد المحاولة.';
+        let m = `حُفظ ${savedOk} من ${allRows.length}. فشل ${saveErrors.length}: ` + saveErrors.slice(0, 5).join(' | ');
+        if (/father_phone|student_code|column|check|violates/i.test(m)) {
+          m += ' — راجع قيود الجدول أو نفّذ sql/phase4-step42-students-columns.sql';
         }
         msg('error', m);
-        return;
+        // لا نتوقف بالكامل إن نجح جزء — نكمّل المنسحبين ونحدّث القائمة
+        cloudStudentsOk = savedOk > 0;
+        if (!cloudStudentsOk) return;
+      } else {
+        cloudStudentsOk = true;
+        msg('ok', `تم حفظ ${savedOk} طالباً على السحابة (جديد: ${toInsert.length}، تحديث: ${toUpdate.length}).`);
       }
-      cloudStudentsOk = true;
       for (const s of d.withdrawn) {
         await sb.from('students').update({
           is_active: false,
