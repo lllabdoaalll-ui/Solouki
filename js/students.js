@@ -504,6 +504,8 @@
     const aliases = {
       'الرقمالقومي': 'national_id',
       'الرقمقومي': 'national_id',
+      'رقمقومي': 'national_id',
+      'رقمقوى': 'national_id',
       'nationalid': 'national_id',
       'nid': 'national_id',
       'كودالطالب': 'student_code',
@@ -523,6 +525,7 @@
       'القسم': 'section',
       'section': 'section',
       'الفصل': 'class',
+      'فصل': 'class',
       'الفصلالدراسي': 'class',
       'class': 'class',
       'رقمالتليفونالاب': 'father_phone',
@@ -547,7 +550,22 @@
     const map = {};
     (header || []).forEach((h, i) => {
       const k = normalizeHeader(h);
-      if (aliases[k]) map[aliases[k]] = i;
+      if (aliases[k]) {
+        if (map[aliases[k]] === undefined) map[aliases[k]] = i;
+        return;
+      }
+      // مطابقة مرنة لعناوين شائعة بأخطاء إملائية أو بدون «ال»
+      let field = null;
+      if (k.includes('قومي') || k.includes('national')) field = 'national_id';
+      else if (k.includes('كود') || k === 'code' || k.includes('studentcode')) field = 'student_code';
+      else if (k.includes('اسم') || k === 'name' || k.includes('fullname')) field = 'full_name';
+      else if (k.includes('نوع') || k.includes('جنس') || k === 'gender') field = 'gender';
+      else if (k === 'صف' || k === 'الصف' || k === 'grade') field = 'grade';
+      else if (k.includes('قسم') || k === 'section') field = 'section';
+      else if (k.includes('فصل') || k === 'class') field = 'class';
+      else if (k.includes('اب') && (k.includes('هاتف') || k.includes('تليفون') || k.includes('رقم'))) field = 'father_phone';
+      else if (k.includes('ام') && (k.includes('هاتف') || k.includes('تليفون') || k.includes('رقم'))) field = 'mother_phone';
+      if (field && map[field] === undefined) map[field] = i;
     });
     return map;
   }
