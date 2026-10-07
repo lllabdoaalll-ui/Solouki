@@ -867,3 +867,70 @@ a.student-name-link:hover {
 #baseReport .data-table td.status-same { color: #64748b; }
 #baseReport .data-table td.status-miss { color: #b91c1c; font-weight: 700; }
 #baseReport .data-table td.status-skip { color: #a16207; }
+
+/* —— شريط الحذف/الاستعادة الجماعي —— */
+.bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+}
+.bulk-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7f1d1d;
+  cursor: pointer;
+  user-select: none;
+}
+.bulk-select-all input { width: 1.05rem; height: 1.05rem; accent-color: #b91c1c; cursor: pointer; }
+.bulk-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-inline-start: auto;
+}
+.col-check {
+  width: 2rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.col-check input,
+.stu-select {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #0f766e;
+  cursor: pointer;
+}
+.stu-check {
+  display: flex;
+  align-items: center;
+  margin-inline-end: 0.35rem;
+  flex-shrink: 0;
+}
+.stu-card.is-selected {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.25);
+  background: #f0fdfa;
+}
+.roster-table tr.is-selected td {
+  background: #f0fdfa;
+}
+.roster-table tr.is-selected.inactive td {
+  background: #fef2f2;
+}
